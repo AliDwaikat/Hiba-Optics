@@ -26,9 +26,9 @@
   --color-success: #22c55e;
   --color-error: #ef4444;
 
-  /* Typography */
-  --font-base: 'Cairo', system-ui, sans-serif; /* Arabic + general UI */
-  --font-latin: 'Poppins', system-ui, sans-serif; /* Latin brand names, prices, numbers */
+  /* Typography — single family (Rubik), hierarchy via weight contrast */
+  --font-base: 'Rubik', system-ui, sans-serif; /* Arabic + general UI + body */
+  --font-latin: 'Rubik', system-ui, sans-serif; /* Latin brand names, prices, numbers */
 
   /* Radius scale — rounded to echo the logo */
   --radius-sm: 8px;
@@ -81,12 +81,18 @@ body {
     line-height: 1.2;
     letter-spacing: -0.01em;
   }
+  /* Large headings: heavy Rubik with tighter metrics for an editorial feel. */
   h1 {
     font-size: clamp(1.9rem, 4vw, 2.75rem);
-    font-weight: 800;
+    font-weight: 900;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
   }
   h2 {
     font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
   }
   h3 {
     font-size: 1.25rem;
@@ -177,8 +183,8 @@ body {
 /* ---- Utilities ---- */
 
 /*
- * Latin words (brand names) and numbers use Poppins. Numbers always render as
- * Western digits (0-9) regardless of the surrounding Arabic context.
+ * Latin words (brand names) and numbers use the Latin token (Rubik). Numbers
+ * always render as Western digits (0-9) regardless of the surrounding Arabic context.
  */
 .latin {
   font-family: var(--font-latin);
