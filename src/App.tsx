@@ -12,10 +12,16 @@ import Favorites from './pages/Favorites'
 import Brands from './pages/Brands'
 import Book from './pages/Book'
 import BookingSuccess from './pages/BookingSuccess'
+import ProtectedRoute from './components/admin/ProtectedRoute'
+import AdminLayout from './components/admin/AdminLayout'
+import AdminLogin from './pages/admin/Login'
+import Dashboard from './pages/admin/Dashboard'
+import AdminPlaceholder from './pages/admin/Placeholder'
 
 export default function App() {
   return (
     <Routes>
+      {/* Public site */}
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
@@ -29,6 +35,19 @@ export default function App() {
         <Route path="/booking-success" element={<BookingSuccess />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-success" element={<OrderSuccess />} />
+      </Route>
+
+      {/* Admin — login is public; everything else is guarded */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<ProtectedRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="products" element={<AdminPlaceholder title="المنتجات" />} />
+          <Route path="orders" element={<AdminPlaceholder title="الطلبات" />} />
+          <Route path="bookings" element={<AdminPlaceholder title="الحجوزات" />} />
+          <Route path="reviews" element={<AdminPlaceholder title="التقييمات" />} />
+          <Route path="branches" element={<AdminPlaceholder title="الفروع" />} />
+        </Route>
       </Route>
     </Routes>
   )
