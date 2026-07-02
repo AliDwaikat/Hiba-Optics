@@ -13,6 +13,9 @@ export interface Branch {
   landmark_en: string | null
   phone: string | null
   whatsapp: string | null
+  hours_ar: string | null
+  lat: number | null
+  lng: number | null
   map_url: string | null
   position: number
   published: boolean
@@ -20,7 +23,7 @@ export interface Branch {
 
 const BRANCH_COLUMNS =
   'id, name_ar, name_en, address_ar, address_en, landmark_ar, landmark_en, ' +
-  'phone, whatsapp, map_url, position, published'
+  'phone, whatsapp, hours_ar, lat, lng, map_url, position, published'
 
 /** Published branches ordered by position. */
 export async function fetchBranches(): Promise<Branch[]> {
