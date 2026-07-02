@@ -1,20 +1,27 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
+import { formatPrice } from '../lib/format'
+import { fetchFeaturedProduct, type Product } from '../lib/products'
+
+const CURRENCY = 'ILS'
 
 /* Yellow dot separator for the trust line. */
 function Dot() {
   return <span className="h-1 w-1 shrink-0 rounded-full bg-yellow" aria-hidden="true" />
 }
 
-/* Graceful fallback when /hero/hero-1.jpg is missing — cream frame with a
-   yellow arc/blob echoing the logo, and a subtle "Hiba" wordmark. */
+/* Eyewear motif + wordmark for the missing-image fallback. */
 function HeroFallback() {
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-cream">
-      <div className="absolute -bottom-16 -left-12 h-64 w-64 rounded-full bg-yellow/30" />
-      <div className="absolute -right-8 -top-12 h-44 w-44 rounded-full border-[14px] border-yellow/25" />
-      <span className="font-latin text-6xl font-bold tracking-tight text-ink/15" dir="ltr">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-cream">
+      <svg width="120" height="60" viewBox="0 0 120 60" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-ink/20" aria-hidden="true">
+        <circle cx="30" cy="34" r="17" />
+        <circle cx="90" cy="34" r="17" />
+        <path d="M47 30h26" />
+        <path d="M13 26l-8-6M107 26l8-6" />
+      </svg>
+      <span className="font-latin text-4xl font-bold tracking-tight text-ink/20" dir="ltr">
         Hiba
       </span>
     </div>
@@ -24,26 +31,47 @@ function HeroFallback() {
 export default function Hero() {
   const reduce = useReducedMotion()
   const [imageBroken, setImageBroken] = useState(false)
+  const [featured, setFeatured] = useState<Product | null>(null)
 
-  // Entrance: staggered fade-up. Disabled under prefers-reduced-motion.
+  useEffect(() => {
+    let active = true
+    fetchFeaturedProduct()
+      .then((p) => active && setFeatured(p))
+      .catch(() => active && setFeatured(null))
+    return () => {
+      active = false
+    }
+  }, [])
+
+  // Entrance: staggered fade-up (nested for the two headline lines).
   const container: Variants = {
     hidden: {},
     show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
   }
+  const headline: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.12 } },
+  }
   const item: Variants = {
-    hidden: { opacity: 0, y: 16 },
+    hidden: { opacity: 0, y: 18 },
     show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
   }
 
-  const floatAnim = reduce ? undefined : { y: [0, -14, 0] }
+  const floatAnim = reduce ? undefined : { y: [0, -16, 0] }
   const floatTrans = { duration: 7, repeat: Infinity, ease: 'easeInOut' as const }
   const cueAnim = reduce ? undefined : { y: [0, 8, 0] }
   const cueTrans = { duration: 1.8, repeat: Infinity, ease: 'easeInOut' as const }
 
+  const featuredImage = featured?.images?.[0]
+  const featuredPrice =
+    featured != null
+      ? Number(featured.sale_price ?? featured.price)
+      : 0
+
   return (
     <section className="relative overflow-hidden bg-cream">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-8 md:min-h-[88vh] md:grid-cols-2 md:gap-16 md:py-24">
-        {/* TEXT — right column in RTL (first in DOM) */}
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-8 md:min-h-[max(580px,86vh)] md:grid-cols-[1.05fr_0.95fr] md:gap-10 md:py-20">
+        {/* INFO — right column in RTL (first in DOM) */}
         <motion.div
           variants={container}
           initial={reduce ? false : 'hidden'}
@@ -53,27 +81,29 @@ export default function Hero() {
           {/* Eyebrow */}
           <motion.div variants={item} className="flex items-center gap-3">
             <span className="h-px w-8 bg-yellow" aria-hidden="true" />
-            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">
+            <span className="text-xs font-medium tracking-[0.2em] text-gray-600">
               مركز هبة الطبي للبصريات
             </span>
           </motion.div>
 
-          {/* Headline */}
+          {/* Headline — the oversized moment */}
           <motion.h1
-            variants={item}
-            className="mt-6 font-extrabold leading-[1.1] tracking-tight text-ink"
-            style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)' }}
+            variants={headline}
+            className="mt-6 font-black text-ink"
+            style={{ fontSize: 'clamp(38px, 6.5vw, 74px)', lineHeight: 1.02, letterSpacing: '-0.02em' }}
           >
-            <span className="block">رؤية أوضح،</span>
-            <span className="block">إطلالة أرقى.</span>
+            <motion.span variants={item} className="block">رؤية أوضح،</motion.span>
+            <motion.span variants={item} className="block">
+              إطلالة <span className="text-yellow">أرقى</span>
+            </motion.span>
           </motion.h1>
 
           {/* Subhead */}
           <motion.p
             variants={item}
-            className="mt-6 max-w-xl text-lg leading-relaxed text-gray-600"
+            className="mt-6 max-w-[300px] text-[15px] leading-[1.7] text-gray-600"
           >
-            نظارات طبية وشمسية من أرقى البراندات العالمية، وفحص نظر شامل — في نابلس وحوارة.
+            نظارات طبية وشمسية من أرقى البراندات العالمية، وفحص نظر شامل في نابلس وحوارة.
           </motion.p>
 
           {/* CTAs */}
@@ -91,30 +121,30 @@ export default function Hero() {
             variants={item}
             className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600"
           >
-            <span>براندات عالمية</span>
-            <Dot />
-            <span>إصدارات محدودة</span>
+            <span>براندات أصلية</span>
             <Dot />
             <span>فحص نظر شامل</span>
+            <Dot />
+            <span>فرعان في نابلس وحوارة</span>
           </motion.div>
         </motion.div>
 
         {/* IMAGE — left column in RTL */}
         <div className="relative">
-          {/* Floating accent shape */}
+          {/* Soft yellow arc peeking behind the card */}
           <motion.div
             aria-hidden="true"
-            className="absolute -right-6 -top-8 -z-0 h-40 w-40 rounded-full bg-yellow/20 blur-2xl"
+            className="absolute -bottom-10 -left-10 z-0 h-56 w-56 rounded-full bg-yellow/20"
             animate={floatAnim}
             transition={floatTrans}
           />
 
-          {/* Image frame */}
+          {/* Off-center image card */}
           <motion.div
             initial={reduce ? false : { opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="relative aspect-[4/5] w-full overflow-hidden rounded-[var(--radius-lg)] shadow-card"
+            className="relative z-10 mx-auto aspect-[4/5] w-[88%] overflow-hidden rounded-[var(--radius-lg)] shadow-card"
           >
             {imageBroken ? (
               <HeroFallback />
@@ -127,6 +157,32 @@ export default function Hero() {
               />
             )}
           </motion.div>
+
+          {/* Floating featured-product card (hidden if none / error) */}
+          {featured && (
+            <motion.div
+              initial={reduce ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: reduce ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute bottom-6 -left-2 z-20 w-44 rounded-[var(--radius)] border border-gray-100 bg-white p-2.5 shadow-card sm:-left-4"
+            >
+              <Link to={`/product/${featured.id}`} className="flex items-center gap-3">
+                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-cream">
+                  {featuredImage ? (
+                    <img src={featuredImage} alt={featured.name_ar} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <span className="font-latin text-[10px] font-bold text-ink/25" dir="ltr">Hiba</span>
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold text-ink">{featured.name_ar}</p>
+                  <p className="num text-sm font-bold text-ink">{formatPrice(featuredPrice, CURRENCY)}</p>
+                </div>
+              </Link>
+            </motion.div>
+          )}
         </div>
       </div>
 

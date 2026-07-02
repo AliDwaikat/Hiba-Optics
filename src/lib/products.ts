@@ -105,6 +105,21 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<Produ
   return (data ?? []) as unknown as Product[]
 }
 
+/** The first published, featured product (by position), or null. */
+export async function fetchFeaturedProduct(): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .select(PRODUCT_COLUMNS)
+    .eq('published', true)
+    .eq('featured', true)
+    .order('position', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return (data as unknown as Product) ?? null
+}
+
 /**
  * A single published product by id (with its Arabic brand name and features),
  * or null if not found / not published.
