@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useCart } from '../lib/cart'
 import { useFavorites } from '../lib/favorites'
 import { useLanguage } from '../lib/language'
@@ -69,7 +70,12 @@ function Logo() {
   )
 }
 
-/* ---- Language toggle ---- */
+/* ---- Language toggle — segmented pill with a sliding yellow indicator ---- */
+const LANG_OPTIONS: { value: Lang; label: string }[] = [
+  { value: 'ar', label: 'العربية' },
+  { value: 'en', label: 'English' },
+]
+
 function LangToggle({
   lang,
   setLang,
@@ -79,21 +85,42 @@ function LangToggle({
   setLang: (l: Lang) => void
   className?: string
 }) {
-  const opt = (value: Lang, text: string) => (
-    <button
-      type="button"
-      onClick={() => setLang(value)}
-      aria-pressed={lang === value}
-      className={lang === value ? 'font-bold text-ink' : 'text-gray-600 transition-colors hover:text-ink'}
-    >
-      {text}
-    </button>
-  )
+  const reduce = useReducedMotion()
+  // Unique per instance so the desktop and drawer toggles never share a layout
+  // animation (both are mounted at once).
+  const pillId = `lang-pill-${useId()}`
+
   return (
-    <div className={`flex items-center gap-1.5 font-latin text-xs ${className}`}>
-      {opt('ar', 'AR')}
-      <span className="text-gray-300">/</span>
-      {opt('en', 'EN')}
+    <div
+      role="group"
+      aria-label="اللغة"
+      className={`inline-flex items-center rounded-full bg-gray-100 p-0.5 ${className}`}
+    >
+      {LANG_OPTIONS.map((o) => {
+        const active = lang === o.value
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => setLang(o.value)}
+            aria-pressed={active}
+            aria-label={o.label}
+            className={`relative rounded-full px-3.5 py-1.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep ${
+              active ? 'font-medium text-ink' : 'text-gray-600 hover:text-ink'
+            }`}
+          >
+            {active && (
+              <motion.span
+                layoutId={pillId}
+                aria-hidden="true"
+                className="absolute inset-0 rounded-full bg-yellow"
+                transition={{ duration: reduce ? 0 : 0.25, ease: [0.4, 0, 0.2, 1] }}
+              />
+            )}
+            <span className="relative z-10">{o.label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }
