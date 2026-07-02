@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import Header from '../components/Header'
 import ProductCard from '../components/ProductCard'
-import { BRAND } from '../lib/i18n'
 import {
   fetchBrands,
   fetchProducts,
@@ -91,18 +90,7 @@ export default function Shop() {
 
   return (
     <main className="min-h-screen bg-black">
-      <header className="border-b border-gray-900 px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <Link
-            to="/"
-            className="font-latin text-xl font-bold tracking-tight text-gold"
-            dir="ltr"
-          >
-            {BRAND.wordmark}
-          </Link>
-          <span className="text-sm text-gray-500">المتجر</span>
-        </div>
-      </header>
+      <Header />
 
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {/* Category tabs */}

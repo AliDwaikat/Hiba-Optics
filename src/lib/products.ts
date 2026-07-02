@@ -84,3 +84,29 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<Produ
   if (error) throw new Error(error.message)
   return (data ?? []) as unknown as Product[]
 }
+
+/** A single published product by id, or null if not found / not published. */
+export async function fetchProduct(id: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .select(PRODUCT_COLUMNS)
+    .eq('published', true)
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return (data as unknown as Product) ?? null
+}
+
+/** A single published brand by id, or null. Used to resolve a product's brand name. */
+export async function fetchBrandById(id: string): Promise<Brand | null> {
+  const { data, error } = await supabase
+    .from('brands')
+    .select(BRAND_COLUMNS)
+    .eq('published', true)
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return (data as unknown as Brand) ?? null
+}
