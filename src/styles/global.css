@@ -4,25 +4,44 @@
 
 /*
  * Hiba Optics — global stylesheet.
- * Single source of truth for brand tokens and base RTL styling.
- * Every component references these variables; no hex values live in components.
+ * Single source of truth for brand tokens and base styling.
+ * Every component references these variables (via Tailwind tokens or var());
+ * no hex values live in components.
  */
 
 :root {
-  /* Brand palette */
-  --color-gold: #f4b400; /* primary accent — provisional, to be replaced with exact logo hex */
-  --color-gold-deep: #c98a00; /* hover / darker accent */
-  --color-black: #0e0e0e; /* primary background / text on light */
+  /* Brand palette — matched to the Hiba Optics logo */
+  --color-yellow: #ffc803; /* primary accent — buttons, highlights, active states, brand mark */
+  --color-yellow-deep: #e5a800; /* hover / pressed / borders where pure yellow is too light */
+  --color-ink: #161616; /* primary text on light backgrounds */
+  --color-black: #0e0e0e; /* very dark section backgrounds */
   --color-white: #ffffff;
-  --color-gray-900: #171717;
-  --color-gray-500: #6b7280;
-  --color-gray-100: #f5f5f5;
+  --color-cream: #fff9ec; /* warm off-white for premium section backgrounds */
+  --color-gray-900: #1f1f1f;
+  --color-gray-600: #5c5c5c;
+  --color-gray-300: #d9d9d9;
+  --color-gray-100: #f5f5f3;
+
+  /* Status colors — diagnostics/feedback, not part of the brand palette */
+  --color-success: #22c55e;
+  --color-error: #ef4444;
 
   /* Typography */
-  --font-arabic: 'Tajawal', 'Inter', system-ui, sans-serif;
-  --font-latin: 'Inter', system-ui, sans-serif;
+  --font-base: 'Cairo', system-ui, sans-serif; /* Arabic + general UI */
+  --font-latin: 'Poppins', system-ui, sans-serif; /* Latin brand names, prices, numbers */
 
-  color-scheme: dark;
+  /* Radius scale — rounded to echo the logo */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 20px;
+
+  /* Soft card shadow */
+  --shadow-card: 0 6px 24px rgba(22, 22, 22, 0.08);
+
+  /* Focus ring (derived from the yellow accent) */
+  --ring-yellow: 0 0 0 3px rgba(255, 200, 3, 0.45);
+
+  color-scheme: light;
 }
 
 *,
@@ -43,17 +62,128 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: var(--font-arabic);
-  background-color: var(--color-black);
-  color: var(--color-white);
+  font-family: var(--font-base);
+  line-height: 1.75; /* generous for body */
+  background-color: var(--color-white);
+  color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ---- Type scale (base layer so Tailwind utilities can still override) ---- */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-base);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  h1 {
+    font-size: clamp(1.9rem, 4vw, 2.75rem);
+    font-weight: 800;
+  }
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+  }
+  h3 {
+    font-size: 1.25rem;
+  }
+  h4 {
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+}
+
 /*
- * Numbers must always render as Western digits in the Latin font, regardless of
- * the surrounding Arabic context. Apply this helper to any numeric run.
+ * ---- Reusable base components (used site-wide) ----
+ * Written as plain CSS (outside @layer) so they are always shipped and ready
+ * to apply, independent of Tailwind's content-based tree-shaking. Tailwind
+ * utilities (single-class specificity, emitted earlier) can still override
+ * individual properties where needed.
  */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius);
+  padding: 0.7rem 1.5rem;
+  font-family: var(--font-base);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-yellow);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Primary: yellow fill, ink text (never white on yellow). */
+.btn-primary {
+  background-color: var(--color-yellow);
+  color: var(--color-ink);
+}
+.btn-primary:not(:disabled):hover {
+  background-color: var(--color-yellow-deep);
+}
+
+/* Secondary/ghost: transparent with an ink border, fills lightly on hover. */
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-ink);
+  border: 1.5px solid var(--color-ink);
+}
+.btn-secondary:not(:disabled):hover {
+  background-color: rgba(22, 22, 22, 0.06);
+}
+
+/* Clean rounded inputs/selects, RTL-aware, yellow focus ring. */
+.field {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-gray-300);
+  background-color: var(--color-white);
+  color: var(--color-ink);
+  padding: 0.6rem 0.85rem;
+  font-family: var(--font-base);
+  text-align: start;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.field::placeholder {
+  color: var(--color-gray-600);
+}
+.field:focus {
+  outline: none;
+  border-color: var(--color-yellow);
+  box-shadow: var(--ring-yellow);
+}
+
+/* Soft premium card surface. */
+.card {
+  border-radius: var(--radius-lg);
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-card);
+}
+
+/* ---- Utilities ---- */
+
+/*
+ * Latin words (brand names) and numbers use Poppins. Numbers always render as
+ * Western digits (0-9) regardless of the surrounding Arabic context.
+ */
+.latin {
+  font-family: var(--font-latin);
+}
+
 .num {
   font-family: var(--font-latin);
   font-variant-numeric: lining-nums;

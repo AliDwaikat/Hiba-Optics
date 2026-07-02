@@ -6,18 +6,27 @@ export default {
       colors: {
         // Brand palette — sourced from CSS variables defined in src/styles/global.css.
         // Never hardcode hex values in components; reference these tokens instead.
-        gold: 'var(--color-gold)',
-        'gold-deep': 'var(--color-gold-deep)',
+        yellow: 'var(--color-yellow)',
+        'yellow-deep': 'var(--color-yellow-deep)',
+        ink: 'var(--color-ink)',
         black: 'var(--color-black)',
         white: 'var(--color-white)',
+        cream: 'var(--color-cream)',
         'gray-900': 'var(--color-gray-900)',
-        'gray-500': 'var(--color-gray-500)',
+        'gray-600': 'var(--color-gray-600)',
+        'gray-300': 'var(--color-gray-300)',
         'gray-100': 'var(--color-gray-100)',
+        success: 'var(--color-success)',
+        error: 'var(--color-error)',
       },
       fontFamily: {
-        // Tajawal drives Arabic; Inter carries Latin text and Western digits.
-        sans: ['Tajawal', 'Inter', 'system-ui', 'sans-serif'],
-        latin: ['Inter', 'system-ui', 'sans-serif'],
+        // Cairo drives Arabic + general UI; Poppins carries Latin names and numbers.
+        sans: ['Cairo', 'system-ui', 'sans-serif'],
+        base: ['Cairo', 'system-ui', 'sans-serif'],
+        latin: ['Poppins', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        card: 'var(--shadow-card)',
       },
     },
   },
