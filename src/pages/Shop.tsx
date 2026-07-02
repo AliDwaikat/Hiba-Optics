@@ -23,17 +23,17 @@ function pillClass(active: boolean): string {
     'whitespace-nowrap rounded-full px-4 py-2 text-sm transition-colors',
     active
       ? 'bg-yellow font-semibold text-ink'
-      : 'bg-gray-900 text-gray-300 hover:text-white',
+      : 'bg-gray-100 text-gray-600 hover:text-ink',
   ].join(' ')
 }
 
 function SkeletonCard() {
   return (
     <div className="animate-pulse">
-      <div className="aspect-square w-full rounded-xl bg-gray-900" />
-      <div className="mt-3 h-3 w-1/2 rounded bg-gray-900" />
-      <div className="mt-2 h-4 w-3/4 rounded bg-gray-900" />
-      <div className="mt-2 h-4 w-1/3 rounded bg-gray-900" />
+      <div className="aspect-square w-full rounded-xl bg-gray-100" />
+      <div className="mt-3 h-3 w-1/2 rounded bg-gray-100" />
+      <div className="mt-2 h-4 w-3/4 rounded bg-gray-100" />
+      <div className="mt-2 h-4 w-1/3 rounded bg-gray-100" />
     </div>
   )
 }
@@ -95,7 +95,7 @@ export default function Shop() {
   }, [category, brandId])
 
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-white">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {/* Category tabs */}
         <div className="flex flex-wrap gap-2">
@@ -147,12 +147,12 @@ export default function Shop() {
               <p className="text-lg" style={{ color: 'var(--color-error)' }}>
                 تعذّر تحميل المنتجات
               </p>
-              <p className="mt-2 text-sm text-gray-300">{error}</p>
+              <p className="mt-2 text-sm text-gray-600">{error}</p>
             </div>
           ) : products.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="text-lg text-white">لا توجد منتجات</p>
-              <p className="mt-2 text-sm text-gray-300">جرّبي تغيير الفلاتر</p>
+              <p className="text-lg text-ink">لا توجد منتجات</p>
+              <p className="mt-2 text-sm text-gray-600">جرّبي تغيير الفلاتر</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">

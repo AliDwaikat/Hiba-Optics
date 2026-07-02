@@ -8,10 +8,10 @@ import { fetchProductsByIds, type Product } from '../lib/products'
 function SkeletonCard() {
   return (
     <div className="animate-pulse">
-      <div className="aspect-square w-full rounded-xl bg-gray-900" />
-      <div className="mt-3 h-3 w-1/2 rounded bg-gray-900" />
-      <div className="mt-2 h-4 w-3/4 rounded bg-gray-900" />
-      <div className="mt-2 h-4 w-1/3 rounded bg-gray-900" />
+      <div className="aspect-square w-full rounded-xl bg-gray-100" />
+      <div className="mt-3 h-3 w-1/2 rounded bg-gray-100" />
+      <div className="mt-2 h-4 w-3/4 rounded bg-gray-100" />
+      <div className="mt-2 h-4 w-1/3 rounded bg-gray-100" />
     </div>
   )
 }
@@ -60,11 +60,11 @@ export default function Favorites() {
   }, [favorites, products])
 
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-white">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-12">
-        <h1 className="text-3xl font-extrabold text-white sm:text-4xl">المفضلة</h1>
+        <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">المفضلة</h1>
         {count > 0 && (
-          <p className="num mt-2 text-sm text-gray-300">{count} منتج في المفضلة</p>
+          <p className="num mt-2 text-sm text-gray-600">{count} منتج في المفضلة</p>
         )}
 
         <div className="mt-8">
@@ -79,14 +79,14 @@ export default function Favorites() {
               <p className="text-lg" style={{ color: 'var(--color-error)' }}>
                 تعذّر تحميل المفضلة
               </p>
-              <p className="mt-2 text-sm text-gray-300">{error}</p>
+              <p className="mt-2 text-sm text-gray-600">{error}</p>
             </div>
           ) : display.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <span className="text-gray-300">
                 <HeartIcon filled={false} className="!h-12 !w-12" />
               </span>
-              <p className="mt-5 text-lg text-white">لا توجد منتجات في المفضلة بعد</p>
+              <p className="mt-5 text-lg text-ink">لا توجد منتجات في المفضلة بعد</p>
               <Link to="/shop" className="btn btn-primary mt-6">
                 تصفّح المتجر
               </Link>

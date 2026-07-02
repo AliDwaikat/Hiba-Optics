@@ -183,21 +183,21 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
         </div>
 
         <div className="mt-3 text-right">
-          {brandName && <p className="text-xs text-gray-300">{brandName}</p>}
-          <h3 className="mt-0.5 text-sm text-white sm:text-base">{product.name_ar}</h3>
+          {brandName && <p className="text-xs text-gray-600">{brandName}</p>}
+          <h3 className="mt-0.5 text-sm text-ink sm:text-base">{product.name_ar}</h3>
 
           {onSale ? (
             <div className="mt-1 flex items-center justify-start gap-2">
-              <span className="num font-semibold text-yellow">
+              <span className="num font-semibold text-ink">
                 {formatPrice(salePrice as number, product.currency)}
               </span>
-              <span className="num text-sm text-gray-300 line-through">
+              <span className="num text-sm text-gray-600 line-through">
                 {formatPrice(price, product.currency)}
               </span>
             </div>
           ) : (
             <div className="mt-1">
-              <span className="num font-semibold text-white">
+              <span className="num font-semibold text-ink">
                 {formatPrice(price, product.currency)}
               </span>
             </div>
