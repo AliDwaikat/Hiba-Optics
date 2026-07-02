@@ -42,7 +42,11 @@ export default function Shop() {
   const [brands, setBrands] = useState<Brand[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [category, setCategory] = useState<CategoryTab>('all')
-  const [brandId, setBrandId] = useState<string | null>(null)
+  // Initialize from a ?brand=<id> URL param (e.g. arriving from /brands); it is
+  // validated against the loaded brand list below and cleared if unknown.
+  const [brandId, setBrandId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('brand'),
+  )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -56,7 +60,10 @@ export default function Shop() {
     let active = true
     fetchBrands()
       .then((data) => {
-        if (active) setBrands(data)
+        if (!active) return
+        setBrands(data)
+        // Drop a ?brand= param that doesn't match a known brand (→ all brands).
+        setBrandId((prev) => (prev && !data.some((b) => b.id === prev) ? null : prev))
       })
       .catch(() => {
         if (active) setBrands([])

@@ -9,6 +9,7 @@ import OrderSuccess from './pages/OrderSuccess'
 import Branches from './pages/Branches'
 import Contact from './pages/Contact'
 import Favorites from './pages/Favorites'
+import Brands from './pages/Brands'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
+        <Route path="/brands" element={<Brands />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/favorites" element={<Favorites />} />

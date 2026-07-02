@@ -84,6 +84,32 @@ export async function fetchBrands(): Promise<Brand[]> {
   return (data ?? []) as unknown as Brand[]
 }
 
+export interface BrandWithCount extends Brand {
+  product_count: number
+}
+
+/** Published brands (ordered by position) each with its published-product count. */
+export async function fetchBrandsWithCounts(): Promise<BrandWithCount[]> {
+  const brands = await fetchBrands()
+
+  const counts = new Map<string, number>()
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('brand_id')
+      .eq('published', true)
+    if (!error && data) {
+      for (const row of data as { brand_id: string | null }[]) {
+        if (row.brand_id) counts.set(row.brand_id, (counts.get(row.brand_id) ?? 0) + 1)
+      }
+    }
+  } catch {
+    // Counts are non-critical — fall back to 0 rather than hiding the brands.
+  }
+
+  return brands.map((b) => ({ ...b, product_count: counts.get(b.id) ?? 0 }))
+}
+
 export interface ProductFilters {
   brandId?: string | null
   category?: Category | null
