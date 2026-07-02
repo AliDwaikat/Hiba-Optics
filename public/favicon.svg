@@ -1,0 +1,12 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hiba Optics">
+  <rect width="64" height="64" rx="15" fill="#161616"/>
+  <g stroke="#FEC902" stroke-width="3" stroke-linecap="round" fill="none">
+    <path d="M11 30 L5 26"/>
+    <path d="M53 30 L59 26"/>
+  </g>
+  <path d="M28 30 q4 -3 8 0" stroke="#FEC902" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <circle cx="22" cy="34" r="12" fill="#FEC902"/>
+  <circle cx="42" cy="34" r="12" fill="#FEC902"/>
+  <path d="M16 34 q6 7 12 0" stroke="#161616" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M36 34 q6 7 12 0" stroke="#161616" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>
