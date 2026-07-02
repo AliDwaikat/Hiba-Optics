@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Wordmark from '../components/Wordmark'
 import { t } from '../lib/i18n'
 import { checkConnection } from '../lib/supabase'
@@ -27,6 +28,13 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-center">
       <Wordmark />
       <p className="mt-4 text-lg text-gray-500">{t('underConstruction')}</p>
+
+      <Link
+        to="/shop"
+        className="mt-6 inline-block rounded-full bg-gold px-6 py-2 font-semibold text-black transition-colors hover:bg-gold-deep"
+      >
+        تصفّحي المتجر
+      </Link>
 
       {/* Temporary connection-check indicator — removed in a later step. */}
       <div className="absolute inset-x-0 bottom-4 flex justify-center px-4">
