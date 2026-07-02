@@ -225,7 +225,7 @@ export default function Contact() {
           {/* FAQ — left column in RTL */}
           <Reveal delay={0.08}>
             <h2 className="text-2xl font-extrabold text-ink">الأسئلة الشائعة</h2>
-            <div className="mt-6 divide-y divide-gray-100 overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-cream">
+            <div className="mt-6 divide-y divide-gray-100 overflow-hidden rounded-[var(--radius-lg)] border border-gray-300 bg-cream">
               {FAQS.map((faq, i) => {
                 const open = openFaq === i
                 return (

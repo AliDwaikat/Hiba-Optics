@@ -412,7 +412,7 @@ export default function ProductDetail() {
 
             {/* Consultation notice */}
             {product.requires_consultation && (
-              <p className="mt-6 rounded-[var(--radius)] border border-gray-100 bg-cream p-3 text-sm leading-relaxed text-gray-600">
+              <p className="mt-6 rounded-[var(--radius)] border border-gray-300 bg-cream p-3 text-sm leading-relaxed text-gray-600">
                 هذا إطار طبي يحتاج فحص نظر وتركيب عدسات — سنتواصل معك لإتمام الفحص واختيار العدسات.
               </p>
             )}

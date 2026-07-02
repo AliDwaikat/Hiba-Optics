@@ -213,7 +213,7 @@ export default function Checkout() {
               </div>
 
               {/* Payment line */}
-              <div className="flex items-center gap-2 rounded-[var(--radius)] border border-gray-100 bg-cream p-3 text-sm text-ink">
+              <div className="flex items-center gap-2 rounded-[var(--radius)] border border-gray-300 bg-cream p-3 text-sm text-ink">
                 <CashIcon />
                 طريقة الدفع: الدفع عند الاستلام
               </div>

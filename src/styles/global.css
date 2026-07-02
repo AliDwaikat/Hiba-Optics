@@ -11,12 +11,12 @@
 
 :root {
   /* Brand palette — matched to the Hiba Optics logo */
-  --color-yellow: #ffc803; /* primary accent — buttons, highlights, active states, brand mark */
-  --color-yellow-deep: #e5a800; /* hover / pressed / borders where pure yellow is too light */
+  --color-yellow: #fec902; /* official brand yellow — buttons, accents, badges, active states */
+  --color-yellow-deep: #e0ae00; /* darker brand yellow for hover / pressed / borders */
   --color-ink: #161616; /* primary text on light backgrounds */
   --color-black: #0e0e0e; /* very dark section backgrounds */
   --color-white: #ffffff;
-  --color-cream: #fff9ec; /* warm off-white for premium section backgrounds */
+  --color-cream: #ffffff; /* now true white (token name kept to avoid a rename refactor) */
   --color-gray-900: #1f1f1f;
   --color-gray-600: #5c5c5c;
   --color-gray-300: #d9d9d9;
