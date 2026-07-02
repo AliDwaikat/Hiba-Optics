@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Hiba Optics — global stylesheet.
+ * Single source of truth for brand tokens and base RTL styling.
+ * Every component references these variables; no hex values live in components.
+ */
+
+:root {
+  /* Brand palette */
+  --color-gold: #f4b400; /* primary accent — provisional, to be replaced with exact logo hex */
+  --color-gold-deep: #c98a00; /* hover / darker accent */
+  --color-black: #0e0e0e; /* primary background / text on light */
+  --color-white: #ffffff;
+  --color-gray-900: #171717;
+  --color-gray-500: #6b7280;
+  --color-gray-100: #f5f5f5;
+
+  /* Typography */
+  --font-arabic: 'Tajawal', 'Inter', system-ui, sans-serif;
+  --font-latin: 'Inter', system-ui, sans-serif;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Arabic-first: RTL and Arabic are the defaults (also set on the <html> tag). */
+  direction: rtl;
+  /* Force Western digits (0-9) everywhere — never Arabic-Indic numerals. */
+  font-variant-numeric: lining-nums;
+  -webkit-font-feature-settings: 'lnum' 1;
+  font-feature-settings: 'lnum' 1;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-arabic);
+  background-color: var(--color-black);
+  color: var(--color-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Numbers must always render as Western digits in the Latin font, regardless of
+ * the surrounding Arabic context. Apply this helper to any numeric run.
+ */
+.num {
+  font-family: var(--font-latin);
+  font-variant-numeric: lining-nums;
+  font-feature-settings: 'lnum' 1;
+  direction: ltr;
+  unicode-bidi: embed;
+}
