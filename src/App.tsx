@@ -10,6 +10,8 @@ import Branches from './pages/Branches'
 import Contact from './pages/Contact'
 import Favorites from './pages/Favorites'
 import Brands from './pages/Brands'
+import Book from './pages/Book'
+import BookingSuccess from './pages/BookingSuccess'
 
 export default function App() {
   return (
@@ -23,6 +25,8 @@ export default function App() {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/branches" element={<Branches />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/book" element={<Book />} />
+        <Route path="/booking-success" element={<BookingSuccess />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-success" element={<OrderSuccess />} />
       </Route>
