@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useCart } from '../lib/cart'
+import { useFavorites } from '../lib/favorites'
 import { useLanguage } from '../lib/language'
 import { NAV_ITEMS, type NavItem } from '../lib/nav'
 import { PRIMARY_WHATSAPP, whatsappLink } from '../lib/contact'
 import type { Lang } from '../lib/i18n'
+import HeartIcon from './HeartIcon'
 
 /* ---- Icons ---- */
+function SearchIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  )
+}
 function BagIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -90,6 +100,7 @@ function LangToggle({
 
 export default function Header() {
   const { itemCount } = useCart()
+  const { count: favCount } = useFavorites()
   const { lang, setLang } = useLanguage()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
@@ -143,18 +154,44 @@ export default function Header() {
         {/* Controls — trailing edge (left in RTL) */}
         <div className="flex items-center gap-3 sm:gap-5">
           <LangToggle lang={lang} setLang={setLang} />
-          <Link
-            to="/cart"
-            aria-label="السلة"
-            className="relative inline-flex items-center text-ink transition-colors hover:text-yellow-deep"
-          >
-            <BagIcon />
-            {itemCount > 0 && (
-              <span className="num absolute -end-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-yellow px-1 text-xs font-bold text-ink">
-                {itemCount}
-              </span>
-            )}
-          </Link>
+
+          {/* Icon cluster: search · favorites · cart */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link
+              to="/shop"
+              aria-label="بحث"
+              className="inline-flex items-center text-ink transition-colors hover:text-yellow-deep"
+            >
+              <SearchIcon />
+            </Link>
+
+            <Link
+              to="/favorites"
+              aria-label="المفضلة"
+              className="relative inline-flex items-center text-ink transition-colors hover:text-yellow-deep"
+            >
+              <HeartIcon filled={false} />
+              {favCount > 0 && (
+                <span className="num absolute -end-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-yellow px-1 text-xs font-bold text-ink">
+                  {favCount}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              to="/cart"
+              aria-label="السلة"
+              className="relative inline-flex items-center text-ink transition-colors hover:text-yellow-deep"
+            >
+              <BagIcon />
+              {itemCount > 0 && (
+                <span className="num absolute -end-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-yellow px-1 text-xs font-bold text-ink">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          </div>
+
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -205,6 +242,27 @@ export default function Header() {
                 {label(n)}
               </NavLink>
             ))}
+
+            {/* Favorites (not part of the main nav) */}
+            <NavLink
+              to="/favorites"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center justify-between rounded-lg px-3 py-3 text-lg text-ink transition-colors ${
+                  isActive ? 'bg-white font-bold' : 'hover:bg-white'
+                }`
+              }
+            >
+              <span className="flex items-center gap-2">
+                <HeartIcon filled={false} />
+                المفضلة
+              </span>
+              {favCount > 0 && (
+                <span className="num flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-yellow px-1 text-xs font-bold text-ink">
+                  {favCount}
+                </span>
+              )}
+            </NavLink>
           </nav>
 
           <div className="border-t border-gray-100 px-5 py-4">

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Product } from '../lib/products'
 import { formatPrice } from '../lib/format'
+import { useFavorites } from '../lib/favorites'
+import HeartIcon from './HeartIcon'
 
 interface ProductCardProps {
   product: Product
@@ -22,6 +24,8 @@ function ImagePlaceholder() {
 
 export default function ProductCard({ product, brandName }: ProductCardProps) {
   const [imageBroken, setImageBroken] = useState(false)
+  const { isFavorite, toggle } = useFavorites()
+  const fav = isFavorite(product.id)
 
   const imageUrl = product.images[0]
   const showImage = Boolean(imageUrl) && !imageBroken
@@ -48,6 +52,21 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
         ) : (
           <ImagePlaceholder />
         )}
+
+        {/* Favorite toggle — does not open the product link */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            toggle(product.id)
+          }}
+          aria-label="المفضلة"
+          aria-pressed={fav}
+          className="absolute end-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+        >
+          <HeartIcon filled={fav} />
+        </button>
 
         {product.requires_consultation && (
           <span className="absolute start-2 top-2 rounded-full border border-yellow bg-black/70 px-2 py-1 text-xs font-medium text-yellow">

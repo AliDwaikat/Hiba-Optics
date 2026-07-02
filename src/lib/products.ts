@@ -105,6 +105,19 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<Produ
   return (data ?? []) as unknown as Product[]
 }
 
+/** Published products whose id is in the given list (order not guaranteed). */
+export async function fetchProductsByIds(ids: string[]): Promise<Product[]> {
+  if (ids.length === 0) return []
+  const { data, error } = await supabase
+    .from('products')
+    .select(PRODUCT_COLUMNS)
+    .eq('published', true)
+    .in('id', ids)
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as unknown as Product[]
+}
+
 /** The first published, featured product (by position), or null. */
 export async function fetchFeaturedProduct(): Promise<Product | null> {
   const { data, error } = await supabase

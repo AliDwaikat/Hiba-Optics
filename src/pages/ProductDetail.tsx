@@ -4,6 +4,8 @@ import { useReducedMotion } from 'framer-motion'
 import { Reveal, RevealGroup, RevealItem } from '../components/home/Reveal'
 import { formatPrice } from '../lib/format'
 import { useCart, type CartColor } from '../lib/cart'
+import { useFavorites } from '../lib/favorites'
+import HeartIcon from '../components/HeartIcon'
 import {
   CATEGORY_LABELS_AR,
   fetchProduct,
@@ -92,6 +94,7 @@ type LoadState =
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const { addItem } = useCart()
+  const { isFavorite, toggle: toggleFavorite } = useFavorites()
   const reduce = useReducedMotion()
   const reviewsRef = useRef<HTMLDivElement>(null)
 
@@ -187,6 +190,7 @@ export default function ProductDetail() {
   }
 
   const { product } = load
+  const favorited = isFavorite(product.id)
   const price = Number(product.price)
   const salePrice = product.sale_price != null ? Number(product.sale_price) : null
   const onSale = salePrice != null && salePrice < price
@@ -413,15 +417,26 @@ export default function ProductDetail() {
               </p>
             )}
 
-            {/* Action button */}
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={!canAdd}
-              className="btn btn-primary mt-4 w-full"
-            >
-              {product.requires_consultation ? 'احجز الآن' : 'أضف إلى السلة'}
-            </button>
+            {/* Action button + favorites toggle */}
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={!canAdd}
+                className="btn btn-primary flex-1"
+              >
+                {product.requires_consultation ? 'احجز الآن' : 'أضف إلى السلة'}
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleFavorite(product.id)}
+                aria-pressed={favorited}
+                className="btn btn-secondary shrink-0"
+              >
+                <HeartIcon filled={favorited} />
+                المفضلة
+              </button>
+            </div>
 
             {feedback && (
               <p className="mt-3 text-center text-sm font-medium" style={{ color: 'var(--color-success)' }}>

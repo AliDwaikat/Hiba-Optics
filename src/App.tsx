@@ -8,6 +8,7 @@ import Checkout from './pages/Checkout'
 import OrderSuccess from './pages/OrderSuccess'
 import Branches from './pages/Branches'
 import Contact from './pages/Contact'
+import Favorites from './pages/Favorites'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/shop" element={<Shop />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/favorites" element={<Favorites />} />
         <Route path="/branches" element={<Branches />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/checkout" element={<Checkout />} />
