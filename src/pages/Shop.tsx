@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import Header from '../components/Header'
 import ProductCard from '../components/ProductCard'
 import {
   fetchBrands,
@@ -90,8 +89,6 @@ export default function Shop() {
 
   return (
     <main className="min-h-screen bg-black">
-      <Header />
-
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {/* Category tabs */}
         <div className="flex flex-wrap gap-2">

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import Header from '../components/Header'
 import { formatPrice } from '../lib/format'
 import { useCart, type CartColor } from '../lib/cart'
 import {
@@ -92,7 +91,6 @@ export default function ProductDetail() {
   if (load.state === 'loading') {
     return (
       <main className="min-h-screen bg-black">
-        <Header />
         <DetailSkeleton />
       </main>
     )
@@ -101,7 +99,6 @@ export default function ProductDetail() {
   if (load.state === 'error') {
     return (
       <main className="min-h-screen bg-black">
-        <Header />
         <div className="py-24 text-center">
           <p className="text-lg" style={{ color: 'var(--color-error)' }}>
             تعذّر تحميل المنتج
@@ -118,7 +115,6 @@ export default function ProductDetail() {
   if (load.state === 'notfound') {
     return (
       <main className="min-h-screen bg-black">
-        <Header />
         <div className="py-24 text-center">
           <p className="text-xl text-white">المنتج غير موجود</p>
           <Link to="/shop" className="mt-6 inline-block text-yellow hover:underline">
@@ -165,8 +161,6 @@ export default function ProductDetail() {
 
   return (
     <main className="min-h-screen bg-black">
-      <Header />
-
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-2">
         {/* Gallery */}
         <div>
