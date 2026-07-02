@@ -11,19 +11,17 @@ function Dot() {
   return <span className="h-1 w-1 shrink-0 rounded-full bg-yellow" aria-hidden="true" />
 }
 
-/* Eyewear motif + wordmark for the missing-image fallback. */
+/* Eyewear motif + logo for the missing-image fallback (cream/light background). */
 function HeroFallback() {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-cream">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-5 bg-cream">
       <svg width="120" height="60" viewBox="0 0 120 60" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-ink/20" aria-hidden="true">
         <circle cx="30" cy="34" r="17" />
         <circle cx="90" cy="34" r="17" />
         <path d="M47 30h26" />
         <path d="M13 26l-8-6M107 26l8-6" />
       </svg>
-      <span className="font-latin text-4xl font-bold tracking-tight text-ink/20" dir="ltr">
-        Hiba
-      </span>
+      <img src="/hiba-logo.png" alt="Hiba Optics" className="h-10 w-auto opacity-80" />
     </div>
   )
 }
