@@ -19,7 +19,7 @@ type LoadState =
 function Placeholder({ className = '' }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center bg-gray-900 ${className}`}>
-      <span className="font-latin text-3xl font-bold tracking-tight text-gold" dir="ltr">
+      <span className="font-latin text-3xl font-bold tracking-tight text-yellow" dir="ltr">
         Hiba
       </span>
     </div>
@@ -106,8 +106,8 @@ export default function ProductDetail() {
           <p className="text-lg" style={{ color: 'var(--color-error)' }}>
             تعذّر تحميل المنتج
           </p>
-          <p className="mt-2 text-sm text-gray-500">{load.message}</p>
-          <Link to="/shop" className="mt-6 inline-block text-gold hover:underline">
+          <p className="mt-2 text-sm text-gray-300">{load.message}</p>
+          <Link to="/shop" className="mt-6 inline-block text-yellow hover:underline">
             العودة إلى المتجر
           </Link>
         </div>
@@ -121,7 +121,7 @@ export default function ProductDetail() {
         <Header />
         <div className="py-24 text-center">
           <p className="text-xl text-white">المنتج غير موجود</p>
-          <Link to="/shop" className="mt-6 inline-block text-gold hover:underline">
+          <Link to="/shop" className="mt-6 inline-block text-yellow hover:underline">
             العودة إلى المتجر
           </Link>
         </div>
@@ -191,7 +191,7 @@ export default function ProductDetail() {
                   type="button"
                   onClick={() => setActiveImage(i)}
                   className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border ${
-                    i === activeImage ? 'border-gold' : 'border-gray-900'
+                    i === activeImage ? 'border-yellow' : 'border-gray-900'
                   }`}
                 >
                   {imageBroken[i] ? (
@@ -212,7 +212,7 @@ export default function ProductDetail() {
 
         {/* Details */}
         <div className="text-right">
-          {brandName && <p className="text-sm text-gray-500">{brandName}</p>}
+          {brandName && <p className="text-sm text-gray-300">{brandName}</p>}
           <h1 className="mt-1 text-2xl font-bold text-white sm:text-3xl">
             {product.name_ar}
           </h1>
@@ -221,10 +221,10 @@ export default function ProductDetail() {
           <div className="mt-4">
             {onSale ? (
               <div className="flex items-center justify-start gap-3">
-                <span className="num text-2xl font-bold text-gold">
+                <span className="num text-2xl font-bold text-yellow">
                   {formatPrice(effectivePrice, product.currency)}
                 </span>
-                <span className="num text-lg text-gray-500 line-through">
+                <span className="num text-lg text-gray-300 line-through">
                   {formatPrice(price, product.currency)}
                 </span>
               </div>
@@ -236,7 +236,7 @@ export default function ProductDetail() {
           </div>
 
           {product.description_ar && (
-            <p className="mt-4 leading-relaxed text-gray-500">{product.description_ar}</p>
+            <p className="mt-4 leading-relaxed text-gray-300">{product.description_ar}</p>
           )}
 
           {/* Color switcher */}
@@ -244,7 +244,7 @@ export default function ProductDetail() {
             <div className="mt-6">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white">اللون</span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-300">
                   {selectedColor ? selectedColor.name_ar : 'اختاري اللون'}
                 </span>
               </div>
@@ -259,7 +259,7 @@ export default function ProductDetail() {
                       aria-label={color.name_ar}
                       title={color.name_ar}
                       className={`h-9 w-9 rounded-full border-2 transition-transform ${
-                        active ? 'scale-110 border-gold' : 'border-gray-900'
+                        active ? 'scale-110 border-yellow' : 'border-gray-900'
                       }`}
                       style={{ backgroundColor: color.hex }}
                     />
@@ -278,7 +278,7 @@ export default function ProductDetail() {
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 disabled={quantity <= 1}
                 aria-label="إنقاص الكمية"
-                className="h-9 w-9 rounded-full border border-gray-900 text-lg text-white transition-colors hover:border-gold disabled:opacity-40"
+                className="h-9 w-9 rounded-full border border-gray-900 text-lg text-white transition-colors hover:border-yellow disabled:opacity-40"
               >
                 −
               </button>
@@ -287,7 +287,7 @@ export default function ProductDetail() {
                 type="button"
                 onClick={() => setQuantity((q) => q + 1)}
                 aria-label="زيادة الكمية"
-                className="h-9 w-9 rounded-full border border-gray-900 text-lg text-white transition-colors hover:border-gold"
+                className="h-9 w-9 rounded-full border border-gray-900 text-lg text-white transition-colors hover:border-yellow"
               >
                 +
               </button>
@@ -303,7 +303,7 @@ export default function ProductDetail() {
 
           {/* Consultation notice */}
           {product.requires_consultation && (
-            <p className="mt-6 rounded-lg border border-gray-900 bg-gray-900/40 p-3 text-sm leading-relaxed text-gray-500">
+            <p className="mt-6 rounded-lg border border-gray-900 bg-gray-900/40 p-3 text-sm leading-relaxed text-gray-300">
               هذا إطار طبي يحتاج فحص نظر وتركيب عدسات — عند الطلب سنتواصل معك لإتمام
               الفحص واختيار العدسات.
             </p>
@@ -314,7 +314,7 @@ export default function ProductDetail() {
             type="button"
             onClick={handleAdd}
             disabled={!canAdd}
-            className="mt-4 w-full rounded-full bg-gold py-3 font-semibold text-black transition-colors hover:bg-gold-deep disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-4 w-full rounded-full bg-yellow py-3 font-semibold text-ink transition-colors hover:bg-yellow-deep disabled:cursor-not-allowed disabled:opacity-40"
           >
             {product.requires_consultation ? 'احجز الآن' : 'أضف إلى السلة'}
           </button>

@@ -23,8 +23,8 @@ function pillClass(active: boolean): string {
   return [
     'whitespace-nowrap rounded-full px-4 py-2 text-sm transition-colors',
     active
-      ? 'bg-gold font-semibold text-black'
-      : 'bg-gray-900 text-gray-500 hover:text-white',
+      ? 'bg-yellow font-semibold text-ink'
+      : 'bg-gray-900 text-gray-300 hover:text-white',
   ].join(' ')
 }
 
@@ -143,12 +143,12 @@ export default function Shop() {
               <p className="text-lg" style={{ color: 'var(--color-error)' }}>
                 تعذّر تحميل المنتجات
               </p>
-              <p className="mt-2 text-sm text-gray-500">{error}</p>
+              <p className="mt-2 text-sm text-gray-300">{error}</p>
             </div>
           ) : products.length === 0 ? (
             <div className="py-20 text-center">
               <p className="text-lg text-white">لا توجد منتجات</p>
-              <p className="mt-2 text-sm text-gray-500">جرّبي تغيير الفلاتر</p>
+              <p className="mt-2 text-sm text-gray-300">جرّبي تغيير الفلاتر</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">

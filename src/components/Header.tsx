@@ -31,7 +31,7 @@ export default function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Link
           to="/"
-          className="font-latin text-xl font-bold tracking-tight text-gold"
+          className="font-latin text-xl font-bold tracking-tight text-yellow"
           dir="ltr"
         >
           {BRAND.wordmark}
@@ -40,11 +40,11 @@ export default function Header() {
         <Link
           to="/cart"
           aria-label="السلة"
-          className="relative inline-flex items-center text-white transition-colors hover:text-gold"
+          className="relative inline-flex items-center text-white transition-colors hover:text-yellow"
         >
           <BagIcon />
           {itemCount > 0 && (
-            <span className="num absolute -end-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gold px-1 text-xs font-bold text-black">
+            <span className="num absolute -end-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-yellow px-1 text-xs font-bold text-ink">
               {itemCount}
             </span>
           )}

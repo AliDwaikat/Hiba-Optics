@@ -13,7 +13,7 @@ interface ProductCardProps {
 function ImagePlaceholder() {
   return (
     <div className="flex h-full w-full items-center justify-center bg-gray-900">
-      <span className="font-latin text-2xl font-bold tracking-tight text-gold" dir="ltr">
+      <span className="font-latin text-2xl font-bold tracking-tight text-yellow" dir="ltr">
         Hiba
       </span>
     </div>
@@ -50,7 +50,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
         )}
 
         {product.requires_consultation && (
-          <span className="absolute start-2 top-2 rounded-full border border-gold bg-black/70 px-2 py-1 text-xs font-medium text-gold">
+          <span className="absolute start-2 top-2 rounded-full border border-yellow bg-black/70 px-2 py-1 text-xs font-medium text-yellow">
             بحاجة لفحص نظر
           </span>
         )}
@@ -65,15 +65,15 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
       </div>
 
       <div className="mt-3 text-right">
-        {brandName && <p className="text-xs text-gray-500">{brandName}</p>}
+        {brandName && <p className="text-xs text-gray-300">{brandName}</p>}
         <h3 className="mt-0.5 text-sm text-white sm:text-base">{product.name_ar}</h3>
 
         {onSale ? (
           <div className="mt-1 flex items-center justify-start gap-2">
-            <span className="num font-semibold text-gold">
+            <span className="num font-semibold text-yellow">
               {formatPrice(salePrice as number, product.currency)}
             </span>
-            <span className="num text-sm text-gray-500 line-through">
+            <span className="num text-sm text-gray-300 line-through">
               {formatPrice(price, product.currency)}
             </span>
           </div>
