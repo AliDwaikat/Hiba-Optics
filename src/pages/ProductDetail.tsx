@@ -10,7 +10,7 @@ import {
   CATEGORY_LABELS_AR,
   fetchProduct,
   fetchReviews,
-  type ProductColor,
+  type ProductVariant,
   type ProductWithBrand,
   type Review,
 } from '../lib/products'
@@ -101,10 +101,11 @@ export default function ProductDetail() {
   const [load, setLoad] = useState<LoadState>({ state: 'loading' })
   const [reviews, setReviews] = useState<Review[]>([])
   const [activeImage, setActiveImage] = useState(0)
-  const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null)
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [feedback, setFeedback] = useState<string | null>(null)
-  const [imageBroken, setImageBroken] = useState<Record<number, boolean>>({})
+  // Broken images keyed by URL so state is correct across variant switches.
+  const [imageBroken, setImageBroken] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (!id) {
@@ -115,7 +116,7 @@ export default function ProductDetail() {
     setLoad({ state: 'loading' })
     setReviews([])
     setActiveImage(0)
-    setSelectedColor(null)
+    setSelectedVariantId(null)
     setQuantity(1)
     setFeedback(null)
     setImageBroken({})
@@ -128,6 +129,10 @@ export default function ProductDetail() {
           return
         }
         setLoad({ state: 'ready', product })
+        // Default-select the first in-stock variant (or the first variant).
+        const vs = product.variants
+        const initial = vs.find((v) => v.in_stock) ?? vs[0]
+        setSelectedVariantId(initial ? initial.id : null)
         // Reviews are non-critical — a failure must not break the page.
         fetchReviews(id)
           .then((r) => active && setReviews(r))
@@ -197,24 +202,53 @@ export default function ProductDetail() {
   const effectivePrice = onSale ? (salePrice as number) : price
   const savePercent = onSale ? Math.round(((price - (salePrice as number)) / price) * 100) : 0
 
-  const images = product.images
-  const hasColors = product.colors.length > 0
-  const canAdd = product.in_stock && (!hasColors || selectedColor !== null)
+  // Variants are the source of truth. Degrade gracefully to one synthetic
+  // default when the array is empty (shouldn't happen post-migration).
+  const hasVariants = product.variants.length > 0
+  const variants: ProductVariant[] = hasVariants
+    ? product.variants
+    : [
+        {
+          id: '__default__',
+          name_ar: product.name_ar,
+          name_en: product.name_en,
+          hex: '#d9d9d9',
+          images: [],
+          in_stock: product.in_stock,
+        },
+      ]
+  const selectedVariant = variants.find((v) => v.id === selectedVariantId) ?? variants[0]
+
+  const images = selectedVariant.images
+  const allOutOfStock = variants.every((v) => !v.in_stock)
+  const canAdd = selectedVariant.in_stock
 
   const currentImage = images[activeImage]
-  const showCurrent = Boolean(currentImage) && !imageBroken[activeImage]
+  const showCurrent = Boolean(currentImage) && !imageBroken[currentImage]
+
+  function selectVariant(v: ProductVariant) {
+    setSelectedVariantId(v.id)
+    setActiveImage(0)
+  }
 
   function handleAdd() {
     if (!canAdd) return
-    const color: CartColor | null = selectedColor
+    const color: CartColor | null = hasVariants
+      ? {
+          name_ar: selectedVariant.name_ar,
+          name_en: selectedVariant.name_en,
+          hex: selectedVariant.hex,
+        }
+      : null
     addItem({
       productId: product.id,
       name_ar: product.name_ar,
       name_en: product.name_en,
       brand_ar: product.brand_name_ar ?? '',
       price: effectivePrice,
-      image: images[0] ?? '',
+      image: selectedVariant.images[0] ?? '',
       color,
+      variantId: hasVariants ? selectedVariant.id : null,
       quantity,
       requiresConsultation: product.requires_consultation,
     })
@@ -245,7 +279,7 @@ export default function ProductDetail() {
                 <img
                   src={currentImage}
                   alt={product.name_ar}
-                  onError={() => setImageBroken((m) => ({ ...m, [activeImage]: true }))}
+                  onError={() => setImageBroken((m) => ({ ...m, [currentImage]: true }))}
                   className="h-full w-full object-contain p-6"
                 />
               ) : (
@@ -257,7 +291,7 @@ export default function ProductDetail() {
                 {product.featured && (
                   <span className="rounded-full bg-yellow px-3 py-1 text-xs font-bold text-ink">الأكثر مبيعاً</span>
                 )}
-                {!product.in_stock && (
+                {allOutOfStock && (
                   <span className="rounded-full bg-ink/70 px-3 py-1 text-xs font-medium text-white">غير متوفر</span>
                 )}
               </div>
@@ -268,7 +302,7 @@ export default function ProductDetail() {
               <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
                 {images.map((img, i) => (
                   <button
-                    key={i}
+                    key={`${selectedVariant.id}-${i}`}
                     type="button"
                     onClick={() => setActiveImage(i)}
                     aria-label={`صورة ${i + 1}`}
@@ -276,13 +310,13 @@ export default function ProductDetail() {
                       i === activeImage ? 'ring-yellow' : 'ring-transparent hover:ring-gray-300'
                     }`}
                   >
-                    {imageBroken[i] ? (
+                    {imageBroken[img] ? (
                       <Placeholder className="h-full w-full" />
                     ) : (
                       <img
                         src={img}
                         alt=""
-                        onError={() => setImageBroken((m) => ({ ...m, [i]: true }))}
+                        onError={() => setImageBroken((m) => ({ ...m, [img]: true }))}
                         className="h-full w-full object-contain p-1"
                       />
                     )}
@@ -350,28 +384,43 @@ export default function ProductDetail() {
               </ul>
             )}
 
-            {/* Color switcher */}
-            {hasColors && (
+            {/* Color / variant switcher */}
+            {hasVariants && (
               <div className="mt-6">
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-ink">اللون</span>
-                  <span className="text-gray-600">{selectedColor ? selectedColor.name_ar : 'اختاري اللون'}</span>
+                  <span className="text-gray-600">{selectedVariant.name_ar}</span>
+                  {!selectedVariant.in_stock && (
+                    <span className="text-xs" style={{ color: 'var(--color-error)' }}>
+                      (غير متوفر)
+                    </span>
+                  )}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {product.colors.map((color) => {
-                    const activeSwatch = selectedColor?.name_ar === color.name_ar
+                  {variants.map((v) => {
+                    const activeSwatch = selectedVariant.id === v.id
                     return (
                       <button
-                        key={color.name_ar}
+                        key={v.id}
                         type="button"
-                        onClick={() => setSelectedColor(color)}
-                        aria-label={color.name_ar}
-                        title={color.name_ar}
-                        className={`h-9 w-9 rounded-full border transition-transform ${
+                        onClick={() => selectVariant(v)}
+                        aria-label={v.name_ar}
+                        aria-pressed={activeSwatch}
+                        title={v.in_stock ? v.name_ar : `${v.name_ar} — غير متوفر`}
+                        className={`relative h-9 w-9 rounded-full border transition-transform ${
                           activeSwatch ? 'scale-110 border-yellow ring-2 ring-yellow' : 'border-gray-300'
-                        }`}
-                        style={{ backgroundColor: color.hex }}
-                      />
+                        } ${v.in_stock ? '' : 'opacity-45'}`}
+                        style={{ backgroundColor: v.hex }}
+                      >
+                        {!v.in_stock && (
+                          <span
+                            className="pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-bold text-ink"
+                            aria-hidden="true"
+                          >
+                            ✕
+                          </span>
+                        )}
+                      </button>
                     )
                   })}
                 </div>
@@ -403,11 +452,17 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Out of stock note */}
-            {!product.in_stock && (
+            {/* Out of stock note — all colors vs the selected color */}
+            {allOutOfStock ? (
               <p className="mt-6 text-sm font-medium" style={{ color: 'var(--color-error)' }}>
                 غير متوفر
               </p>
+            ) : (
+              !selectedVariant.in_stock && (
+                <p className="mt-6 text-sm font-medium" style={{ color: 'var(--color-error)' }}>
+                  غير متوفر بهذا اللون
+                </p>
+              )
             )}
 
             {/* Consultation notice */}

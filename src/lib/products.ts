@@ -29,6 +29,17 @@ export interface ProductFeature {
   text_en: string
 }
 
+/** A color/style variant (products.variants jsonb) — the source of truth for
+ *  the product page's color switcher, gallery, and per-color stock. */
+export interface ProductVariant {
+  id: string
+  name_ar: string
+  name_en: string
+  hex: string
+  images: string[]
+  in_stock: boolean
+}
+
 export interface Brand {
   id: string
   name_ar: string
@@ -55,6 +66,7 @@ export interface Product {
   images: string[]
   colors: ProductColor[]
   features: ProductFeature[]
+  variants: ProductVariant[]
   requires_consultation: boolean
   in_stock: boolean
   featured: boolean
@@ -80,7 +92,7 @@ const BRAND_COLUMNS = 'id, name_ar, name_en, logo_url, position, published'
 const PRODUCT_COLUMNS =
   'id, brand_id, name_ar, name_en, model, description_ar, description_en, category, audience, ' +
   'frame_shape, ' +
-  'price, sale_price, currency, images, colors, features, requires_consultation, in_stock, ' +
+  'price, sale_price, currency, images, colors, features, variants, requires_consultation, in_stock, ' +
   'featured, published, position'
 
 /** Published brands ordered by position. */
@@ -192,6 +204,7 @@ export async function fetchProduct(id: string): Promise<ProductWithBrand | null>
   return {
     ...product,
     features: product.features ?? [],
+    variants: Array.isArray(product.variants) ? product.variants : [],
     brand_name_ar: brandRow?.name_ar ?? null,
   }
 }

@@ -27,6 +27,9 @@ export interface CartItem {
   price: number
   image: string
   color: CartColor | null
+  /** Selected variant id (per-variant model). Optional so older/simple items
+   *  still validate; color carries the variant's name_ar/hex, image its photo. */
+  variantId?: string | null
   quantity: number
   requiresConsultation: boolean
 }
