@@ -85,10 +85,10 @@ function HeaderLogo() {
   return (
     <span className="inline-flex items-center px-1.5">
       <img
-        src="/hiba-logo.png?v=4"
+        src="/hiba-logo.png?v=5"
         alt="Hiba Optics"
         onError={() => setBroken(true)}
-        className="block h-11 w-auto max-w-none"
+        className="block h-[54px] w-auto max-w-none"
       />
     </span>
   )
@@ -187,7 +187,7 @@ export default function Header() {
           : 'border-b border-transparent bg-cream'
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:h-20 sm:px-8">
+      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4 sm:h-24 sm:px-8">
         {/* Logo — leading edge (right in RTL) */}
         <Link to="/" aria-label="Hiba Optics" className="flex items-center">
           <HeaderLogo />
