@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import ProductImagePlaceholder from '../../components/ProductImagePlaceholder'
 import { formatPrice } from '../../lib/format'
 import { CATEGORY_LABELS_AR, type Category, type Product } from '../../lib/products'
@@ -143,6 +143,7 @@ function SkeletonRows() {
 }
 
 export default function AdminProducts() {
+  const location = useLocation()
   const [products, setProducts] = useState<Product[]>([])
   const [brands, setBrands] = useState<AdminBrand[]>([])
   const [loading, setLoading] = useState(true)
@@ -167,6 +168,17 @@ export default function AdminProducts() {
   }
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), [])
+
+  // Show a one-off toast after returning from the add/edit form, then clear the
+  // history state so a refresh doesn't replay it.
+  useEffect(() => {
+    const flash = (location.state as { flash?: string } | null)?.flash
+    if (flash) {
+      showToast(flash, 'success')
+      window.history.replaceState({}, '')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     let active = true

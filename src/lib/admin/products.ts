@@ -1,5 +1,5 @@
 import { supabase } from '../supabase'
-import type { Product } from '../products'
+import type { Audience, Category, Product, ProductColor, ProductFeature } from '../products'
 
 /**
  * Admin data layer for the catalog. Unlike the storefront helpers in
@@ -61,5 +61,82 @@ export async function setProductFlag(
 /** Permanently delete a product. Throws on error. */
 export async function deleteAdminProduct(id: string): Promise<void> {
   const { error } = await supabase.from('products').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+/* ---- Single-product read + writes for the add/edit form ---- */
+
+/** A product row including the admin-only `model` column. */
+export interface AdminProductRecord extends Product {
+  model: string | null
+}
+
+/** The exact `products` columns the form reads and writes (includes model). */
+const ADMIN_FORM_COLUMNS = `${ADMIN_PRODUCT_COLUMNS}, model`
+
+/** Every writable column, in the shape the form submits. */
+export interface ProductWritePayload {
+  brand_id: string | null
+  model: string | null
+  name_ar: string
+  name_en: string
+  description_ar: string | null
+  description_en: string | null
+  category: Category
+  audience: Audience
+  price: number
+  sale_price: number | null
+  currency: string
+  images: string[]
+  colors: ProductColor[]
+  features: ProductFeature[]
+  requires_consultation: boolean
+  in_stock: boolean
+  featured: boolean
+  published: boolean
+  position: number
+}
+
+/** One product by id (any published state), with array fields normalized, or null. */
+export async function fetchAdminProduct(id: string): Promise<AdminProductRecord | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .select(ADMIN_FORM_COLUMNS)
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  if (!data) return null
+
+  const p = data as unknown as AdminProductRecord
+  return {
+    ...p,
+    images: p.images ?? [],
+    colors: p.colors ?? [],
+    features: p.features ?? [],
+  }
+}
+
+/** Insert a new product; returns its id. Throws on error. */
+export async function createProduct(payload: ProductWritePayload): Promise<{ id: string }> {
+  const { data, error } = await supabase
+    .from('products')
+    .insert(payload)
+    .select('id')
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data as { id: string }
+}
+
+/** Update an existing product by id. Throws on error. */
+export async function updateProduct(id: string, payload: ProductWritePayload): Promise<void> {
+  const { error } = await supabase
+    .from('products')
+    .update(payload)
+    .eq('id', id)
+    .select('id')
+    .single()
+
   if (error) throw new Error(error.message)
 }
