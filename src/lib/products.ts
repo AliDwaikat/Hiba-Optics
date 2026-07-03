@@ -35,6 +35,7 @@ export interface Product {
   brand_id: string | null
   name_ar: string
   name_en: string
+  model: string | null
   description_ar: string | null
   description_en: string | null
   category: Category
@@ -68,7 +69,7 @@ export const CATEGORY_LABELS_AR: Record<Category, string> = {
 const BRAND_COLUMNS = 'id, name_ar, name_en, logo_url, position, published'
 
 const PRODUCT_COLUMNS =
-  'id, brand_id, name_ar, name_en, description_ar, description_en, category, audience, ' +
+  'id, brand_id, name_ar, name_en, model, description_ar, description_en, category, audience, ' +
   'price, sale_price, currency, images, colors, features, requires_consultation, in_stock, ' +
   'featured, published, position'
 
