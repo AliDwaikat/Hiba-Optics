@@ -83,12 +83,12 @@ function HeaderLogo() {
     )
   }
   return (
-    <span className="inline-flex items-center rounded-xl bg-ink px-[14px] py-2">
+    <span className="inline-flex items-center px-1.5">
       <img
-        src="/hiba-logo.png?v=3"
+        src="/hiba-logo.png?v=4"
         alt="Hiba Optics"
         onError={() => setBroken(true)}
-        className="block h-[30px] w-auto max-w-none"
+        className="block h-11 w-auto max-w-none"
       />
     </span>
   )
