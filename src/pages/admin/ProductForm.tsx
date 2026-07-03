@@ -378,6 +378,48 @@ export default function ProductForm() {
     await Promise.all(files.map((f) => uploadOne(f)))
   }
 
+  /* Paste-to-upload: an image blob (screenshot / copied image) runs through the
+     SAME validate + upload path as the file input; a pasted http(s) URL is
+     appended like "add by link". Images append to the same images[] as the file
+     picker, so the pasted image lands in the current product's list. */
+  function handlePaste(e: React.ClipboardEvent) {
+    const dt = e.clipboardData
+    if (!dt) return
+
+    // 1) Image blob → give it a sensible name and upload it.
+    const imageItem = Array.from(dt.items || []).find(
+      (it) => it.kind === 'file' && it.type.startsWith('image/'),
+    )
+    if (imageItem) {
+      const blob = imageItem.getAsFile()
+      if (blob) {
+        e.preventDefault()
+        const ext = (blob.type.split('/')[1] || 'png').replace('+xml', '')
+        const named = new File([blob], `pasted-${Date.now()}.${ext}`, {
+          type: blob.type || 'image/png',
+        })
+        void uploadOne(named)
+        return
+      }
+    }
+
+    // 2) Plain-text URL — but never hijack a paste into a real text field
+    //    (e.g. the add-by-URL box or the name inputs).
+    const target = e.target as HTMLElement | null
+    const editable =
+      !!target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable)
+    if (editable) return
+
+    const text = dt.getData('text')?.trim()
+    if (text && /^https?:\/\/\S+$/i.test(text)) {
+      e.preventDefault()
+      setForm((f) => ({ ...f, images: [...f.images, text] }))
+    }
+  }
+
   function validate(): Errors {
     const e: Errors = {}
     if (!form.name_ar.trim()) e.name_ar = 'الاسم بالعربية مطلوب'
@@ -497,7 +539,7 @@ export default function ProductForm() {
   const numField = 'field'
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="pb-24">
+    <form onSubmit={handleSubmit} onPaste={handlePaste} noValidate className="pb-24">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-2xl font-extrabold text-ink">{title}</h2>
       </div>
@@ -820,19 +862,21 @@ export default function ProductForm() {
               </div>
             )}
 
-            {/* Upload dropzone */}
+            {/* Upload dropzone — focusable so the user can click it then paste */}
             <label
+              tabIndex={0}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault()
                 handleFiles(e.dataTransfer.files)
               }}
-              className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[var(--radius)] border-2 border-dashed border-gray-300 bg-gray-100 px-4 py-6 text-center transition-colors hover:border-yellow-deep"
+              className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[var(--radius)] border-2 border-dashed border-gray-300 bg-gray-100 px-4 py-6 text-center transition-colors hover:border-yellow-deep focus-visible:outline-none focus-visible:border-yellow-deep focus-visible:ring-2 focus-visible:ring-yellow-deep"
             >
               <span className="text-sm font-medium text-ink">ارفع صورة</span>
               <span className="text-xs text-gray-600">
                 اسحب وأفلت الصور هنا أو انقر للاختيار — JPG / PNG / WebP، حتى ٥ ميغابايت
               </span>
+              <span className="text-xs text-gray-600">أو الصق صورة مباشرة (Ctrl+V)</span>
               <input
                 ref={fileInputRef}
                 type="file"
