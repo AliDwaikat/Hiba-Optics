@@ -21,7 +21,7 @@ import AdminProductForm from './pages/admin/ProductForm'
 import AdminOrders from './pages/admin/Orders'
 import AdminBookings from './pages/admin/Bookings'
 import AdminReviews from './pages/admin/Reviews'
-import AdminPlaceholder from './pages/admin/Placeholder'
+import AdminBranches from './pages/admin/Branches'
 
 export default function App() {
   return (
@@ -53,7 +53,7 @@ export default function App() {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="bookings" element={<AdminBookings />} />
           <Route path="reviews" element={<AdminReviews />} />
-          <Route path="branches" element={<AdminPlaceholder title="الفروع" />} />
+          <Route path="branches" element={<AdminBranches />} />
         </Route>
       </Route>
     </Routes>
