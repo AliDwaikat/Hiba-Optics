@@ -1,5 +1,12 @@
 import { supabase } from '../supabase'
-import type { Audience, Category, Product, ProductColor, ProductFeature } from '../products'
+import type {
+  Audience,
+  Category,
+  FrameShape,
+  Product,
+  ProductColor,
+  ProductFeature,
+} from '../products'
 
 /**
  * Admin data layer for the catalog. Unlike the storefront helpers in
@@ -71,8 +78,8 @@ export interface AdminProductRecord extends Product {
   model: string | null
 }
 
-/** The exact `products` columns the form reads and writes (includes model). */
-const ADMIN_FORM_COLUMNS = `${ADMIN_PRODUCT_COLUMNS}, model`
+/** The exact `products` columns the form reads and writes (includes model + frame_shape). */
+const ADMIN_FORM_COLUMNS = `${ADMIN_PRODUCT_COLUMNS}, model, frame_shape`
 
 /** Every writable column, in the shape the form submits. */
 export interface ProductWritePayload {
@@ -84,6 +91,7 @@ export interface ProductWritePayload {
   description_en: string | null
   category: Category
   audience: Audience
+  frame_shape: FrameShape | null
   price: number
   sale_price: number | null
   currency: string

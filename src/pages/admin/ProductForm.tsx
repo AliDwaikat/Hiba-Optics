@@ -5,6 +5,7 @@ import {
   CATEGORY_LABELS_AR,
   type Audience,
   type Category,
+  type FrameShape,
   type ProductColor,
   type ProductFeature,
 } from '../../lib/products'
@@ -31,6 +32,18 @@ const AUDIENCE_OPTIONS: { value: Audience; label: string }[] = [
   { value: 'kids', label: 'أطفال' },
 ]
 
+// Empty value = null frame_shape (stored as null on save).
+const FRAME_SHAPE_OPTIONS: { value: FrameShape | ''; label: string }[] = [
+  { value: '', label: '(بدون تحديد)' },
+  { value: 'round', label: 'مستدير' },
+  { value: 'square', label: 'مربّع' },
+  { value: 'rectangular', label: 'مستطيل' },
+  { value: 'aviator', label: 'أفياتور' },
+  { value: 'cat_eye', label: 'عين القطة' },
+  { value: 'oval', label: 'بيضاوي' },
+  { value: 'browline', label: 'براولاين' },
+]
+
 const CURRENCY_OPTIONS: { value: string; label: string }[] = [
   { value: 'ILS', label: '₪ شيكل' },
   { value: 'JOD', label: 'د.أ دينار' },
@@ -48,6 +61,7 @@ interface FormState {
   description_en: string
   category: Category
   audience: Audience
+  frame_shape: FrameShape | ''
   price: string
   sale_price: string
   currency: string
@@ -70,6 +84,7 @@ const EMPTY_FORM: FormState = {
   description_en: '',
   category: 'sunglasses',
   audience: 'unisex',
+  frame_shape: '',
   price: '',
   sale_price: '',
   currency: 'ILS',
@@ -236,6 +251,7 @@ export default function ProductForm() {
           description_en: p.description_en ?? '',
           category: p.category,
           audience: p.audience,
+          frame_shape: p.frame_shape ?? '',
           price: String(p.price ?? ''),
           sale_price: p.sale_price != null ? String(p.sale_price) : '',
           currency: p.currency ?? 'ILS',
@@ -343,6 +359,7 @@ export default function ProductForm() {
       description_en: form.description_en.trim() || null,
       category: form.category,
       audience: form.audience,
+      frame_shape: form.frame_shape || null,
       price: Number(form.price),
       sale_price: form.sale_price.trim() === '' ? null : Number(form.sale_price),
       currency: form.currency || 'ILS',
@@ -523,6 +540,24 @@ export default function ProductForm() {
                     </option>
                   ))}
                 </select>
+              </Field>
+
+              <Field label="شكل الإطار" htmlFor="frame_shape">
+                <select
+                  id="frame_shape"
+                  className="field"
+                  value={form.frame_shape}
+                  onChange={(e) => set('frame_shape', e.target.value as FrameShape | '')}
+                >
+                  {FRAME_SHAPE_OPTIONS.map((o) => (
+                    <option key={o.value || 'none'} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-600">
+                  يُستخدم في ميزة «اعثر على إطارك» لمطابقة شكل الوجه — اختياري.
+                </p>
               </Field>
             </div>
           </Section>
