@@ -103,7 +103,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
         }}
       >
         <div
-          className={`relative aspect-square w-full overflow-hidden rounded-xl bg-gray-100 ${
+          className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-gray-100 bg-white ${
             product.in_stock ? '' : 'opacity-60'
           }`}
         >
@@ -118,7 +118,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
                 onError={() => setImageBroken(true)}
                 animate={{ scale: animateHover ? 1.04 : 1 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="absolute inset-0 h-full w-full object-contain p-4 sm:p-5"
+                className="absolute inset-0 h-full w-full object-contain p-2 sm:p-3"
               />
               {hasSecond && (
                 <motion.img
@@ -130,7 +130,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
                   onError={() => setSecondBroken(true)}
                   animate={{ scale: animateHover ? 1.04 : 1, opacity: animateHover ? 1 : 0 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="absolute inset-0 h-full w-full object-contain p-4 sm:p-5"
+                  className="absolute inset-0 h-full w-full object-contain p-2 sm:p-3"
                 />
               )}
             </>

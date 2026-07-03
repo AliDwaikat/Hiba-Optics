@@ -278,13 +278,13 @@ export default function ProductDetail() {
         <div className="mt-8 grid gap-10 md:grid-cols-2 md:gap-14">
           {/* GALLERY — right column in RTL */}
           <Reveal>
-            <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-white">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-white">
               {showCurrent ? (
                 <img
                   src={currentImage}
                   alt={product.name_ar}
                   onError={() => setImageBroken((m) => ({ ...m, [currentImage]: true }))}
-                  className="h-full w-full object-contain p-6"
+                  className="h-full w-full object-contain p-4"
                 />
               ) : (
                 <Placeholder className="h-full w-full" />
