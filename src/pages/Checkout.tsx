@@ -94,10 +94,12 @@ export default function Checkout() {
     setSubmitting(true)
     const snapshot: OrderItemSnapshot[] = items.map((i) => ({
       productId: i.productId,
+      variantId: i.variantId ?? null,
       name_ar: i.name_ar,
       quantity: i.quantity,
       unit_price: i.price,
       color: i.color,
+      image: i.image || null,
       requiresConsultation: i.requiresConsultation,
     }))
     const orderNumber = generateOrderNumber()
@@ -235,9 +237,20 @@ export default function Checkout() {
 
                 <ul className="mt-4 space-y-3">
                   {items.map((i) => (
-                    <li key={`${i.productId}-${i.color?.name_ar ?? ''}`} className="flex items-start justify-between gap-3 text-sm">
+                    <li key={`${i.productId}-${i.variantId ?? ''}`} className="flex items-start justify-between gap-3 text-sm">
                       <span className="text-ink">
                         {i.name_ar}
+                        {i.color && (
+                          <span className="inline-flex items-center gap-1 text-gray-600">
+                            {' — '}
+                            <span
+                              className="inline-block h-3 w-3 rounded-full border border-gray-300 align-middle"
+                              style={{ backgroundColor: i.color.hex }}
+                              aria-hidden="true"
+                            />
+                            {i.color.name_ar}
+                          </span>
+                        )}
                         <span className="num text-gray-600"> × {i.quantity}</span>
                       </span>
                       {i.requiresConsultation ? (

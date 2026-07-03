@@ -11,10 +11,15 @@ export type FulfillmentType = 'delivery' | 'pickup'
 /** One line of the cart snapshot stored in orders.items (jsonb). */
 export interface OrderItemSnapshot {
   productId: string
+  /** Chosen variant id (null for legacy / variant-less items). */
+  variantId: string | null
   name_ar: string
   quantity: number
   unit_price: number
+  /** Selected variant color (name_ar / name_en / hex). */
   color: CartColor | null
+  /** The variant's image url (so the order shows the exact color ordered). */
+  image: string | null
   requiresConsultation: boolean
 }
 

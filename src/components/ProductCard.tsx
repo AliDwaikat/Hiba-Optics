@@ -27,8 +27,15 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
 
   const fav = isFavorite(product.id)
 
-  const imageUrl = product.images[0]
-  const secondUrl = product.images[1]
+  // Representative variant = first in-stock (or first). Card imagery + quick-add
+  // come from variants now; fall back to the flat images[] backup, then placeholder.
+  const variants = product.variants ?? []
+  const repVariant = variants.find((v) => v.in_stock) ?? variants[0] ?? null
+  const gallery =
+    repVariant && repVariant.images.length > 0 ? repVariant.images : product.images ?? []
+
+  const imageUrl = gallery[0]
+  const secondUrl = gallery[1]
   const showImage = Boolean(imageUrl) && !imageBroken
   const hasSecond = showImage && Boolean(secondUrl) && !secondBroken
 
@@ -49,8 +56,11 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
       name_en: product.name_en,
       brand_ar: brandName ?? '',
       price: effectivePrice,
-      image: imageUrl ?? '',
-      color: product.colors[0] ?? null,
+      image: repVariant?.images[0] ?? imageUrl ?? '',
+      color: repVariant
+        ? { name_ar: repVariant.name_ar, name_en: repVariant.name_en, hex: repVariant.hex }
+        : null,
+      variantId: repVariant?.id ?? null,
       quantity: 1,
       requiresConsultation: false,
     })

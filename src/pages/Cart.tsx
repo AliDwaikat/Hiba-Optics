@@ -37,15 +37,16 @@ function ThumbPlaceholder() {
   )
 }
 
-function colorName(item: CartItem): string | null {
-  return item.color?.name_ar ?? null
+/** A cart line is identified by product id + variant id (null for legacy items). */
+function lineKey(item: CartItem): string | null {
+  return item.variantId ?? null
 }
 
 /* ---------- Line item ---------- */
 function CartLine({ item }: { item: CartItem }) {
   const { updateQty, removeItem } = useCart()
   const [broken, setBroken] = useState(false)
-  const cn = colorName(item)
+  const vid = lineKey(item)
   const showImage = Boolean(item.image) && !broken
 
   return (
@@ -81,7 +82,7 @@ function CartLine({ item }: { item: CartItem }) {
 
           <button
             type="button"
-            onClick={() => removeItem(item.productId, cn)}
+            onClick={() => removeItem(item.productId, vid)}
             aria-label="إزالة"
             className="text-gray-600 transition-colors hover:text-error"
           >
@@ -94,7 +95,7 @@ function CartLine({ item }: { item: CartItem }) {
           <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={() => updateQty(item.productId, cn, Math.max(1, item.quantity - 1))}
+              onClick={() => updateQty(item.productId, vid, Math.max(1, item.quantity - 1))}
               disabled={item.quantity <= 1}
               aria-label="إنقاص الكمية"
               className="h-8 w-8 rounded-full border border-gray-300 text-lg leading-none text-ink transition-colors hover:border-yellow disabled:opacity-40"
@@ -104,7 +105,7 @@ function CartLine({ item }: { item: CartItem }) {
             <span className="num w-6 text-center text-ink">{item.quantity}</span>
             <button
               type="button"
-              onClick={() => updateQty(item.productId, cn, item.quantity + 1)}
+              onClick={() => updateQty(item.productId, vid, item.quantity + 1)}
               aria-label="زيادة الكمية"
               className="h-8 w-8 rounded-full border border-gray-300 text-lg leading-none text-ink transition-colors hover:border-yellow"
             >
@@ -134,7 +135,7 @@ function ItemGroup({ items }: { items: CartItem[] }) {
   return (
     <RevealGroup className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-white shadow-card">
       {items.map((item) => (
-        <RevealItem key={`${item.productId}-${colorName(item) ?? ''}`}>
+        <RevealItem key={`${item.productId}-${lineKey(item) ?? ''}`}>
           <CartLine item={item} />
         </RevealItem>
       ))}

@@ -41,8 +41,8 @@ interface CartContextValue {
   /** Sum of price*qty for NON-consultation items only (reserve items aren't payable). */
   subtotal: number
   addItem: (item: CartItem) => void
-  removeItem: (productId: string, colorName: string | null) => void
-  updateQty: (productId: string, colorName: string | null, qty: number) => void
+  removeItem: (productId: string, variantId: string | null) => void
+  updateQty: (productId: string, variantId: string | null, qty: number) => void
   clear: () => void
 }
 
@@ -50,10 +50,11 @@ const STORAGE_KEY = 'hiba_cart'
 
 const CartContext = createContext<CartContextValue | null>(null)
 
-/** A cart line is identified by product id + selected color name (null when no color). */
-function sameLine(item: CartItem, productId: string, colorName: string | null): boolean {
-  const itemColor = item.color?.name_ar ?? null
-  return item.productId === productId && itemColor === colorName
+/** A cart line is identified by product id + selected variant id (null when the
+ *  product has no variants, or for legacy items stored before variants). */
+function sameLine(item: CartItem, productId: string, variantId: string | null): boolean {
+  const itemVariant = item.variantId ?? null
+  return item.productId === productId && itemVariant === variantId
 }
 
 function loadCart(): CartItem[] {
@@ -82,8 +83,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function addItem(item: CartItem) {
     setItems((prev) => {
-      const colorName = item.color?.name_ar ?? null
-      const idx = prev.findIndex((p) => sameLine(p, item.productId, colorName))
+      const variantId = item.variantId ?? null
+      const idx = prev.findIndex((p) => sameLine(p, item.productId, variantId))
       if (idx === -1) return [...prev, item]
       const next = [...prev]
       next[idx] = { ...next[idx], quantity: next[idx].quantity + item.quantity }
@@ -91,15 +92,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  function removeItem(productId: string, colorName: string | null) {
-    setItems((prev) => prev.filter((p) => !sameLine(p, productId, colorName)))
+  function removeItem(productId: string, variantId: string | null) {
+    setItems((prev) => prev.filter((p) => !sameLine(p, productId, variantId)))
   }
 
-  function updateQty(productId: string, colorName: string | null, qty: number) {
+  function updateQty(productId: string, variantId: string | null, qty: number) {
     setItems((prev) => {
-      if (qty < 1) return prev.filter((p) => !sameLine(p, productId, colorName))
+      if (qty < 1) return prev.filter((p) => !sameLine(p, productId, variantId))
       return prev.map((p) =>
-        sameLine(p, productId, colorName) ? { ...p, quantity: qty } : p,
+        sameLine(p, productId, variantId) ? { ...p, quantity: qty } : p,
       )
     })
   }
