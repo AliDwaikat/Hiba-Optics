@@ -18,6 +18,7 @@ import AdminLogin from './pages/admin/Login'
 import Dashboard from './pages/admin/Dashboard'
 import AdminProducts from './pages/admin/Products'
 import AdminProductForm from './pages/admin/ProductForm'
+import AdminOrders from './pages/admin/Orders'
 import AdminPlaceholder from './pages/admin/Placeholder'
 
 export default function App() {
@@ -47,7 +48,7 @@ export default function App() {
           <Route path="products" element={<AdminProducts />} />
           <Route path="products/new" element={<AdminProductForm />} />
           <Route path="products/:id/edit" element={<AdminProductForm />} />
-          <Route path="orders" element={<AdminPlaceholder title="الطلبات" />} />
+          <Route path="orders" element={<AdminOrders />} />
           <Route path="bookings" element={<AdminPlaceholder title="الحجوزات" />} />
           <Route path="reviews" element={<AdminPlaceholder title="التقييمات" />} />
           <Route path="branches" element={<AdminPlaceholder title="الفروع" />} />
