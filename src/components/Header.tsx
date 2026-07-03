@@ -103,10 +103,12 @@ const LANG_OPTIONS: { value: Lang; label: string }[] = [
 function LangToggle({
   lang,
   setLang,
+  groupLabel,
   className = '',
 }: {
   lang: Lang
   setLang: (l: Lang) => void
+  groupLabel: string
   className?: string
 }) {
   const reduce = useReducedMotion()
@@ -117,7 +119,7 @@ function LangToggle({
   return (
     <div
       role="group"
-      aria-label="اللغة"
+      aria-label={groupLabel}
       className={`inline-flex items-center rounded-full bg-gray-100 p-0.5 ${className}`}
     >
       {LANG_OPTIONS.map((o) => {
@@ -152,7 +154,7 @@ function LangToggle({
 export default function Header() {
   const { itemCount } = useCart()
   const { count: favCount } = useFavorites()
-  const { lang, setLang } = useLanguage()
+  const { lang, setLang, t } = useLanguage()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -204,13 +206,13 @@ export default function Header() {
 
         {/* Controls — trailing edge (left in RTL) */}
         <div className="flex items-center gap-3 sm:gap-5">
-          <LangToggle lang={lang} setLang={setLang} />
+          <LangToggle lang={lang} setLang={setLang} groupLabel={t('header.language')} />
 
           {/* Icon cluster: search · favorites · cart */}
           <div className="flex items-center gap-3 sm:gap-4">
             <Link
               to="/shop"
-              aria-label="بحث"
+              aria-label={t('header.search')}
               className="inline-flex items-center text-ink transition-colors hover:text-yellow-deep"
             >
               <SearchIcon />
@@ -218,7 +220,7 @@ export default function Header() {
 
             <Link
               to="/favorites"
-              aria-label="المفضلة"
+              aria-label={t('header.favorites')}
               className="relative inline-flex items-center text-ink transition-colors hover:text-yellow-deep"
             >
               <HeartIcon filled={false} />
@@ -231,7 +233,7 @@ export default function Header() {
 
             <Link
               to="/cart"
-              aria-label="السلة"
+              aria-label={t('header.cart')}
               className="relative inline-flex items-center text-ink transition-colors hover:text-yellow-deep"
             >
               <BagIcon />
@@ -246,7 +248,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            aria-label="القائمة"
+            aria-label={t('header.menu')}
             className="text-ink md:hidden"
           >
             <MenuIcon />
@@ -272,7 +274,7 @@ export default function Header() {
         >
           <div className="flex items-center justify-between px-5 py-4">
             <Logo />
-            <button type="button" onClick={() => setOpen(false)} aria-label="إغلاق" className="text-ink">
+            <button type="button" onClick={() => setOpen(false)} aria-label={t('header.close')} className="text-ink">
               <CloseIcon />
             </button>
           </div>
@@ -306,7 +308,7 @@ export default function Header() {
             >
               <span className="flex items-center gap-2">
                 <HeartIcon filled={false} />
-                المفضلة
+                {t('header.favorites')}
               </span>
               {favCount > 0 && (
                 <span className="num flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-yellow px-1 text-xs font-bold text-ink">
@@ -317,7 +319,7 @@ export default function Header() {
           </nav>
 
           <div className="border-t border-gray-100 px-5 py-4">
-            <LangToggle lang={lang} setLang={setLang} className="mb-4" />
+            <LangToggle lang={lang} setLang={setLang} groupLabel={t('header.language')} className="mb-4" />
             <a
               href={whatsappLink(PRIMARY_WHATSAPP)}
               target="_blank"
@@ -325,7 +327,7 @@ export default function Header() {
               className="btn btn-primary w-full"
             >
               <WhatsAppIcon />
-              تواصل عبر واتساب
+              {t('header.whatsapp')}
             </a>
           </div>
         </aside>

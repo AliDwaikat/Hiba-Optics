@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
+import { useLanguage } from '../lib/language'
 
 /* Yellow dot separator for the trust line. */
 function Dot() {
@@ -34,6 +35,7 @@ function GlassesArt() {
 
 export default function Hero() {
   const reduce = useReducedMotion()
+  const { t } = useLanguage()
 
   // Entrance: staggered fade-up (nested for the two headline lines).
   const container: Variants = {
@@ -60,13 +62,13 @@ export default function Hero() {
           variants={container}
           initial={reduce ? false : 'hidden'}
           animate="show"
-          className="text-right"
+          className="text-start"
         >
           {/* Eyebrow */}
           <motion.div variants={item} className="flex items-center gap-3">
             <span className="h-[3px] w-[22px] shrink-0 bg-yellow" aria-hidden="true" />
             <span className="text-sm font-medium tracking-wide text-ink">
-              مركز هبة الطبي للبصريات
+              {t('hero.eyebrow')}
             </span>
           </motion.div>
 
@@ -76,34 +78,34 @@ export default function Hero() {
             className="mt-6 font-extrabold text-ink"
             style={{ fontSize: 'clamp(38px, 6.5vw, 74px)', lineHeight: 1.08, letterSpacing: '-0.02em' }}
           >
-            <motion.span variants={item} className="block">رؤية أوضح،</motion.span>
+            <motion.span variants={item} className="block">{t('hero.headline.l1')}</motion.span>
             <motion.span variants={item} className="block">
-              إطلالة <span className="text-yellow">أرقى</span>
+              {t('hero.headline.l2pre')}<span className="text-yellow">{t('hero.headline.l2hl')}</span>
             </motion.span>
           </motion.h1>
 
           {/* Subhead */}
-          <motion.p variants={item} className="mt-6 max-w-[300px] text-[15px] leading-[1.7] text-gray-600">
-            نظارات طبية وشمسية من أرقى البراندات العالمية، وفحص نظر شامل في نابلس وحوارة.
+          <motion.p variants={item} className="mt-6 max-w-[340px] text-[15px] leading-[1.7] text-gray-600">
+            {t('hero.subhead')}
           </motion.p>
 
           {/* CTAs */}
           <motion.div variants={item} className="mt-8 flex flex-wrap gap-4">
             <Link to="/shop" className="btn btn-primary">
-              تسوّق النظارات
+              {t('hero.cta.shop')}
             </Link>
             <Link to="/book" className="btn btn-secondary">
-              احجز فحص نظر
+              {t('cta.bookExam')}
             </Link>
           </motion.div>
 
           {/* Trust line */}
           <motion.div variants={item} className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
-            <span>براندات أصلية</span>
+            <span>{t('hero.trust.1')}</span>
             <Dot />
-            <span>فحص نظر شامل</span>
+            <span>{t('hero.trust.2')}</span>
             <Dot />
-            <span>فرعان في نابلس وحوارة</span>
+            <span>{t('hero.trust.3')}</span>
           </motion.div>
         </motion.div>
 

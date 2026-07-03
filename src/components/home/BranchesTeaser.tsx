@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Reveal, RevealGroup, RevealItem } from './Reveal'
+import { useLanguage } from '../../lib/language'
 import { fetchBranches, type Branch } from '../../lib/branches'
 import { telLink, whatsappLink } from '../../lib/contact'
 
@@ -13,6 +14,7 @@ function WhatsAppIcon() {
 }
 
 export default function BranchesTeaser() {
+  const { t, localize } = useLanguage()
   const [branches, setBranches] = useState<Branch[]>([])
   const [ready, setReady] = useState(false)
 
@@ -42,47 +44,51 @@ export default function BranchesTeaser() {
   return (
     <section className="bg-cream py-16 sm:py-20 md:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-8">
-        <Reveal className="text-right">
-          <h2 className="text-3xl font-extrabold text-ink sm:text-4xl">زورونا</h2>
-          <p className="mt-2 text-gray-600">فرعان لخدمتكم</p>
+        <Reveal className="text-start">
+          <h2 className="text-3xl font-extrabold text-ink sm:text-4xl">{t('branches.heading')}</h2>
+          <p className="mt-2 text-gray-600">{t('branches.sub')}</p>
         </Reveal>
 
         <RevealGroup className="mt-10 grid gap-5 sm:gap-6 md:mt-12 md:grid-cols-2">
-          {branches.map((b) => (
-            <RevealItem key={b.id}>
-              <div className="h-full rounded-[var(--radius-lg)] border border-gray-100 bg-white p-6 shadow-card sm:p-8">
-                <h3 className="text-xl font-bold text-ink">{b.name_ar}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                  {b.address_ar}
-                  {b.landmark_ar ? ` — ${b.landmark_ar}` : ''}
-                </p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  {b.whatsapp && (
-                    <a
-                      href={whatsappLink(b.whatsapp)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-primary"
-                    >
-                      <WhatsAppIcon />
-                      واتساب
-                    </a>
-                  )}
-                  {b.phone && (
-                    <a href={telLink(b.phone)} className="btn btn-secondary">
-                      الاتصال
-                    </a>
-                  )}
+          {branches.map((b) => {
+            const address = localize(b, 'address')
+            const landmark = localize(b, 'landmark')
+            return (
+              <RevealItem key={b.id}>
+                <div className="h-full rounded-[var(--radius-lg)] border border-gray-100 bg-white p-6 shadow-card sm:p-8">
+                  <h3 className="text-xl font-bold text-ink">{localize(b, 'name')}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                    {address}
+                    {landmark ? ` — ${landmark}` : ''}
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    {b.whatsapp && (
+                      <a
+                        href={whatsappLink(b.whatsapp)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary"
+                      >
+                        <WhatsAppIcon />
+                        {t('branches.whatsapp')}
+                      </a>
+                    )}
+                    {b.phone && (
+                      <a href={telLink(b.phone)} className="btn btn-secondary">
+                        {t('branches.call')}
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </RevealItem>
-          ))}
+              </RevealItem>
+            )
+          })}
         </RevealGroup>
 
         <p className="mt-8 text-sm text-gray-600">
-          خريطة كل فرع في{' '}
+          {t('branches.map.pre')}
           <Link to="/branches" className="text-ink underline decoration-yellow underline-offset-4 transition-colors hover:text-yellow-deep">
-            صفحة الفروع
+            {t('branches.map.link')}
           </Link>
         </p>
       </div>

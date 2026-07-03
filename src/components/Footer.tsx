@@ -23,7 +23,7 @@ function FacebookIcon() {
 }
 
 export default function Footer() {
-  const { lang } = useLanguage()
+  const { lang, t, localize } = useLanguage()
   const [branches, setBranches] = useState<Branch[]>([])
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function Footer() {
               <span className="text-cream tracking-[0.2em]">OPTICS</span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-gray-300">
-              نظارات طبية وشمسية · فحص نظر شامل · براندات عالمية
+              {t('footer.tagline')}
             </p>
             <div className="mt-5 flex items-center gap-4">
               <a
@@ -83,7 +83,7 @@ export default function Footer() {
 
           {/* Quick links */}
           <div>
-            <h4 className="text-sm font-bold text-cream">روابط سريعة</h4>
+            <h4 className="text-sm font-bold text-cream">{t('footer.quickLinks')}</h4>
             <ul className="mt-4 space-y-2.5">
               {NAV_ITEMS.map((n) => (
                 <li key={n.to}>
@@ -98,14 +98,15 @@ export default function Footer() {
           {/* Branches (from the database) */}
           {branches.length > 0 && (
             <div>
-              <h4 className="text-sm font-bold text-cream">الفروع</h4>
+              <h4 className="text-sm font-bold text-cream">{t('footer.branches')}</h4>
               <ul className="mt-4 space-y-4">
                 {branches.map((b) => {
                   const num = b.whatsapp || b.phone
+                  const landmark = localize(b, 'landmark')
                   return (
                     <li key={b.id} className="text-sm">
-                      <p className="font-semibold text-cream">{b.name_ar}</p>
-                      {b.landmark_ar && <p className="mt-0.5 text-gray-300">{b.landmark_ar}</p>}
+                      <p className="font-semibold text-cream">{localize(b, 'name')}</p>
+                      {landmark && <p className="mt-0.5 text-gray-300">{landmark}</p>}
                       {num && (
                         <a
                           href={b.whatsapp ? whatsappLink(b.whatsapp) : telLink(num)}
@@ -128,9 +129,9 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-14 flex flex-col gap-2 border-t border-gray-900 pt-6 text-xs text-gray-600 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © <span className="num">{year}</span> Hiba Optics — جميع الحقوق محفوظة
+            © <span className="num">{year}</span> Hiba Optics — {t('footer.rights')}
           </p>
-          <p>تصميم وتطوير Zaytoun</p>
+          <p>{t('footer.credit')}</p>
         </div>
       </div>
     </footer>

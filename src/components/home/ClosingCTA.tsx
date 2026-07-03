@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import { Reveal } from './Reveal'
+import { useLanguage } from '../../lib/language'
 
 export default function ClosingCTA() {
+  const { t } = useLanguage()
   return (
     <section className="relative overflow-hidden bg-black py-20 sm:py-24 md:py-28">
       {/* Subtle yellow accent flourishes */}
@@ -10,21 +12,21 @@ export default function ClosingCTA() {
 
       <Reveal className="relative mx-auto max-w-3xl px-4 text-center sm:px-8">
         <h2 className="text-3xl font-extrabold leading-tight text-white sm:text-4xl md:text-5xl">
-          جاهز لإطلالة أوضح وأناقة أرقى؟
+          {t('closing.heading')}
         </h2>
         <p className="mt-4 text-lg text-gray-300">
-          اكتشف مجموعتنا من أرقى البراندات، أو احجز فحص نظر شامل مع مختصينا.
+          {t('closing.sub')}
         </p>
 
         <div className="mt-9 flex flex-wrap justify-center gap-4">
           <Link to="/shop" className="btn btn-primary">
-            تسوّق الآن
+            {t('closing.shop')}
           </Link>
           <Link
             to="/book"
             className="btn border border-white/40 text-white transition-colors hover:bg-white/10"
           >
-            احجز فحص نظر
+            {t('cta.bookExam')}
           </Link>
         </div>
       </Reveal>

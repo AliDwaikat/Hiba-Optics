@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Reveal, RevealGroup, RevealItem } from './Reveal'
+import { useLanguage } from '../../lib/language'
+import type { UIKey } from '../../lib/i18n'
 
 /* Simple line icons (ink stroke, one yellow accent detail). */
 function EyeExamIcon() {
@@ -47,45 +49,46 @@ function KidsGlassesIcon() {
 
 interface Service {
   icon: ReactNode
-  title: string
-  desc: string
+  titleKey: UIKey
+  descKey: UIKey
   to: string
 }
 
 const SERVICES: Service[] = [
-  { icon: <EyeExamIcon />, title: 'فحص نظر شامل', desc: 'فحص دقيق بأحدث الأجهزة لتحديد مقاسك بدقة.', to: '/services/eye-exam' },
-  { icon: <SunglassesIcon />, title: 'نظارات شمسية', desc: 'أرقى البراندات العالمية وإصدارات محدودة.', to: '/shop?category=sunglasses' },
-  { icon: <ContactLensIcon />, title: 'عدسات لاصقة', desc: 'عدسات مريحة وآمنة لكل الاستخدامات.', to: '/shop?category=contact_lenses' },
-  { icon: <KidsGlassesIcon />, title: 'نظارات أطفال', desc: 'إطارات مرنة ومتينة مصممة خصيصاً للأطفال.', to: '/shop?audience=kids' },
+  { icon: <EyeExamIcon />, titleKey: 'services.eyeExam.title', descKey: 'services.eyeExam.desc', to: '/services/eye-exam' },
+  { icon: <SunglassesIcon />, titleKey: 'services.sunglasses.title', descKey: 'services.sunglasses.desc', to: '/shop?category=sunglasses' },
+  { icon: <ContactLensIcon />, titleKey: 'services.contacts.title', descKey: 'services.contacts.desc', to: '/shop?category=contact_lenses' },
+  { icon: <KidsGlassesIcon />, titleKey: 'services.kids.title', descKey: 'services.kids.desc', to: '/shop?audience=kids' },
 ]
 
 export default function Services() {
+  const { t } = useLanguage()
   return (
     <section className="bg-white py-16 sm:py-20 md:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-8">
         {/* Eyebrow + heading */}
-        <Reveal className="text-right">
+        <Reveal className="text-start">
           <div className="flex items-center justify-start gap-3">
             <span className="h-px w-8 bg-yellow" aria-hidden="true" />
-            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">لماذا هبة</span>
+            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">{t('common.whyHiba')}</span>
           </div>
-          <h2 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">خدماتنا</h2>
+          <h2 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">{t('services.heading')}</h2>
         </Reveal>
 
         {/* Cards */}
         <RevealGroup className="mt-10 grid grid-cols-2 gap-4 sm:gap-6 md:mt-12 md:grid-cols-4">
           {SERVICES.map((s) => (
-            <RevealItem key={s.title}>
+            <RevealItem key={s.titleKey}>
               <Link
                 to={s.to}
-                aria-label={s.title}
+                aria-label={t(s.titleKey)}
                 className="group flex h-full flex-col rounded-[var(--radius-lg)] border border-gray-100 bg-cream p-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-yellow-deep hover:shadow-lg focus-visible:outline-none focus-visible:-translate-y-1 focus-visible:shadow-lg focus-visible:ring-2 focus-visible:ring-yellow-deep motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-7"
               >
                 <span className="text-ink transition-colors group-hover:text-yellow-deep">{s.icon}</span>
-                <h3 className="mt-4 text-base font-bold text-ink sm:text-lg">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-600">{s.desc}</p>
+                <h3 className="mt-4 text-base font-bold text-ink sm:text-lg">{t(s.titleKey)}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{t(s.descKey)}</p>
                 <span className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold text-yellow-deep opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
-                  اعرف المزيد <span aria-hidden="true">←</span>
+                  {t('common.learnMore')} <span aria-hidden="true" className="rtl:inline ltr:hidden">←</span><span aria-hidden="true" className="ltr:inline rtl:hidden">→</span>
                 </span>
               </Link>
             </RevealItem>
