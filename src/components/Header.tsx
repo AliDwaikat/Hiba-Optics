@@ -70,6 +70,30 @@ function Logo() {
   )
 }
 
+/* ---- Header logo on a small dark chip so the yellow "Hiba" wordmark reads
+   crisply against the white header (mirrors the favicon's ink-chip look). ---- */
+function HeaderLogo() {
+  const [broken, setBroken] = useState(false)
+  if (broken) {
+    return (
+      <span className="font-latin text-lg font-bold tracking-tight">
+        <span className="text-ink">Hiba</span>{' '}
+        <span className="text-gray-600 tracking-[0.15em]">OPTICS</span>
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center rounded-xl bg-ink px-3 py-1.5">
+      <img
+        src="/hiba-logo.png"
+        alt="Hiba Optics"
+        onError={() => setBroken(true)}
+        className="h-[30px] w-auto sm:h-8"
+      />
+    </span>
+  )
+}
+
 /* ---- Language toggle — segmented pill with a sliding yellow indicator ---- */
 const LANG_OPTIONS: { value: Lang; label: string }[] = [
   { value: 'ar', label: 'العربية' },
@@ -166,7 +190,7 @@ export default function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:h-20 sm:px-8">
         {/* Logo — leading edge (right in RTL) */}
         <Link to="/" aria-label="Hiba Optics" className="flex items-center">
-          <Logo />
+          <HeaderLogo />
         </Link>
 
         {/* Desktop nav */}
