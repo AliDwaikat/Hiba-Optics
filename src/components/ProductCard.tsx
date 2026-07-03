@@ -6,22 +6,12 @@ import { formatPrice } from '../lib/format'
 import { useFavorites } from '../lib/favorites'
 import { useCart } from '../lib/cart'
 import HeartIcon from './HeartIcon'
+import ProductImagePlaceholder from './ProductImagePlaceholder'
 
 interface ProductCardProps {
   product: Product
   /** Arabic brand name, resolved by the parent from brand_id. */
   brandName?: string
-}
-
-/** Neutral placeholder shown when a product has no image (or it fails to load). */
-function ImagePlaceholder() {
-  return (
-    <div className="flex h-full w-full items-center justify-center bg-gray-900">
-      <span className="font-latin text-2xl font-bold tracking-tight text-yellow" dir="ltr">
-        Hiba
-      </span>
-    </div>
-  )
 }
 
 export default function ProductCard({ product, brandName }: ProductCardProps) {
@@ -134,7 +124,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
               )}
             </>
           ) : (
-            <ImagePlaceholder />
+            <ProductImagePlaceholder />
           )}
 
           {/* Favorite toggle — does not open the product link */}
