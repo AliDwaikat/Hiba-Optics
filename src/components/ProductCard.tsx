@@ -6,12 +6,13 @@ import { formatPrice } from '../lib/format'
 import { galleryImages, primaryImage } from '../lib/productImages'
 import { useFavorites } from '../lib/favorites'
 import { useCart } from '../lib/cart'
+import { useLanguage } from '../lib/language'
 import HeartIcon from './HeartIcon'
 import ProductImagePlaceholder from './ProductImagePlaceholder'
 
 interface ProductCardProps {
   product: Product
-  /** Arabic brand name, resolved by the parent from brand_id. */
+  /** Brand name (already localized by the parent from brand_id). */
   brandName?: string
 }
 
@@ -20,6 +21,9 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
   const navigate = useNavigate()
   const { isFavorite, toggle } = useFavorites()
   const { addItem } = useCart()
+  const { t, localize } = useLanguage()
+
+  const name = localize(product, 'name')
 
   const [imageBroken, setImageBroken] = useState(false)
   const [secondBroken, setSecondBroken] = useState(false)
@@ -113,7 +117,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
                   centered on a clean tile (never cropped). */}
               <motion.img
                 src={imageUrl}
-                alt={product.name_ar}
+                alt={name}
                 loading="lazy"
                 onError={() => setImageBroken(true)}
                 animate={{ scale: animateHover ? 1.04 : 1 }}
@@ -146,7 +150,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
               e.stopPropagation()
               toggle(product.id)
             }}
-            aria-label="المفضلة"
+            aria-label={t('header.favorites')}
             aria-pressed={fav}
             className="absolute end-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
           >
@@ -155,14 +159,14 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
 
           {product.requires_consultation && (
             <span className="absolute start-2 top-2 z-10 rounded-full border border-yellow bg-black/70 px-2 py-1 text-xs font-medium text-yellow">
-              بحاجة لفحص نظر
+              {t('card.consultation')}
             </span>
           )}
 
           {!product.in_stock && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
               <span className="rounded-full bg-black/80 px-4 py-1 text-sm font-medium text-white">
-                غير متوفر
+                {t('card.outOfStock')}
               </span>
             </div>
           )}
@@ -171,21 +175,21 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
           {product.requires_consultation ? (
             <div className={revealClass}>
               <button type="button" onClick={handleReserve} className={quickBtnClass}>
-                احجز
+                {t('card.reserve')}
               </button>
             </div>
           ) : product.in_stock ? (
             <div className={revealClass}>
               <button type="button" onClick={handleQuickAdd} className={quickBtnClass}>
-                {added ? 'تمت الإضافة ✓' : 'أضف للسلة'}
+                {added ? t('card.added') : t('card.add')}
               </button>
             </div>
           ) : null}
         </div>
 
-        <div className="mt-3 text-right">
+        <div className="mt-3 text-start">
           {brandName && <p className="text-xs text-gray-600">{brandName}</p>}
-          <h3 className="mt-0.5 text-sm text-ink sm:text-base">{product.name_ar}</h3>
+          <h3 className="mt-0.5 text-sm text-ink sm:text-base">{name}</h3>
 
           {onSale ? (
             <div className="mt-1 flex items-center justify-start gap-2">

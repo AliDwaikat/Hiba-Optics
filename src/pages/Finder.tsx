@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import ProductCard from '../components/ProductCard'
+import { useLanguage } from '../lib/language'
+import { format, type Lang, type UIKey } from '../lib/i18n'
 import {
   fetchProducts,
   type Audience,
@@ -49,41 +51,71 @@ function FaceIcon({ shape }: { shape: FaceShape }) {
 
 interface FaceOption {
   value: FaceShape
-  label: string
-  heading: string
-  why: string
+  labelKey: UIKey
+  heading: Record<Lang, string>
+  why: Record<Lang, string>
 }
 
 const FACE_OPTIONS: FaceOption[] = [
   {
     value: 'oval',
-    label: 'بيضاوي',
-    heading: 'إطارات تناسب وجهك البيضاوي',
-    why: 'الوجه البيضاوي متوازن الملامح، لذا تناسبه معظم أنواع الإطارات.',
+    labelKey: 'finder.face.oval',
+    heading: {
+      ar: 'إطارات تناسب وجهك البيضاوي',
+      en: 'Frames that suit your oval face',
+    },
+    why: {
+      ar: 'الوجه البيضاوي متوازن الملامح، لذا تناسبه معظم أنواع الإطارات.',
+      en: 'An oval face is well balanced, so it works with most frame styles.',
+    },
   },
   {
     value: 'round',
-    label: 'دائري',
-    heading: 'إطارات تناسب وجهك الدائري',
-    why: 'الوجه الدائري تُبرز ملامحه الإطارات الزاوية التي تضيف له تحديداً وطولاً.',
+    labelKey: 'finder.face.round',
+    heading: {
+      ar: 'إطارات تناسب وجهك الدائري',
+      en: 'Frames that suit your round face',
+    },
+    why: {
+      ar: 'الوجه الدائري تُبرز ملامحه الإطارات الزاوية التي تضيف له تحديداً وطولاً.',
+      en: 'A round face is flattered by angular frames that add definition and length.',
+    },
   },
   {
     value: 'square',
-    label: 'مربّع',
-    heading: 'إطارات تناسب وجهك المربّع',
-    why: 'الوجه المربّع تلطّف حِدّته الإطارات المستديرة وناعمة المنحنيات.',
+    labelKey: 'finder.face.square',
+    heading: {
+      ar: 'إطارات تناسب وجهك المربّع',
+      en: 'Frames that suit your square face',
+    },
+    why: {
+      ar: 'الوجه المربّع تلطّف حِدّته الإطارات المستديرة وناعمة المنحنيات.',
+      en: 'A square face is softened by round frames with gentle curves.',
+    },
   },
   {
     value: 'heart',
-    label: 'قلب',
-    heading: 'إطارات تناسب وجهك القلبي الشكل',
-    why: 'الوجه القلبي توازنه الإطارات الأخفّ والأوسع من الأسفل.',
+    labelKey: 'finder.face.heart',
+    heading: {
+      ar: 'إطارات تناسب وجهك القلبي الشكل',
+      en: 'Frames that suit your heart-shaped face',
+    },
+    why: {
+      ar: 'الوجه القلبي توازنه الإطارات الأخفّ والأوسع من الأسفل.',
+      en: 'A heart-shaped face is balanced by lighter frames that are wider at the bottom.',
+    },
   },
   {
     value: 'long',
-    label: 'طويل',
-    heading: 'إطارات تناسب وجهك الطويل',
-    why: 'الوجه الطويل تُوازن طوله الإطارات الأعمق ذات الحضور الأكبر.',
+    labelKey: 'finder.face.long',
+    heading: {
+      ar: 'إطارات تناسب وجهك الطويل',
+      en: 'Frames that suit your long face',
+    },
+    why: {
+      ar: 'الوجه الطويل تُوازن طوله الإطارات الأعمق ذات الحضور الأكبر.',
+      en: 'A long face is balanced by deeper frames with more presence.',
+    },
   },
 ]
 
@@ -96,23 +128,24 @@ const MATCH: Record<FaceShape, FrameShape[]> = {
   long: ['square', 'rectangular', 'browline', 'round'],
 }
 
-const CATEGORY_OPTIONS: { value: CategoryChoice; label: string }[] = [
-  { value: 'all', label: 'الكل' },
-  { value: 'sunglasses', label: 'شمسية' },
-  { value: 'optical', label: 'طبية' },
+const CATEGORY_OPTIONS: { value: CategoryChoice; labelKey: UIKey }[] = [
+  { value: 'all', labelKey: 'shop.cat.all' },
+  { value: 'sunglasses', labelKey: 'shop.cat.sunglasses' },
+  { value: 'optical', labelKey: 'shop.cat.optical' },
 ]
 
-const AUDIENCE_OPTIONS: { value: Audience; label: string }[] = [
-  { value: 'men', label: 'رجالي' },
-  { value: 'women', label: 'نسائي' },
-  { value: 'unisex', label: 'للجنسين' },
-  { value: 'kids', label: 'أطفال' },
+const AUDIENCE_OPTIONS: { value: Audience; labelKey: UIKey }[] = [
+  { value: 'men', labelKey: 'shop.aud.men' },
+  { value: 'women', labelKey: 'shop.aud.women' },
+  { value: 'unisex', labelKey: 'shop.aud.unisex' },
+  { value: 'kids', labelKey: 'shop.aud.kids' },
 ]
 
 type Phase = 0 | 1 | 2 | 3 | 4
 
 export default function Finder() {
   const reduce = useReducedMotion()
+  const { t, lang } = useLanguage()
 
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -195,9 +228,7 @@ export default function Finder() {
     return (
       <div className="mb-8">
         <div className="flex items-center justify-between text-xs text-gray-600">
-          <span>
-            الخطوة <span className="num">{step}</span> من <span className="num">3</span>
-          </span>
+          <span className="num">{format(t('finder.step'), { n: step, total: 3 })}</span>
         </div>
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
           <motion.div
@@ -218,7 +249,7 @@ export default function Finder() {
         onClick={() => setPhase(to)}
         className="text-sm font-medium text-gray-600 transition-colors hover:text-ink"
       >
-        ← رجوع
+        <span aria-hidden="true">←</span> {t('finder.back')}
       </button>
     )
   }
@@ -239,20 +270,20 @@ export default function Finder() {
               className="text-center"
             >
               <span className="text-xs font-semibold tracking-[0.2em] text-yellow-deep">
-                مكتشف الإطارات
+                {t('finder.eyebrow')}
               </span>
               <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">
-                اعثر على الإطار المثالي لوجهك
+                {t('finder.intro.title')}
               </h1>
               <p className="mx-auto mt-4 max-w-md text-gray-600">
-                أجب عن ثلاثة أسئلة قصيرة ودعنا نقترح لك الإطارات التي تناسب شكل وجهك وذوقك.
+                {t('finder.intro.desc')}
               </p>
               <button
                 type="button"
                 onClick={() => setPhase(1)}
                 className="btn btn-primary mt-8 px-10"
               >
-                ابدأ
+                {t('finder.start')}
               </button>
             </motion.div>
           )}
@@ -268,8 +299,8 @@ export default function Finder() {
               transition={transition}
             >
               <ProgressBar step={1} />
-              <h2 className="text-2xl font-bold text-ink">ما شكل وجهك؟</h2>
-              <p className="mt-2 text-sm text-gray-600">اختر الشكل الأقرب لملامح وجهك.</p>
+              <h2 className="text-2xl font-bold text-ink">{t('finder.q1')}</h2>
+              <p className="mt-2 text-sm text-gray-600">{t('finder.q1.sub')}</p>
 
               <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {FACE_OPTIONS.map((o) => (
@@ -283,7 +314,7 @@ export default function Finder() {
                     className={optionBtn}
                   >
                     <FaceIcon shape={o.value} />
-                    <span className="text-sm font-medium">{o.label}</span>
+                    <span className="text-sm font-medium">{t(o.labelKey)}</span>
                   </button>
                 ))}
               </div>
@@ -296,7 +327,7 @@ export default function Finder() {
                   aria-expanded={showTip}
                   className="text-sm font-medium text-yellow-deep transition-colors hover:text-ink"
                 >
-                  غير متأكد؟
+                  {t('finder.notSure')}
                 </button>
                 <AnimatePresence initial={false}>
                   {showTip && (
@@ -308,13 +339,20 @@ export default function Finder() {
                       transition={{ duration: reduce ? 0 : 0.25, ease: 'easeOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-3 rounded-[var(--radius)] bg-gray-100 p-4 text-sm leading-relaxed text-gray-600">
-                        قف أمام المرآة وانظر إلى أعرض جزء في وجهك: إن كان الجبين أعرض ويضيق نحو الذقن
-                        فوجهك <span className="text-ink">قلب</span>؛ وإن تساوى عرض الجبين والفكّين
-                        بزوايا واضحة فهو <span className="text-ink">مربّع</span>؛ وإن كان العرض
-                        والطول متقاربين وبانحناءات ناعمة فهو <span className="text-ink">دائري</span>؛
-                        وإن كان الطول أكبر من العرض فهو <span className="text-ink">طويل</span>؛ أمّا
-                        المتوازن الأطول قليلاً من عرضه فهو <span className="text-ink">بيضاوي</span>.
+                      <div className="mt-3 rounded-[var(--radius)] bg-gray-100 p-4 text-sm leading-relaxed text-gray-600 text-start">
+                        {lang === 'ar' ? (
+                          <>
+                            قف أمام المرآة وانظر إلى أعرض جزء في وجهك: إن كان الجبين أعرض ويضيق نحو
+                            الذقن فوجهك <span className="text-ink">قلب</span>؛ وإن تساوى عرض الجبين
+                            والفكّين بزوايا واضحة فهو <span className="text-ink">مربّع</span>؛ وإن كان
+                            العرض والطول متقاربين وبانحناءات ناعمة فهو{' '}
+                            <span className="text-ink">دائري</span>؛ وإن كان الطول أكبر من العرض فهو{' '}
+                            <span className="text-ink">طويل</span>؛ أمّا المتوازن الأطول قليلاً من
+                            عرضه فهو <span className="text-ink">بيضاوي</span>.
+                          </>
+                        ) : (
+                          t('finder.tip')
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -338,8 +376,8 @@ export default function Finder() {
               transition={transition}
             >
               <ProgressBar step={2} />
-              <h2 className="text-2xl font-bold text-ink">أي نوع تفضّل؟</h2>
-              <p className="mt-2 text-sm text-gray-600">اختر نوع النظارة الذي تبحث عنه.</p>
+              <h2 className="text-2xl font-bold text-ink">{t('finder.q2')}</h2>
+              <p className="mt-2 text-sm text-gray-600">{t('finder.q2.sub')}</p>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {CATEGORY_OPTIONS.map((o) => (
@@ -352,7 +390,7 @@ export default function Finder() {
                     }}
                     className={choiceBtn}
                   >
-                    {o.label}
+                    {t(o.labelKey)}
                   </button>
                 ))}
               </div>
@@ -374,8 +412,8 @@ export default function Finder() {
               transition={transition}
             >
               <ProgressBar step={3} />
-              <h2 className="text-2xl font-bold text-ink">لمن؟</h2>
-              <p className="mt-2 text-sm text-gray-600">اختياري — يمكنك التخطّي.</p>
+              <h2 className="text-2xl font-bold text-ink">{t('finder.q3')}</h2>
+              <p className="mt-2 text-sm text-gray-600">{t('finder.q3.sub')}</p>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {AUDIENCE_OPTIONS.map((o) => (
@@ -388,7 +426,7 @@ export default function Finder() {
                     }}
                     className={choiceBtn}
                   >
-                    {o.label}
+                    {t(o.labelKey)}
                   </button>
                 ))}
               </div>
@@ -403,7 +441,9 @@ export default function Finder() {
                   }}
                   className="text-sm font-medium text-yellow-deep transition-colors hover:text-ink"
                 >
-                  تخطّي ←
+                  {t('finder.skip')}{' '}
+                  <span aria-hidden="true" className="rtl:inline ltr:hidden">←</span>
+                  <span aria-hidden="true" className="ltr:inline rtl:hidden">→</span>
                 </button>
               </div>
             </motion.div>
@@ -422,20 +462,24 @@ export default function Finder() {
               <div className="text-center">
                 {broadened ? (
                   <>
-                    <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">منتجات مقترحة</h2>
+                    <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">
+                      {t('finder.results.suggested')}
+                    </h2>
                     <p className="mx-auto mt-3 max-w-lg text-gray-600">
-                      لم نجد تطابقاً دقيقاً وفق اختياراتك، إليك اقتراحات من مجموعتنا.
+                      {t('finder.results.broadenedNote')}
                     </p>
                   </>
                 ) : (
                   <>
                     <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">
-                      {faceOption?.heading}
+                      {faceOption?.heading[lang]}
                     </h2>
-                    <p className="mx-auto mt-3 max-w-lg text-gray-600">{faceOption?.why}</p>
+                    <p className="mx-auto mt-3 max-w-lg text-gray-600">{faceOption?.why[lang]}</p>
                   </>
                 )}
-                <p className="num mt-2 text-sm text-gray-600">{list.length} إطار</p>
+                <p className="num mt-2 text-sm text-gray-600">
+                  {format(t('finder.count'), { n: list.length })}
+                </p>
               </div>
 
               <div className="mt-8">
@@ -451,7 +495,7 @@ export default function Finder() {
                   </div>
                 ) : list.length === 0 ? (
                   <div className="py-12 text-center">
-                    <p className="text-lg text-ink">لا توجد إطارات متاحة حالياً</p>
+                    <p className="text-lg text-ink">{t('finder.empty')}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
@@ -464,10 +508,10 @@ export default function Finder() {
 
               <div className="mt-10 flex flex-wrap justify-center gap-3">
                 <button type="button" onClick={restart} className="btn btn-secondary">
-                  أعد الاختبار
+                  {t('finder.restart')}
                 </button>
                 <Link to="/shop" className="btn btn-primary">
-                  تصفّح كل النظارات
+                  {t('finder.browseAll')}
                 </Link>
               </div>
             </motion.div>

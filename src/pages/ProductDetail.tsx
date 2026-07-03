@@ -5,9 +5,10 @@ import { Reveal, RevealGroup, RevealItem } from '../components/home/Reveal'
 import { formatPrice } from '../lib/format'
 import { useCart, type CartColor } from '../lib/cart'
 import { useFavorites } from '../lib/favorites'
+import { useLanguage } from '../lib/language'
+import { CATEGORY_LABEL_KEY, format, type UIKey } from '../lib/i18n'
 import HeartIcon from '../components/HeartIcon'
 import {
-  CATEGORY_LABELS_AR,
   fetchProduct,
   fetchReviews,
   type ProductVariant,
@@ -48,10 +49,10 @@ function TrustIcon({ path }: { path: string }) {
     </svg>
   )
 }
-const TRUST = [
-  { text: 'منتج أصلي', path: 'M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5l-8-3Zm-2 9 2 2 3-3.5' },
-  { text: 'ضمان الجودة', path: 'M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5l-8-3Z' },
-  { text: 'فحص وتركيب في المحل', path: 'M3 9l1-5h16l1 5M4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9Zm5 4h6' },
+const TRUST: { key: UIKey; path: string }[] = [
+  { key: 'pd.trust.authentic', path: 'M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5l-8-3Zm-2 9 2 2 3-3.5' },
+  { key: 'pd.trust.quality', path: 'M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5l-8-3Z' },
+  { key: 'pd.trust.fitting', path: 'M3 9l1-5h16l1 5M4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9Zm5 4h6' },
 ]
 
 /* Branded placeholder for an empty/broken image (never breaks layout). */
@@ -107,11 +108,16 @@ function Lightbox({
   onClose: () => void
   onIndex: (i: number) => void
 }) {
+  const { t, dir } = useLanguage()
   const [zoom, setZoom] = useState(false)
   const touchX = useRef<number | null>(null)
   const lastTap = useRef(0)
   const count = images.length
   const clamp = (i: number) => ((i % count) + count) % count
+  const rtl = dir === 'rtl'
+  // Chevron directions follow reading order (start/end), not fixed physical sides.
+  const startChevron = rtl ? 'right' : 'left'
+  const endChevron = rtl ? 'left' : 'right'
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -123,13 +129,14 @@ function Lightbox({
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
-      else if (e.key === 'ArrowLeft') onIndex(clamp(index + 1))
-      else if (e.key === 'ArrowRight') onIndex(clamp(index - 1))
+      // ArrowRight/Left move by visual direction: in RTL they are mirrored.
+      else if (e.key === 'ArrowLeft') onIndex(clamp(index + (rtl ? 1 : -1)))
+      else if (e.key === 'ArrowRight') onIndex(clamp(index + (rtl ? -1 : 1)))
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, count])
+  }, [index, count, rtl])
 
   function onTouchStart(e: React.TouchEvent) {
     touchX.current = e.touches[0]?.clientX ?? null
@@ -156,14 +163,14 @@ function Lightbox({
       className="fixed inset-0 z-[70] flex items-center justify-center"
       role="dialog"
       aria-modal="true"
-      aria-label="عرض الصورة"
+      aria-label={t('pd.lightbox.aria')}
       style={{ backgroundColor: 'color-mix(in srgb, var(--color-black) 92%, transparent)' }}
       onClick={onClose}
     >
       <button
         type="button"
         onClick={onClose}
-        aria-label="إغلاق"
+        aria-label={t('header.close')}
         className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -191,21 +198,22 @@ function Lightbox({
 
         {count > 1 && (
           <>
-            <button
-              type="button"
-              onClick={() => onIndex(clamp(index + 1))}
-              aria-label="الصورة التالية"
-              className="absolute start-2 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
-            >
-              <ChevIcon dir="left" />
-            </button>
+            {/* Previous sits at the reading-start edge; next at the reading-end edge. */}
             <button
               type="button"
               onClick={() => onIndex(clamp(index - 1))}
-              aria-label="الصورة السابقة"
+              aria-label={t('pd.gallery.prev')}
+              className="absolute start-2 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
+            >
+              <ChevIcon dir={startChevron} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onIndex(clamp(index + 1))}
+              aria-label={t('pd.gallery.next')}
               className="absolute end-2 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
             >
-              <ChevIcon dir="right" />
+              <ChevIcon dir={endChevron} />
             </button>
             <span className="num absolute bottom-4 start-1/2 z-10 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-sm text-white" dir="ltr">
               {index + 1} / {count}
@@ -231,6 +239,7 @@ function Gallery({
 }) {
   const reduce = useReducedMotion()
   const canHover = useCanHover()
+  const { t, dir } = useLanguage()
   const [index, setIndex] = useState(0)
   const [broken, setBroken] = useState<Record<string, boolean>>({})
   const [hovering, setHovering] = useState(false)
@@ -245,15 +254,20 @@ function Gallery({
   const showImage = Boolean(src) && !broken[src]
   const zoomable = showImage
   const magnify = zoomable && canHover && !reduce && hovering
+  const rtl = dir === 'rtl'
+  // Chevrons follow reading order (start/end), not fixed physical sides.
+  const startChevron = rtl ? 'right' : 'left'
+  const endChevron = rtl ? 'left' : 'right'
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (count <= 1) return
+    // Arrow keys move by visual direction (mirrored in RTL).
     if (e.key === 'ArrowLeft') {
       e.preventDefault()
-      setIndex((i) => clamp(i + 1)) // RTL: left advances (next)
+      setIndex((i) => clamp(i + (rtl ? 1 : -1)))
     } else if (e.key === 'ArrowRight') {
       e.preventDefault()
-      setIndex((i) => clamp(i - 1))
+      setIndex((i) => clamp(i + (rtl ? -1 : 1)))
     }
   }
   function onMouseMove(e: React.MouseEvent) {
@@ -284,7 +298,7 @@ function Gallery({
       <div
         ref={stageRef}
         role="group"
-        aria-label="معرض صور المنتج"
+        aria-label={t('pd.gallery.aria')}
         tabIndex={0}
         onKeyDown={onKeyDown}
         onMouseEnter={() => setHovering(true)}
@@ -320,35 +334,35 @@ function Gallery({
 
         {count > 1 && (
           <>
-            {/* RTL: "next" advances the array and sits on the left. */}
+            {/* Previous at the reading-start edge, next at the reading-end edge. */}
             <button
               type="button"
-              aria-label="الصورة التالية"
-              onClick={(e) => {
-                e.stopPropagation()
-                setIndex((i) => clamp(i + 1))
-              }}
-              className={`${arrowBtn} start-2`}
-            >
-              <ChevIcon dir="left" />
-            </button>
-            <button
-              type="button"
-              aria-label="الصورة السابقة"
+              aria-label={t('pd.gallery.prev')}
               onClick={(e) => {
                 e.stopPropagation()
                 setIndex((i) => clamp(i - 1))
               }}
+              className={`${arrowBtn} start-2`}
+            >
+              <ChevIcon dir={startChevron} />
+            </button>
+            <button
+              type="button"
+              aria-label={t('pd.gallery.next')}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIndex((i) => clamp(i + 1))
+              }}
               className={`${arrowBtn} end-2`}
             >
-              <ChevIcon dir="right" />
+              <ChevIcon dir={endChevron} />
             </button>
           </>
         )}
 
         {zoomable && canHover && !reduce && (
           <span className="pointer-events-none absolute bottom-3 end-3 z-10 rounded-full bg-ink/60 px-2 py-1 text-[11px] text-white opacity-0 transition-opacity group-hover:opacity-100">
-            مرّر مؤشر الفأرة للتكبير
+            {t('pd.gallery.magnifyHint')}
           </span>
         )}
       </div>
@@ -361,7 +375,7 @@ function Gallery({
               key={i}
               type="button"
               onClick={() => setIndex(i)}
-              aria-label={`صورة ${i + 1}`}
+              aria-label={format(t('pd.gallery.thumb'), { n: i + 1 })}
               aria-current={i === index}
               className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-white ring-2 transition focus-visible:outline-none focus-visible:ring-yellow-deep ${
                 i === index ? 'ring-yellow' : 'ring-transparent hover:ring-gray-300'
@@ -425,6 +439,7 @@ export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const { addItem } = useCart()
   const { isFavorite, toggle: toggleFavorite } = useFavorites()
+  const { t, localize } = useLanguage()
   const reduce = useReducedMotion()
   const reviewsRef = useRef<HTMLDivElement>(null)
 
@@ -495,11 +510,11 @@ export default function ProductDetail() {
       <main className="bg-white">
         <div className="py-24 text-center">
           <p className="text-lg" style={{ color: 'var(--color-error)' }}>
-            تعذّر تحميل المنتج
+            {t('pd.error')}
           </p>
           <p className="mt-2 text-sm text-gray-600">{load.message}</p>
           <Link to="/shop" className="mt-6 inline-block text-ink underline decoration-yellow underline-offset-4">
-            العودة إلى المتجر
+            {t('pd.backToShop')}
           </Link>
         </div>
       </main>
@@ -510,9 +525,9 @@ export default function ProductDetail() {
     return (
       <main className="bg-white">
         <div className="py-24 text-center">
-          <p className="text-xl font-bold text-ink">المنتج غير موجود</p>
+          <p className="text-xl font-bold text-ink">{t('pd.notfound')}</p>
           <Link to="/shop" className="mt-6 inline-block text-ink underline decoration-yellow underline-offset-4">
-            العودة إلى المتجر
+            {t('pd.backToShop')}
           </Link>
         </div>
       </main>
@@ -521,6 +536,11 @@ export default function ProductDetail() {
 
   const { product } = load
   const favorited = isFavorite(product.id)
+  // Localized DB content (English when lang='en', Arabic fallback).
+  const name = localize(product, 'name')
+  const description = localize(product, 'description')
+  const brandName =
+    localize({ name_ar: product.brand_name_ar, name_en: product.brand_name_en }, 'name')
   const price = Number(product.price)
   const salePrice = product.sale_price != null ? Number(product.sale_price) : null
   const onSale = salePrice != null && salePrice < price
@@ -576,23 +596,23 @@ export default function ProductDetail() {
       quantity,
       requiresConsultation: product.requires_consultation,
     })
-    setFeedback(product.requires_consultation ? 'تمت الإضافة للحجز ✓' : 'تمت الإضافة ✓')
+    setFeedback(product.requires_consultation ? t('pd.addedReserve') : t('pd.added'))
   }
 
   return (
     <main className="bg-white">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
         {/* Breadcrumb */}
-        <nav className="text-sm text-gray-600" aria-label="مسار التنقل">
+        <nav className="text-sm text-gray-600" aria-label={t('pd.breadcrumb.aria')}>
           <Link to="/" className="transition-colors hover:text-ink">
-            الرئيسية
+            {t('pd.breadcrumb.home')}
           </Link>
           <span className="mx-2 text-gray-300">/</span>
           <Link to="/shop" className="transition-colors hover:text-ink">
-            {CATEGORY_LABELS_AR[product.category]}
+            {t(CATEGORY_LABEL_KEY[product.category])}
           </Link>
           <span className="mx-2 text-gray-300">/</span>
-          <span className="text-ink">{product.name_ar}</span>
+          <span className="text-ink">{name}</span>
         </nav>
 
         <div className="mt-8 grid gap-10 md:grid-cols-2 md:gap-14">
@@ -602,14 +622,14 @@ export default function ProductDetail() {
             <Gallery
               key={selectedVariant.id}
               images={images}
-              alt={product.name_ar}
+              alt={name}
               overlay={
                 <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-2">
                   {product.featured && (
-                    <span className="rounded-full bg-yellow px-3 py-1 text-xs font-bold text-ink">الأكثر مبيعاً</span>
+                    <span className="rounded-full bg-yellow px-3 py-1 text-xs font-bold text-ink">{t('pd.featured')}</span>
                   )}
                   {allOutOfStock && (
-                    <span className="rounded-full bg-ink/70 px-3 py-1 text-xs font-medium text-white">غير متوفر</span>
+                    <span className="rounded-full bg-ink/70 px-3 py-1 text-xs font-medium text-white">{t('pd.outOfStock')}</span>
                   )}
                 </div>
               }
@@ -618,15 +638,15 @@ export default function ProductDetail() {
 
           {/* INFO — left column in RTL */}
           <Reveal delay={0.08}>
-            {(product.brand_name_ar || product.name_en) && (
+            {(brandName || (product.name_en && product.name_en !== name)) && (
               <p className="text-sm text-gray-600">
-                {product.brand_name_ar}
-                {product.name_en && (
+                {brandName}
+                {product.name_en && product.name_en !== name && (
                   <span className="latin ms-2 text-gray-600">{product.name_en}</span>
                 )}
               </p>
             )}
-            <h1 className="mt-1 text-3xl font-extrabold leading-tight text-ink sm:text-4xl">{product.name_ar}</h1>
+            <h1 className="mt-1 text-3xl font-extrabold leading-tight text-ink sm:text-4xl">{name}</h1>
 
             {/* Rating summary */}
             {reviewStats.count > 0 && (
@@ -637,7 +657,7 @@ export default function ProductDetail() {
               >
                 <Stars value={reviewStats.avg} />
                 <span className="num">
-                  {reviewStats.avg.toFixed(1)} ({reviewStats.count} تقييم)
+                  {reviewStats.avg.toFixed(1)} ({format(t('pd.reviewsCount'), { n: reviewStats.count })})
                 </span>
               </button>
             )}
@@ -649,7 +669,7 @@ export default function ProductDetail() {
                   <span className="num text-3xl font-bold text-ink">{formatPrice(effectivePrice, product.currency)}</span>
                   <span className="num text-lg text-gray-600 line-through">{formatPrice(price, product.currency)}</span>
                   <span className="num rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
-                    وفّر {savePercent}٪
+                    {format(t('pd.save'), { x: savePercent })}
                   </span>
                 </>
               ) : (
@@ -658,8 +678,8 @@ export default function ProductDetail() {
             </div>
 
             {/* Description */}
-            {product.description_ar && (
-              <p className="mt-5 leading-relaxed text-gray-600">{product.description_ar}</p>
+            {description && (
+              <p className="mt-5 leading-relaxed text-gray-600">{description}</p>
             )}
 
             {/* Feature bullets */}
@@ -668,7 +688,7 @@ export default function ProductDetail() {
                 {product.features.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-ink">
                     <CheckIcon />
-                    <span>{f.text_ar}</span>
+                    <span>{localize(f, 'text')}</span>
                   </li>
                 ))}
               </ul>
@@ -678,25 +698,26 @@ export default function ProductDetail() {
             {hasVariants && (
               <div className="mt-6">
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-ink">اللون</span>
-                  <span className="text-gray-600">{selectedVariant.name_ar}</span>
+                  <span className="text-ink">{t('pd.color')}</span>
+                  <span className="text-gray-600">{localize(selectedVariant, 'name')}</span>
                   {!selectedVariant.in_stock && (
                     <span className="text-xs" style={{ color: 'var(--color-error)' }}>
-                      (غير متوفر)
+                      {t('pd.outOfStockParen')}
                     </span>
                   )}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {variants.map((v) => {
                     const activeSwatch = selectedVariant.id === v.id
+                    const vName = localize(v, 'name')
                     return (
                       <button
                         key={v.id}
                         type="button"
                         onClick={() => selectVariant(v)}
-                        aria-label={v.name_ar}
+                        aria-label={vName}
                         aria-pressed={activeSwatch}
-                        title={v.in_stock ? v.name_ar : `${v.name_ar} — غير متوفر`}
+                        title={v.in_stock ? vName : `${vName} — ${t('pd.outOfStock')}`}
                         className={`relative h-9 w-9 rounded-full border transition-transform ${
                           activeSwatch ? 'scale-110 border-yellow ring-2 ring-yellow' : 'border-gray-300'
                         } ${v.in_stock ? '' : 'opacity-45'}`}
@@ -719,13 +740,13 @@ export default function ProductDetail() {
 
             {/* Quantity */}
             <div className="mt-6 flex items-center gap-4">
-              <span className="text-sm text-ink">الكمية</span>
+              <span className="text-sm text-ink">{t('pd.qty')}</span>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
-                  aria-label="إنقاص الكمية"
+                  aria-label={t('pd.qty.dec')}
                   className="h-9 w-9 rounded-full border border-gray-300 text-lg text-ink transition-colors hover:border-yellow disabled:opacity-40"
                 >
                   −
@@ -734,7 +755,7 @@ export default function ProductDetail() {
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => q + 1)}
-                  aria-label="زيادة الكمية"
+                  aria-label={t('pd.qty.inc')}
                   className="h-9 w-9 rounded-full border border-gray-300 text-lg text-ink transition-colors hover:border-yellow"
                 >
                   +
@@ -745,12 +766,12 @@ export default function ProductDetail() {
             {/* Out of stock note — all colors vs the selected color */}
             {allOutOfStock ? (
               <p className="mt-6 text-sm font-medium" style={{ color: 'var(--color-error)' }}>
-                غير متوفر
+                {t('pd.outOfStock')}
               </p>
             ) : (
               !selectedVariant.in_stock && (
                 <p className="mt-6 text-sm font-medium" style={{ color: 'var(--color-error)' }}>
-                  غير متوفر بهذا اللون
+                  {t('pd.outOfStockColor')}
                 </p>
               )
             )}
@@ -758,7 +779,7 @@ export default function ProductDetail() {
             {/* Consultation notice */}
             {product.requires_consultation && (
               <p className="mt-6 rounded-[var(--radius)] border border-gray-300 bg-cream p-3 text-sm leading-relaxed text-gray-600">
-                هذا إطار طبي يحتاج فحص نظر وتركيب عدسات — سنتواصل معك لإتمام الفحص واختيار العدسات.
+                {t('pd.consultation')}
               </p>
             )}
 
@@ -770,7 +791,7 @@ export default function ProductDetail() {
                 disabled={!canAdd}
                 className="btn btn-primary flex-1"
               >
-                {product.requires_consultation ? 'احجز الآن' : 'أضف إلى السلة'}
+                {product.requires_consultation ? t('pd.reserve') : t('pd.addToCart')}
               </button>
               <button
                 type="button"
@@ -779,7 +800,7 @@ export default function ProductDetail() {
                 className="btn btn-secondary shrink-0"
               >
                 <HeartIcon filled={favorited} />
-                المفضلة
+                {t('header.favorites')}
               </button>
             </div>
 
@@ -791,10 +812,10 @@ export default function ProductDetail() {
 
             {/* Trust row */}
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-gray-100 pt-5 text-sm text-gray-600">
-              {TRUST.map((t) => (
-                <span key={t.text} className="inline-flex items-center gap-2">
-                  <TrustIcon path={t.path} />
-                  {t.text}
+              {TRUST.map((item) => (
+                <span key={item.key} className="inline-flex items-center gap-2">
+                  <TrustIcon path={item.path} />
+                  {t(item.key)}
                 </span>
               ))}
             </div>
@@ -804,19 +825,19 @@ export default function ProductDetail() {
         {/* REVIEWS */}
         <div ref={reviewsRef} className="mt-16 border-t border-gray-100 pt-12 sm:mt-20">
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">التقييمات</h2>
+            <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">{t('pd.reviews.heading')}</h2>
             {reviewStats.count > 0 && (
               <span className="inline-flex items-center gap-2 text-sm text-gray-600">
                 <Stars value={reviewStats.avg} />
                 <span className="num">
-                  {reviewStats.avg.toFixed(1)} ({reviewStats.count} تقييم)
+                  {reviewStats.avg.toFixed(1)} ({format(t('pd.reviewsCount'), { n: reviewStats.count })})
                 </span>
               </span>
             )}
           </div>
 
           {reviews.length === 0 ? (
-            <p className="mt-6 text-gray-600">لا توجد تقييمات بعد</p>
+            <p className="mt-6 text-gray-600">{t('pd.reviews.none')}</p>
           ) : (
             <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2">
               {reviews.map((r) => (

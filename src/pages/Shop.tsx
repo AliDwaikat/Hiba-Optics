@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import { formatPrice } from '../lib/format'
+import { useLanguage } from '../lib/language'
+import { AUDIENCE_LABEL_KEY, format, type UIKey } from '../lib/i18n'
 import {
   fetchBrands,
   fetchProducts,
@@ -15,35 +17,29 @@ type CategoryTab = Category | 'all'
 type AudienceTab = Audience | 'all'
 type SortKey = 'newest' | 'price_asc' | 'price_desc' | 'featured'
 
-const CATEGORY_TABS: { value: CategoryTab; label: string }[] = [
-  { value: 'all', label: 'الكل' },
-  { value: 'sunglasses', label: 'شمسية' },
-  { value: 'optical', label: 'طبية' },
-  { value: 'contact_lenses', label: 'عدسات لاصقة' },
-  { value: 'accessories', label: 'إكسسوارات' },
+const CATEGORY_TABS: { value: CategoryTab; labelKey: UIKey }[] = [
+  { value: 'all', labelKey: 'shop.cat.all' },
+  { value: 'sunglasses', labelKey: 'shop.cat.sunglasses' },
+  { value: 'optical', labelKey: 'shop.cat.optical' },
+  { value: 'contact_lenses', labelKey: 'shop.cat.contact_lenses' },
+  { value: 'accessories', labelKey: 'shop.cat.accessories' },
 ]
 const CATEGORY_VALUES = new Set<string>(['sunglasses', 'optical', 'contact_lenses', 'accessories'])
 
-const AUDIENCE_TABS: { value: AudienceTab; label: string }[] = [
-  { value: 'all', label: 'الكل' },
-  { value: 'men', label: 'رجالي' },
-  { value: 'women', label: 'نسائي' },
-  { value: 'unisex', label: 'للجنسين' },
-  { value: 'kids', label: 'أطفال' },
+const AUDIENCE_TABS: { value: AudienceTab; labelKey: UIKey }[] = [
+  { value: 'all', labelKey: 'shop.aud.all' },
+  { value: 'men', labelKey: 'shop.aud.men' },
+  { value: 'women', labelKey: 'shop.aud.women' },
+  { value: 'unisex', labelKey: 'shop.aud.unisex' },
+  { value: 'kids', labelKey: 'shop.aud.kids' },
 ]
-const AUDIENCE_LABELS: Record<Audience, string> = {
-  men: 'رجالي',
-  women: 'نسائي',
-  unisex: 'للجنسين',
-  kids: 'أطفال',
-}
 const AUDIENCE_VALUES = new Set<string>(['men', 'women', 'unisex', 'kids'])
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: 'newest', label: 'الأحدث' },
-  { value: 'price_asc', label: 'السعر: من الأقل للأعلى' },
-  { value: 'price_desc', label: 'السعر: من الأعلى للأقل' },
-  { value: 'featured', label: 'المميزة أولاً' },
+const SORT_OPTIONS: { value: SortKey; labelKey: UIKey }[] = [
+  { value: 'newest', labelKey: 'shop.sort.newest' },
+  { value: 'price_asc', labelKey: 'shop.sort.price_asc' },
+  { value: 'price_desc', labelKey: 'shop.sort.price_desc' },
+  { value: 'featured', labelKey: 'shop.sort.featured' },
 ]
 
 /** Price shown/used for filtering + sorting: sale_price when it's a real discount. */
@@ -92,6 +88,7 @@ function SearchIcon() {
 }
 
 export default function Shop() {
+  const { t, localize } = useLanguage()
   const [searchParams, setSearchParams] = useSearchParams()
   const [brands, setBrands] = useState<Brand[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -135,9 +132,10 @@ export default function Shop() {
   const [sort, setSort] = useState<SortKey>('newest')
   const [drawerOpen, setDrawerOpen] = useState(false)
 
+  // Map id → localized brand name (Arabic default, English when lang='en').
   const brandNameById = useMemo(
-    () => new Map(brands.map((b) => [b.id, b.name_ar])),
-    [brands],
+    () => new Map(brands.map((b) => [b.id, localize(b, 'name')])),
+    [brands, localize],
   )
 
   // Debounce the search input (~200ms).
@@ -200,12 +198,12 @@ export default function Shop() {
   }, [products])
 
   const allColors = useMemo(() => {
-    const map = new Map<string, { key: string; name_ar: string; hex: string }>()
+    const map = new Map<string, { key: string; name_ar: string; name_en: string; hex: string }>()
     for (const p of products) {
       for (const c of p.colors ?? []) {
         if (!c?.name_ar || !c?.hex) continue
         const key = colorKey(c.name_ar, c.hex)
-        if (!map.has(key)) map.set(key, { key, name_ar: c.name_ar, hex: c.hex })
+        if (!map.has(key)) map.set(key, { key, name_ar: c.name_ar, name_en: c.name_en ?? '', hex: c.hex })
       }
     }
     return Array.from(map.values())
@@ -308,7 +306,7 @@ export default function Shop() {
       <div className="space-y-5">
         {/* Audience */}
         <div>
-          <p className="mb-2 text-sm font-semibold text-ink">الفئة المستهدفة</p>
+          <p className="mb-2 text-sm font-semibold text-ink">{t('shop.aud.label')}</p>
           <div className="flex flex-wrap gap-2">
             {AUDIENCE_TABS.map((a) => (
               <button
@@ -317,7 +315,7 @@ export default function Shop() {
                 onClick={() => setAudience(a.value)}
                 className={pillClass(audience === a.value)}
               >
-                {a.label}
+                {t(a.labelKey)}
               </button>
             ))}
           </div>
@@ -327,14 +325,14 @@ export default function Shop() {
         {bounds.max > bounds.min && (
           <div>
             <p className="mb-2 text-sm font-semibold text-ink">
-              السعر:{' '}
+              {t('shop.price.label')}{' '}
               <span className="num font-normal text-gray-600">
                 {formatPrice(range.min, 'ILS')} – {formatPrice(range.max, 'ILS')}
               </span>
             </p>
             <div className="flex items-center gap-3">
               <label className="flex-1">
-                <span className="mb-1 block text-xs text-gray-600">من</span>
+                <span className="mb-1 block text-xs text-gray-600">{t('shop.price.min')}</span>
                 <input
                   type="number"
                   dir="ltr"
@@ -344,11 +342,11 @@ export default function Shop() {
                   value={range.min}
                   onChange={(e) => setMin(e.target.value)}
                   className="field"
-                  aria-label="أقل سعر"
+                  aria-label={t('shop.price.minAria')}
                 />
               </label>
               <label className="flex-1">
-                <span className="mb-1 block text-xs text-gray-600">إلى</span>
+                <span className="mb-1 block text-xs text-gray-600">{t('shop.price.max')}</span>
                 <input
                   type="number"
                   dir="ltr"
@@ -358,7 +356,7 @@ export default function Shop() {
                   value={range.max}
                   onChange={(e) => setMax(e.target.value)}
                   className="field"
-                  aria-label="أعلى سعر"
+                  aria-label={t('shop.price.maxAria')}
                 />
               </label>
             </div>
@@ -367,31 +365,32 @@ export default function Shop() {
 
         {/* Availability */}
         <div>
-          <p className="mb-2 text-sm font-semibold text-ink">التوفّر</p>
+          <p className="mb-2 text-sm font-semibold text-ink">{t('shop.avail.label')}</p>
           <button
             type="button"
             onClick={() => setInStockOnly((v) => !v)}
             aria-pressed={inStockOnly}
             className={pillClass(inStockOnly)}
           >
-            المتوفر فقط
+            {t('shop.avail.inStock')}
           </button>
         </div>
 
         {/* Colors */}
         {allColors.length > 0 && (
           <div>
-            <p className="mb-2 text-sm font-semibold text-ink">اللون</p>
+            <p className="mb-2 text-sm font-semibold text-ink">{t('shop.color.label')}</p>
             <div className="flex flex-wrap gap-2">
               {allColors.map((c) => {
                 const selected = selectedColors.has(c.key)
+                const colorName = localize(c, 'name')
                 return (
                   <button
                     key={c.key}
                     type="button"
                     onClick={() => toggleColor(c.key)}
                     aria-pressed={selected}
-                    title={c.name_ar}
+                    title={colorName}
                     className={`flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition-colors ${
                       selected ? 'border-yellow-deep bg-gray-100 text-ink' : 'border-gray-300 text-gray-600 hover:text-ink'
                     }`}
@@ -401,7 +400,7 @@ export default function Shop() {
                       style={{ backgroundColor: c.hex }}
                       aria-hidden="true"
                     />
-                    {c.name_ar}
+                    {colorName}
                   </button>
                 )
               })}
@@ -416,8 +415,9 @@ export default function Shop() {
   function priceChipLabel(): string {
     if (range.min > bounds.min && range.max < bounds.max)
       return `${formatPrice(range.min, 'ILS')} – ${formatPrice(range.max, 'ILS')}`
-    if (range.max < bounds.max) return `أقل من ${formatPrice(range.max, 'ILS')}`
-    return `أكثر من ${formatPrice(range.min, 'ILS')}`
+    if (range.max < bounds.max)
+      return format(t('shop.price.under'), { x: formatPrice(range.max, 'ILS') })
+    return format(t('shop.price.over'), { x: formatPrice(range.min, 'ILS') })
   }
 
   function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
@@ -427,7 +427,7 @@ export default function Shop() {
         <button
           type="button"
           onClick={onRemove}
-          aria-label={`إزالة ${label}`}
+          aria-label={format(t('shop.chip.remove'), { label })}
           className="text-gray-600 transition-colors hover:text-ink"
         >
           <ClearIcon />
@@ -455,11 +455,15 @@ export default function Shop() {
               </svg>
             </span>
             <span className="text-sm text-ink sm:text-base">
-              <span className="font-bold">اعثر على إطارك</span>
-              <span className="hidden text-gray-600 sm:inline"> — إطارات تناسب شكل وجهك</span>
+              <span className="font-bold">{t('shop.finder.title')}</span>
+              <span className="hidden text-gray-600 sm:inline">{t('shop.finder.subtitle')}</span>
             </span>
           </span>
-          <span className="shrink-0 text-sm font-medium text-yellow-deep">ابدأ ←</span>
+          <span className="shrink-0 text-sm font-medium text-yellow-deep">
+            {t('shop.finder.start')}{' '}
+            <span aria-hidden="true" className="rtl:inline ltr:hidden">←</span>
+            <span aria-hidden="true" className="ltr:inline rtl:hidden">→</span>
+          </span>
         </Link>
 
         {/* Search + sort */}
@@ -472,15 +476,15 @@ export default function Shop() {
               type="search"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="ابحث بالاسم أو الموديل…"
-              aria-label="بحث"
+              placeholder={t('shop.search.placeholder')}
+              aria-label={t('shop.search.aria')}
               className="field ps-10 pe-9"
             />
             {searchInput && (
               <button
                 type="button"
                 onClick={() => setSearchInput('')}
-                aria-label="مسح البحث"
+                aria-label={t('shop.search.clear')}
                 className="absolute inset-y-0 end-3 flex items-center text-gray-600 transition-colors hover:text-ink"
               >
                 <ClearIcon />
@@ -495,7 +499,7 @@ export default function Shop() {
               onClick={() => setDrawerOpen(true)}
               className="inline-flex items-center gap-2 rounded-[var(--radius)] border border-gray-300 px-4 py-2.5 text-sm font-medium text-ink md:hidden"
             >
-              الفلاتر
+              {t('shop.filters')}
               {advancedActiveCount > 0 && (
                 <span className="num flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-yellow px-1 text-xs font-bold text-ink">
                   {advancedActiveCount}
@@ -504,16 +508,16 @@ export default function Shop() {
             </button>
 
             <label className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">ترتيب</span>
+              <span className="text-sm text-gray-600">{t('shop.sort.label')}</span>
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
-                aria-label="ترتيب"
+                aria-label={t('shop.sort.label')}
                 className="field w-auto"
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.label}
+                    {t(o.labelKey)}
                   </option>
                 ))}
               </select>
@@ -530,7 +534,7 @@ export default function Shop() {
               onClick={() => setCategory(tab.value)}
               className={pillClass(category === tab.value)}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>
@@ -539,7 +543,7 @@ export default function Shop() {
         {brands.length > 0 && (
           <div className="mt-3 -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
             <button type="button" onClick={() => setBrandId(null)} className={pillClass(brandId === null)}>
-              كل البراندات
+              {t('shop.brand.all')}
             </button>
             {brands.map((brand) => (
               <button
@@ -548,7 +552,7 @@ export default function Shop() {
                 onClick={() => setBrandId(brand.id)}
                 className={pillClass(brandId === brand.id)}
               >
-                {brand.name_ar}
+                {localize(brand, 'name')}
               </button>
             ))}
           </div>
@@ -561,29 +565,29 @@ export default function Shop() {
 
         {/* Active-filters summary + result count */}
         <div className="mt-5 flex flex-wrap items-center gap-2">
-          <span className="num text-sm text-gray-600">{results.length} نتيجة</span>
+          <span className="num text-sm text-gray-600">{format(t('shop.results'), { n: results.length })}</span>
           {anyFilterActive && <span className="mx-1 h-4 w-px bg-gray-300" aria-hidden="true" />}
           {search.trim() !== '' && (
-            <Chip label={`بحث: ${search.trim()}`} onRemove={() => setSearchInput('')} />
+            <Chip label={format(t('shop.search.chip'), { q: search.trim() })} onRemove={() => setSearchInput('')} />
           )}
           {category !== 'all' && (
             <Chip
-              label={CATEGORY_TABS.find((c) => c.value === category)?.label ?? ''}
+              label={t(CATEGORY_TABS.find((c) => c.value === category)?.labelKey ?? 'shop.cat.all')}
               onRemove={() => setCategory('all')}
             />
           )}
           {brandId && (
-            <Chip label={brandNameById.get(brandId) ?? 'براند'} onRemove={() => setBrandId(null)} />
+            <Chip label={brandNameById.get(brandId) ?? ''} onRemove={() => setBrandId(null)} />
           )}
           {audience !== 'all' && (
-            <Chip label={AUDIENCE_LABELS[audience as Audience]} onRemove={() => setAudience('all')} />
+            <Chip label={t(AUDIENCE_LABEL_KEY[audience as Audience])} onRemove={() => setAudience('all')} />
           )}
           {priceActive && <Chip label={priceChipLabel()} onRemove={resetPrice} />}
-          {inStockOnly && <Chip label="المتوفر فقط" onRemove={() => setInStockOnly(false)} />}
+          {inStockOnly && <Chip label={t('shop.avail.inStock')} onRemove={() => setInStockOnly(false)} />}
           {Array.from(selectedColors).map((key) => {
             const c = allColors.find((x) => x.key === key)
             return (
-              <Chip key={key} label={c?.name_ar ?? 'لون'} onRemove={() => toggleColor(key)} />
+              <Chip key={key} label={c ? localize(c, 'name') : ''} onRemove={() => toggleColor(key)} />
             )
           })}
           {anyFilterActive && (
@@ -592,7 +596,7 @@ export default function Shop() {
               onClick={clearAll}
               className="text-sm font-medium text-gray-600 underline-offset-2 transition-colors hover:text-ink hover:underline"
             >
-              مسح الكل
+              {t('shop.clearAll')}
             </button>
           )}
         </div>
@@ -608,15 +612,15 @@ export default function Shop() {
           ) : error ? (
             <div className="py-20 text-center">
               <p className="text-lg" style={{ color: 'var(--color-error)' }}>
-                تعذّر تحميل المنتجات
+                {t('shop.error')}
               </p>
               <p className="mt-2 text-sm text-gray-600">{error}</p>
             </div>
           ) : results.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="text-lg text-ink">لا توجد منتجات مطابقة</p>
+              <p className="text-lg text-ink">{t('shop.empty.title')}</p>
               <button type="button" onClick={clearAll} className="btn btn-secondary mt-6">
-                مسح الفلاتر
+                {t('shop.empty.clear')}
               </button>
             </div>
           ) : (
@@ -648,17 +652,17 @@ export default function Shop() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="الفلاتر"
+          aria-label={t('shop.drawer.title')}
           className={`absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col rounded-t-[var(--radius-lg)] bg-white shadow-xl transition-transform duration-300 ease-out motion-reduce:transition-none ${
             drawerOpen ? 'translate-y-0' : 'translate-y-full'
           }`}
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-            <h2 className="text-lg font-bold text-ink">الفلاتر</h2>
+            <h2 className="text-lg font-bold text-ink">{t('shop.drawer.title')}</h2>
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}
-              aria-label="إغلاق"
+              aria-label={t('header.close')}
               className="text-ink"
             >
               <ClearIcon />
@@ -673,10 +677,10 @@ export default function Shop() {
               }}
               className="btn btn-secondary flex-1"
             >
-              مسح الكل
+              {t('shop.clearAll')}
             </button>
             <button type="button" onClick={() => setDrawerOpen(false)} className="btn btn-primary flex-1">
-              تطبيق
+              {t('shop.apply')}
             </button>
           </div>
         </div>

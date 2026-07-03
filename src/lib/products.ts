@@ -74,9 +74,10 @@ export interface Product {
   position: number
 }
 
-/** A product plus its resolved Arabic brand name (from the brands join). */
+/** A product plus its resolved brand name (from the brands join, both languages). */
 export interface ProductWithBrand extends Product {
   brand_name_ar: string | null
+  brand_name_en: string | null
 }
 
 /** Arabic labels for product categories (shared by the shop filters and breadcrumbs). */
@@ -189,7 +190,7 @@ export async function fetchFeaturedProduct(): Promise<Product | null> {
 export async function fetchProduct(id: string): Promise<ProductWithBrand | null> {
   const { data, error } = await supabase
     .from('products')
-    .select(`${PRODUCT_COLUMNS}, brands(name_ar)`)
+    .select(`${PRODUCT_COLUMNS}, brands(name_ar, name_en)`)
     .eq('published', true)
     .eq('id', id)
     .maybeSingle()
@@ -198,7 +199,10 @@ export async function fetchProduct(id: string): Promise<ProductWithBrand | null>
   if (!data) return null
 
   const { brands, ...product } = data as unknown as Product & {
-    brands: { name_ar: string } | { name_ar: string }[] | null
+    brands:
+      | { name_ar: string; name_en: string }
+      | { name_ar: string; name_en: string }[]
+      | null
   }
   const brandRow = Array.isArray(brands) ? brands[0] : brands
   return {
@@ -206,6 +210,7 @@ export async function fetchProduct(id: string): Promise<ProductWithBrand | null>
     features: product.features ?? [],
     variants: Array.isArray(product.variants) ? product.variants : [],
     brand_name_ar: brandRow?.name_ar ?? null,
+    brand_name_en: brandRow?.name_en ?? null,
   }
 }
 

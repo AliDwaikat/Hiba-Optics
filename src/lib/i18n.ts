@@ -124,6 +124,148 @@ export const UI = {
     en: 'Explore our collection of top brands, or book a comprehensive eye exam with our specialists.',
   },
   'closing.shop': { ar: 'تسوّق الآن', en: 'Shop Now' },
+
+  // ---- Shop: finder entry ----
+  'shop.finder.title': { ar: 'اعثر على إطارك', en: 'Find your frame' },
+  'shop.finder.subtitle': {
+    ar: ' — إطارات تناسب شكل وجهك',
+    en: ' — frames that suit your face shape',
+  },
+  'shop.finder.start': { ar: 'ابدأ', en: 'Start' },
+
+  // ---- Shop: search + sort ----
+  'shop.search.placeholder': { ar: 'ابحث بالاسم أو الموديل…', en: 'Search by name or model…' },
+  'shop.search.aria': { ar: 'بحث', en: 'Search' },
+  'shop.search.clear': { ar: 'مسح البحث', en: 'Clear search' },
+  'shop.search.chip': { ar: 'بحث: {q}', en: 'Search: {q}' },
+  'shop.filters': { ar: 'الفلاتر', en: 'Filters' },
+  'shop.apply': { ar: 'تطبيق', en: 'Apply' },
+  'shop.sort.label': { ar: 'ترتيب', en: 'Sort' },
+  'shop.sort.newest': { ar: 'الأحدث', en: 'Newest' },
+  'shop.sort.price_asc': { ar: 'السعر: من الأقل للأعلى', en: 'Price: low to high' },
+  'shop.sort.price_desc': { ar: 'السعر: من الأعلى للأقل', en: 'Price: high to low' },
+  'shop.sort.featured': { ar: 'المميزة أولاً', en: 'Featured first' },
+
+  // ---- Shop: category / brand / audience filters ----
+  'shop.cat.all': { ar: 'الكل', en: 'All' },
+  'shop.cat.sunglasses': { ar: 'شمسية', en: 'Sunglasses' },
+  'shop.cat.optical': { ar: 'طبية', en: 'Optical' },
+  'shop.cat.contact_lenses': { ar: 'عدسات لاصقة', en: 'Contact lenses' },
+  'shop.cat.accessories': { ar: 'إكسسوارات', en: 'Accessories' },
+  'shop.brand.all': { ar: 'كل البراندات', en: 'All brands' },
+  'shop.aud.label': { ar: 'الفئة المستهدفة', en: 'Audience' },
+  'shop.aud.all': { ar: 'الكل', en: 'All' },
+  'shop.aud.men': { ar: 'رجالي', en: 'Men' },
+  'shop.aud.women': { ar: 'نسائي', en: 'Women' },
+  'shop.aud.unisex': { ar: 'للجنسين', en: 'Unisex' },
+  'shop.aud.kids': { ar: 'أطفال', en: 'Kids' },
+
+  // ---- Shop: price / availability / color ----
+  'shop.price.label': { ar: 'السعر:', en: 'Price:' },
+  'shop.price.min': { ar: 'من', en: 'Min' },
+  'shop.price.max': { ar: 'إلى', en: 'Max' },
+  'shop.price.minAria': { ar: 'أقل سعر', en: 'Minimum price' },
+  'shop.price.maxAria': { ar: 'أعلى سعر', en: 'Maximum price' },
+  'shop.price.under': { ar: 'أقل من {x}', en: 'Under {x}' },
+  'shop.price.over': { ar: 'أكثر من {x}', en: 'Over {x}' },
+  'shop.avail.label': { ar: 'التوفّر', en: 'Availability' },
+  'shop.avail.inStock': { ar: 'المتوفر فقط', en: 'In stock only' },
+  'shop.color.label': { ar: 'اللون', en: 'Color' },
+
+  // ---- Shop: results + chips + states ----
+  'shop.results': { ar: '{n} نتيجة', en: '{n} results' },
+  'shop.clearAll': { ar: 'مسح الكل', en: 'Clear all' },
+  'shop.chip.remove': { ar: 'إزالة {label}', en: 'Remove {label}' },
+  'shop.empty.title': { ar: 'لا توجد منتجات مطابقة', en: 'No matching products' },
+  'shop.empty.clear': { ar: 'مسح الفلاتر', en: 'Clear filters' },
+  'shop.error': { ar: 'تعذّر تحميل المنتجات', en: "Couldn't load products" },
+  'shop.drawer.title': { ar: 'الفلاتر', en: 'Filters' },
+
+  // ---- Product card (shared) ----
+  'card.consultation': { ar: 'بحاجة لفحص نظر', en: 'Eye exam required' },
+  'card.outOfStock': { ar: 'غير متوفر', en: 'Out of stock' },
+  'card.reserve': { ar: 'احجز', en: 'Reserve' },
+  'card.add': { ar: 'أضف للسلة', en: 'Add to cart' },
+  'card.added': { ar: 'تمت الإضافة ✓', en: 'Added ✓' },
+
+  // ---- Product detail ----
+  'pd.breadcrumb.aria': { ar: 'مسار التنقل', en: 'Breadcrumb' },
+  'pd.breadcrumb.home': { ar: 'الرئيسية', en: 'Home' },
+  'pd.reviewsCount': { ar: '{n} تقييم', en: '{n} reviews' },
+  'pd.save': { ar: 'وفّر {x}٪', en: 'Save {x}%' },
+  'pd.color': { ar: 'اللون', en: 'Color' },
+  'pd.outOfStockParen': { ar: '(غير متوفر)', en: '(out of stock)' },
+  'pd.qty': { ar: 'الكمية', en: 'Quantity' },
+  'pd.qty.dec': { ar: 'إنقاص الكمية', en: 'Decrease quantity' },
+  'pd.qty.inc': { ar: 'زيادة الكمية', en: 'Increase quantity' },
+  'pd.outOfStock': { ar: 'غير متوفر', en: 'Out of stock' },
+  'pd.outOfStockColor': { ar: 'غير متوفر بهذا اللون', en: 'Out of stock in this color' },
+  'pd.consultation': {
+    ar: 'هذا إطار طبي يحتاج فحص نظر وتركيب عدسات — سنتواصل معك لإتمام الفحص واختيار العدسات.',
+    en: "This is a prescription frame that needs an eye exam and lens fitting — we'll contact you to complete the exam and choose your lenses.",
+  },
+  'pd.addToCart': { ar: 'أضف إلى السلة', en: 'Add to Cart' },
+  'pd.reserve': { ar: 'احجز الآن', en: 'Reserve Now' },
+  'pd.added': { ar: 'تمت الإضافة ✓', en: 'Added ✓' },
+  'pd.addedReserve': { ar: 'تمت الإضافة للحجز ✓', en: 'Added to reservation ✓' },
+  'pd.trust.authentic': { ar: 'منتج أصلي', en: 'Authentic product' },
+  'pd.trust.quality': { ar: 'ضمان الجودة', en: 'Quality guarantee' },
+  'pd.trust.fitting': { ar: 'فحص وتركيب في المحل', en: 'In-store exam & fitting' },
+  'pd.reviews.heading': { ar: 'التقييمات', en: 'Reviews' },
+  'pd.reviews.none': { ar: 'لا توجد تقييمات بعد', en: 'No reviews yet' },
+  'pd.featured': { ar: 'الأكثر مبيعاً', en: 'Best seller' },
+  'pd.notfound': { ar: 'المنتج غير موجود', en: 'Product not found' },
+  'pd.backToShop': { ar: 'العودة إلى المتجر', en: 'Back to shop' },
+  'pd.error': { ar: 'تعذّر تحميل المنتج', en: "Couldn't load product" },
+  'pd.gallery.aria': { ar: 'معرض صور المنتج', en: 'Product image gallery' },
+  'pd.gallery.next': { ar: 'الصورة التالية', en: 'Next image' },
+  'pd.gallery.prev': { ar: 'الصورة السابقة', en: 'Previous image' },
+  'pd.gallery.thumb': { ar: 'صورة {n}', en: 'Image {n}' },
+  'pd.gallery.magnifyHint': { ar: 'مرّر مؤشر الفأرة للتكبير', en: 'Hover to zoom' },
+  'pd.lightbox.aria': { ar: 'عرض الصورة', en: 'Image viewer' },
+
+  // ---- Finder ----
+  'finder.eyebrow': { ar: 'مكتشف الإطارات', en: 'Frame Finder' },
+  'finder.intro.title': {
+    ar: 'اعثر على الإطار المثالي لوجهك',
+    en: 'Find the perfect frame for your face',
+  },
+  'finder.intro.desc': {
+    ar: 'أجب عن ثلاثة أسئلة قصيرة ودعنا نقترح لك الإطارات التي تناسب شكل وجهك وذوقك.',
+    en: "Answer three quick questions and we'll suggest frames that suit your face shape and taste.",
+  },
+  'finder.start': { ar: 'ابدأ', en: 'Start' },
+  'finder.step': { ar: 'الخطوة {n} من {total}', en: 'Step {n} of {total}' },
+  'finder.back': { ar: 'رجوع', en: 'Back' },
+  'finder.skip': { ar: 'تخطّي', en: 'Skip' },
+  'finder.q1': { ar: 'ما شكل وجهك؟', en: "What's your face shape?" },
+  'finder.q1.sub': { ar: 'اختر الشكل الأقرب لملامح وجهك.', en: 'Pick the shape closest to your features.' },
+  'finder.face.oval': { ar: 'بيضاوي', en: 'Oval' },
+  'finder.face.round': { ar: 'دائري', en: 'Round' },
+  'finder.face.square': { ar: 'مربّع', en: 'Square' },
+  'finder.face.heart': { ar: 'قلب', en: 'Heart' },
+  'finder.face.long': { ar: 'طويل', en: 'Long' },
+  'finder.notSure': { ar: 'غير متأكد؟', en: 'Not sure?' },
+  'finder.tip': {
+    ar: '',
+    en: 'Stand in front of a mirror and look at the widest part of your face: if your forehead is wider and narrows toward the chin, your face is heart-shaped; if the forehead and jaw are equally wide with clear angles, it’s square; if the width and length are similar with soft curves, it’s round; if it’s longer than it is wide, it’s long; and if it’s balanced and slightly longer than it is wide, it’s oval.',
+  },
+  'finder.q2': { ar: 'أي نوع تفضّل؟', en: 'Which type do you prefer?' },
+  'finder.q2.sub': {
+    ar: 'اختر نوع النظارة الذي تبحث عنه.',
+    en: "Choose the type of eyewear you're looking for.",
+  },
+  'finder.q3': { ar: 'لمن؟', en: 'Who is it for?' },
+  'finder.q3.sub': { ar: 'اختياري — يمكنك التخطّي.', en: 'Optional — you can skip.' },
+  'finder.results.suggested': { ar: 'منتجات مقترحة', en: 'Suggested products' },
+  'finder.results.broadenedNote': {
+    ar: 'لم نجد تطابقاً دقيقاً وفق اختياراتك، إليك اقتراحات من مجموعتنا.',
+    en: "We couldn't find an exact match for your choices — here are some suggestions from our collection.",
+  },
+  'finder.count': { ar: '{n} إطار', en: '{n} frames' },
+  'finder.empty': { ar: 'لا توجد إطارات متاحة حالياً', en: 'No frames available right now' },
+  'finder.restart': { ar: 'أعد الاختبار', en: 'Restart quiz' },
+  'finder.browseAll': { ar: 'تصفّح كل النظارات', en: 'Browse all eyewear' },
 } satisfies Record<string, Entry>
 
 export type UIKey = keyof typeof UI
@@ -132,6 +274,33 @@ export type UIKey = keyof typeof UI
 export function translate(key: UIKey, lang: Lang): string {
   return UI[key][lang]
 }
+
+/**
+ * Interpolate `{name}` placeholders in a (usually translated) string.
+ * e.g. format(t('shop.results'), { n: 12 }) → "12 results".
+ * Numbers are stringified as-is (Western digits).
+ */
+export function format(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, k: string) =>
+    k in vars ? String(vars[k]) : `{${k}}`,
+  )
+}
+
+/** Category value → UI key (localized label for filters + breadcrumbs). */
+export const CATEGORY_LABEL_KEY = {
+  sunglasses: 'shop.cat.sunglasses',
+  optical: 'shop.cat.optical',
+  contact_lenses: 'shop.cat.contact_lenses',
+  accessories: 'shop.cat.accessories',
+} satisfies Record<string, UIKey>
+
+/** Audience value → UI key (localized label for filters + chips). */
+export const AUDIENCE_LABEL_KEY = {
+  men: 'shop.aud.men',
+  women: 'shop.aud.women',
+  unisex: 'shop.aud.unisex',
+  kids: 'shop.aud.kids',
+} satisfies Record<string, UIKey>
 
 /**
  * Pick a localized DB field: `${base}_en` when lang='en' (falling back to
