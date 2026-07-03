@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import { formatPrice } from '../lib/format'
 import {
@@ -433,6 +433,29 @@ export default function Shop() {
   return (
     <main className="min-h-screen bg-white">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        {/* Face-shape frame finder entry point */}
+        <Link
+          to="/finder"
+          className="mb-4 flex items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-gray-300 bg-gray-100 px-4 py-3 transition-colors hover:border-yellow-deep"
+        >
+          <span className="flex items-center gap-3">
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+              style={{ backgroundColor: 'var(--color-yellow)' }}
+              aria-hidden="true"
+            >
+              <svg width="20" height="20" viewBox="0 0 48 48" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinejoin="round">
+                <ellipse cx="24" cy="24" rx="13" ry="18" />
+              </svg>
+            </span>
+            <span className="text-sm text-ink sm:text-base">
+              <span className="font-bold">اعثر على إطارك</span>
+              <span className="hidden text-gray-600 sm:inline"> — إطارات تناسب شكل وجهك</span>
+            </span>
+          </span>
+          <span className="shrink-0 text-sm font-medium text-yellow-deep">ابدأ ←</span>
+        </Link>
+
         {/* Search + sort */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">

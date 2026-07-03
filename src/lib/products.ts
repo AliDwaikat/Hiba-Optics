@@ -7,6 +7,14 @@ import { supabase } from './supabase'
 
 export type Category = 'sunglasses' | 'optical' | 'contact_lenses' | 'accessories'
 export type Audience = 'men' | 'women' | 'unisex' | 'kids'
+export type FrameShape =
+  | 'round'
+  | 'square'
+  | 'rectangular'
+  | 'aviator'
+  | 'cat_eye'
+  | 'oval'
+  | 'browline'
 
 /** A single selectable color on a product (products.colors jsonb). */
 export interface ProductColor {
@@ -40,6 +48,7 @@ export interface Product {
   description_en: string | null
   category: Category
   audience: Audience
+  frame_shape: FrameShape | null
   price: number
   sale_price: number | null
   currency: string
@@ -70,6 +79,7 @@ const BRAND_COLUMNS = 'id, name_ar, name_en, logo_url, position, published'
 
 const PRODUCT_COLUMNS =
   'id, brand_id, name_ar, name_en, model, description_ar, description_en, category, audience, ' +
+  'frame_shape, ' +
   'price, sale_price, currency, images, colors, features, requires_consultation, in_stock, ' +
   'featured, published, position'
 
