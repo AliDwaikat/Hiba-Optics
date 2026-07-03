@@ -14,6 +14,7 @@ import {
   type ProductWithBrand,
   type Review,
 } from '../lib/products'
+import { galleryImages } from '../lib/productImages'
 
 /* ---------- Icons ---------- */
 function StarIcon({ filled }: { filled: boolean }) {
@@ -219,7 +220,10 @@ export default function ProductDetail() {
       ]
   const selectedVariant = variants.find((v) => v.id === selectedVariantId) ?? variants[0]
 
-  const images = selectedVariant.images
+  // Gallery for the selected variant, with graceful fallback (selected variant's
+  // images → first variant that has images → flat images[] → placeholder). Uses
+  // the SAME shared helper as the product card so they never disagree.
+  const images = galleryImages(product, selectedVariant)
   const allOutOfStock = variants.every((v) => !v.in_stock)
   const canAdd = selectedVariant.in_stock
 
@@ -246,7 +250,7 @@ export default function ProductDetail() {
       name_en: product.name_en,
       brand_ar: product.brand_name_ar ?? '',
       price: effectivePrice,
-      image: selectedVariant.images[0] ?? '',
+      image: images[0] ?? '',
       color,
       variantId: hasVariants ? selectedVariant.id : null,
       quantity,

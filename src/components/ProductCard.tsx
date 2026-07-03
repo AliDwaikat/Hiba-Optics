@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { Product } from '../lib/products'
 import { formatPrice } from '../lib/format'
+import { galleryImages, primaryImage } from '../lib/productImages'
 import { useFavorites } from '../lib/favorites'
 import { useCart } from '../lib/cart'
 import HeartIcon from './HeartIcon'
@@ -27,15 +28,13 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
 
   const fav = isFavorite(product.id)
 
-  // Representative variant = first in-stock (or first). Card imagery + quick-add
-  // come from variants now; fall back to the flat images[] backup, then placeholder.
+  // Representative variant = first in-stock (or first) — drives quick-add identity.
+  // The displayed image uses the SHARED helper so the card and detail agree.
   const variants = product.variants ?? []
   const repVariant = variants.find((v) => v.in_stock) ?? variants[0] ?? null
-  const gallery =
-    repVariant && repVariant.images.length > 0 ? repVariant.images : product.images ?? []
-
-  const imageUrl = gallery[0]
-  const secondUrl = gallery[1]
+  const imageUrl = primaryImage(product) ?? undefined
+  // A second, distinct image (from the rep variant's gallery) for the hover crossfade.
+  const secondUrl = galleryImages(product, repVariant).find((u) => u !== imageUrl)
   const showImage = Boolean(imageUrl) && !imageBroken
   const hasSecond = showImage && Boolean(secondUrl) && !secondBroken
 
@@ -56,7 +55,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
       name_en: product.name_en,
       brand_ar: brandName ?? '',
       price: effectivePrice,
-      image: repVariant?.images[0] ?? imageUrl ?? '',
+      image: galleryImages(product, repVariant)[0] ?? imageUrl ?? '',
       color: repVariant
         ? { name_ar: repVariant.name_ar, name_en: repVariant.name_en, hex: repVariant.hex }
         : null,
@@ -104,12 +103,14 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
         }}
       >
         <div
-          className={`relative aspect-square w-full overflow-hidden rounded-xl bg-gray-900 ${
+          className={`relative aspect-square w-full overflow-hidden rounded-xl bg-gray-100 ${
             product.in_stock ? '' : 'opacity-60'
           }`}
         >
           {showImage ? (
             <>
+              {/* Eyewear is wide/short — object-contain shows the whole frame,
+                  centered on a clean tile (never cropped). */}
               <motion.img
                 src={imageUrl}
                 alt={product.name_ar}
@@ -117,7 +118,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
                 onError={() => setImageBroken(true)}
                 animate={{ scale: animateHover ? 1.04 : 1 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="absolute inset-0 h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full object-contain p-4 sm:p-5"
               />
               {hasSecond && (
                 <motion.img
@@ -129,12 +130,12 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
                   onError={() => setSecondBroken(true)}
                   animate={{ scale: animateHover ? 1.04 : 1, opacity: animateHover ? 1 : 0 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-contain p-4 sm:p-5"
                 />
               )}
             </>
           ) : (
-            <ProductImagePlaceholder />
+            <ProductImagePlaceholder light />
           )}
 
           {/* Favorite toggle — does not open the product link */}
