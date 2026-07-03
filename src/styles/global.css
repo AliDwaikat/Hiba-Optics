@@ -26,9 +26,9 @@
   --color-success: #22c55e;
   --color-error: #ef4444;
 
-  /* Typography — single family (Rubik), hierarchy via weight contrast */
-  --font-base: 'Rubik', system-ui, sans-serif; /* Arabic + general UI + body */
-  --font-latin: 'Rubik', system-ui, sans-serif; /* Latin brand names, prices, numbers */
+  /* Typography — single family (Tajawal), hierarchy via weight contrast */
+  --font-base: 'Tajawal', system-ui, sans-serif; /* Arabic + general UI + body */
+  --font-latin: 'Tajawal', system-ui, sans-serif; /* Latin brand names, prices, numbers */
 
   /* Radius scale — rounded to echo the logo */
   --radius-sm: 8px;
@@ -81,11 +81,11 @@ body {
     line-height: 1.2;
     letter-spacing: -0.01em;
   }
-  /* Large headings: heavy Rubik with tighter metrics for an editorial feel. */
+  /* Large headings: heaviest Tajawal (800) with tighter metrics for an editorial feel. */
   h1 {
     font-size: clamp(1.9rem, 4vw, 2.75rem);
-    font-weight: 900;
-    line-height: 1.12;
+    font-weight: 800;
+    line-height: 1.15;
     letter-spacing: -0.02em;
   }
   h2 {
@@ -183,7 +183,7 @@ body {
 /* ---- Utilities ---- */
 
 /*
- * Latin words (brand names) and numbers use the Latin token (Rubik). Numbers
+ * Latin words (brand names) and numbers use the Latin token (Tajawal). Numbers
  * always render as Western digits (0-9) regardless of the surrounding Arabic context.
  */
 .latin {

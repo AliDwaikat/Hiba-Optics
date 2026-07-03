@@ -15,7 +15,7 @@ export default function BrandStatement() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 flex items-center justify-center"
       >
-        <span className="font-latin text-[30vw] font-black leading-none tracking-tight text-cream opacity-5" dir="ltr">
+        <span className="font-latin text-[30vw] font-extrabold leading-none tracking-tight text-cream opacity-5" dir="ltr">
           HIBA
         </span>
       </span>
@@ -38,7 +38,7 @@ export default function BrandStatement() {
         {/* Statement headline */}
         <RevealItem className="mt-6">
           <h2
-            className="font-black text-white"
+            className="font-extrabold text-white"
             style={{ fontSize: 'clamp(30px, 5vw, 60px)', lineHeight: 1.15, letterSpacing: '-0.01em' }}
           >
             نؤمن أن النظارة ليست مجرّد عدسة، بل طريقتك في رؤية العالم{' '}

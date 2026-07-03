@@ -20,10 +20,10 @@ export default {
         error: 'var(--color-error)',
       },
       fontFamily: {
-        // Rubik drives everything — Arabic, Latin names, and numbers.
-        sans: ['Rubik', 'system-ui', 'sans-serif'],
-        base: ['Rubik', 'system-ui', 'sans-serif'],
-        latin: ['Rubik', 'system-ui', 'sans-serif'],
+        // Tajawal drives everything — Arabic, Latin names, and numbers.
+        sans: ['Tajawal', 'system-ui', 'sans-serif'],
+        base: ['Tajawal', 'system-ui', 'sans-serif'],
+        latin: ['Tajawal', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         card: 'var(--shadow-card)',

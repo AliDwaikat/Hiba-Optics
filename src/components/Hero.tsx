@@ -73,8 +73,8 @@ export default function Hero() {
           {/* Headline — the oversized moment */}
           <motion.h1
             variants={headline}
-            className="mt-6 font-black text-ink"
-            style={{ fontSize: 'clamp(38px, 6.5vw, 74px)', lineHeight: 1.02, letterSpacing: '-0.02em' }}
+            className="mt-6 font-extrabold text-ink"
+            style={{ fontSize: 'clamp(38px, 6.5vw, 74px)', lineHeight: 1.08, letterSpacing: '-0.02em' }}
           >
             <motion.span variants={item} className="block">رؤية أوضح،</motion.span>
             <motion.span variants={item} className="block">
