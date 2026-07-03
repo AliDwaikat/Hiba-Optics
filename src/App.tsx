@@ -13,6 +13,7 @@ import Brands from './pages/Brands'
 import Book from './pages/Book'
 import BookingSuccess from './pages/BookingSuccess'
 import Finder from './pages/Finder'
+import EyeExam from './pages/EyeExam'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminLogin from './pages/admin/Login'
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/finder" element={<Finder />} />
+        <Route path="/services/eye-exam" element={<EyeExam />} />
         <Route path="/brands" element={<Brands />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
