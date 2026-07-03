@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useReducedMotion } from 'framer-motion'
 import { Reveal, RevealGroup, RevealItem } from '../components/home/Reveal'
@@ -67,6 +67,335 @@ function Placeholder({ className = '' }: { className?: string }) {
   )
 }
 
+/* True only on hover-capable, fine-pointer devices (desktop) — where the
+   hover magnifier makes sense; touch devices use the tap-to-open lightbox. */
+function useCanHover() {
+  const [can, setCan] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)')
+    const update = () => setCan(mq.matches)
+    update()
+    mq.addEventListener?.('change', update)
+    return () => mq.removeEventListener?.('change', update)
+  }, [])
+  return can
+}
+
+function ChevIcon({ dir }: { dir: 'left' | 'right' }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={dir === 'left' ? 'm15 18-6-6 6-6' : 'm9 18 6-6-6-6'} />
+    </svg>
+  )
+}
+
+/* Full-screen lightbox: swipe / arrows to navigate, double-tap (or the zoom
+   button) to magnify, Esc to close. Used on touch and on click. */
+function Lightbox({
+  images,
+  index,
+  alt,
+  reduce,
+  onClose,
+  onIndex,
+}: {
+  images: string[]
+  index: number
+  alt: string
+  reduce: boolean
+  onClose: () => void
+  onIndex: (i: number) => void
+}) {
+  const [zoom, setZoom] = useState(false)
+  const touchX = useRef<number | null>(null)
+  const lastTap = useRef(0)
+  const count = images.length
+  const clamp = (i: number) => ((i % count) + count) % count
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [])
+  useEffect(() => setZoom(false), [index])
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+      else if (e.key === 'ArrowLeft') onIndex(clamp(index + 1))
+      else if (e.key === 'ArrowRight') onIndex(clamp(index - 1))
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, count])
+
+  function onTouchStart(e: React.TouchEvent) {
+    touchX.current = e.touches[0]?.clientX ?? null
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    const now = Date.now()
+    const isDouble = now - lastTap.current < 300
+    lastTap.current = now
+    if (isDouble) {
+      setZoom((z) => !z)
+      touchX.current = null
+      return
+    }
+    const startX = touchX.current
+    touchX.current = null
+    if (zoom || startX == null || count <= 1) return
+    const dx = (e.changedTouches[0]?.clientX ?? startX) - startX
+    if (Math.abs(dx) < 40) return
+    onIndex(clamp(dx < 0 ? index + 1 : index - 1)) // RTL: swipe left → next
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="عرض الصورة"
+      style={{ backgroundColor: 'color-mix(in srgb, var(--color-black) 92%, transparent)' }}
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="إغلاق"
+        className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
+
+      <div
+        className="relative flex h-full w-full items-center justify-center p-6 sm:p-12"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <img
+          src={images[index]}
+          alt={alt}
+          onDoubleClick={() => setZoom((z) => !z)}
+          className="max-h-full max-w-full select-none object-contain"
+          style={{
+            transform: zoom ? 'scale(2.5)' : 'scale(1)',
+            transition: reduce ? 'none' : 'transform 0.2s ease-out',
+            cursor: zoom ? 'zoom-out' : 'zoom-in',
+          }}
+        />
+
+        {count > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => onIndex(clamp(index + 1))}
+              aria-label="الصورة التالية"
+              className="absolute start-2 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
+            >
+              <ChevIcon dir="left" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onIndex(clamp(index - 1))}
+              aria-label="الصورة السابقة"
+              className="absolute end-2 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
+            >
+              <ChevIcon dir="right" />
+            </button>
+            <span className="num absolute bottom-4 start-1/2 z-10 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-sm text-white" dir="ltr">
+              {index + 1} / {count}
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* Product image gallery: arrows + keyboard + swipe + hover magnifier (desktop)
+   + tap lightbox (touch). Remounts per variant (keyed) so it resets to the
+   variant's first image. */
+function Gallery({
+  images,
+  alt,
+  overlay,
+}: {
+  images: string[]
+  alt: string
+  overlay?: ReactNode
+}) {
+  const reduce = useReducedMotion()
+  const canHover = useCanHover()
+  const [index, setIndex] = useState(0)
+  const [broken, setBroken] = useState<Record<string, boolean>>({})
+  const [hovering, setHovering] = useState(false)
+  const [origin, setOrigin] = useState('50% 50%')
+  const [lightbox, setLightbox] = useState(false)
+  const touchX = useRef<number | null>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
+
+  const count = images.length
+  const clamp = (i: number) => (count > 0 ? ((i % count) + count) % count : 0)
+  const src = images[index]
+  const showImage = Boolean(src) && !broken[src]
+  const zoomable = showImage
+  const magnify = zoomable && canHover && !reduce && hovering
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (count <= 1) return
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      setIndex((i) => clamp(i + 1)) // RTL: left advances (next)
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      setIndex((i) => clamp(i - 1))
+    }
+  }
+  function onMouseMove(e: React.MouseEvent) {
+    if (!zoomable || !canHover || reduce) return
+    const rect = stageRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100))
+    const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100))
+    setOrigin(`${x}% ${y}%`)
+  }
+  function onTouchStart(e: React.TouchEvent) {
+    touchX.current = e.touches[0]?.clientX ?? null
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    const startX = touchX.current
+    touchX.current = null
+    if (startX == null || count <= 1) return
+    const dx = (e.changedTouches[0]?.clientX ?? startX) - startX
+    if (Math.abs(dx) < 40) return
+    setIndex((i) => clamp(dx < 0 ? i + 1 : i - 1)) // RTL: swipe left → next
+  }
+
+  const arrowBtn =
+    'absolute top-1/2 z-20 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/85 text-ink shadow-sm backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep'
+
+  return (
+    <>
+      <div
+        ref={stageRef}
+        role="group"
+        aria-label="معرض صور المنتج"
+        tabIndex={0}
+        onKeyDown={onKeyDown}
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => {
+          setHovering(false)
+          setOrigin('50% 50%')
+        }}
+        onMouseMove={onMouseMove}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onClick={() => zoomable && setLightbox(true)}
+        className={`group relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep ${
+          zoomable ? 'cursor-zoom-in' : ''
+        }`}
+      >
+        {showImage ? (
+          <img
+            src={src}
+            alt={alt}
+            onError={() => setBroken((m) => ({ ...m, [src]: true }))}
+            className="h-full w-full select-none object-contain p-4"
+            style={{
+              transform: magnify ? 'scale(2.3)' : 'scale(1)',
+              transformOrigin: origin,
+              transition: reduce ? 'none' : 'transform 0.15s ease-out',
+            }}
+          />
+        ) : (
+          <Placeholder className="h-full w-full" />
+        )}
+
+        {overlay}
+
+        {count > 1 && (
+          <>
+            {/* RTL: "next" advances the array and sits on the left. */}
+            <button
+              type="button"
+              aria-label="الصورة التالية"
+              onClick={(e) => {
+                e.stopPropagation()
+                setIndex((i) => clamp(i + 1))
+              }}
+              className={`${arrowBtn} start-2`}
+            >
+              <ChevIcon dir="left" />
+            </button>
+            <button
+              type="button"
+              aria-label="الصورة السابقة"
+              onClick={(e) => {
+                e.stopPropagation()
+                setIndex((i) => clamp(i - 1))
+              }}
+              className={`${arrowBtn} end-2`}
+            >
+              <ChevIcon dir="right" />
+            </button>
+          </>
+        )}
+
+        {zoomable && canHover && !reduce && (
+          <span className="pointer-events-none absolute bottom-3 end-3 z-10 rounded-full bg-ink/60 px-2 py-1 text-[11px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+            مرّر مؤشر الفأرة للتكبير
+          </span>
+        )}
+      </div>
+
+      {/* Thumbnails */}
+      {count > 1 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setIndex(i)}
+              aria-label={`صورة ${i + 1}`}
+              aria-current={i === index}
+              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-white ring-2 transition focus-visible:outline-none focus-visible:ring-yellow-deep ${
+                i === index ? 'ring-yellow' : 'ring-transparent hover:ring-gray-300'
+              }`}
+            >
+              {broken[img] ? (
+                <Placeholder className="h-full w-full" />
+              ) : (
+                <img
+                  src={img}
+                  alt=""
+                  onError={() => setBroken((m) => ({ ...m, [img]: true }))}
+                  className="h-full w-full object-contain p-1"
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {lightbox && zoomable && (
+        <Lightbox
+          images={images}
+          index={index}
+          alt={alt}
+          reduce={!!reduce}
+          onClose={() => setLightbox(false)}
+          onIndex={(i) => setIndex(i)}
+        />
+      )}
+    </>
+  )
+}
+
 function DetailSkeleton() {
   return (
     <div className="mx-auto max-w-6xl animate-pulse px-4 py-8 sm:px-8">
@@ -101,12 +430,9 @@ export default function ProductDetail() {
 
   const [load, setLoad] = useState<LoadState>({ state: 'loading' })
   const [reviews, setReviews] = useState<Review[]>([])
-  const [activeImage, setActiveImage] = useState(0)
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [feedback, setFeedback] = useState<string | null>(null)
-  // Broken images keyed by URL so state is correct across variant switches.
-  const [imageBroken, setImageBroken] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (!id) {
@@ -116,11 +442,9 @@ export default function ProductDetail() {
     let active = true
     setLoad({ state: 'loading' })
     setReviews([])
-    setActiveImage(0)
     setSelectedVariantId(null)
     setQuantity(1)
     setFeedback(null)
-    setImageBroken({})
 
     fetchProduct(id)
       .then((product) => {
@@ -227,12 +551,8 @@ export default function ProductDetail() {
   const allOutOfStock = variants.every((v) => !v.in_stock)
   const canAdd = selectedVariant.in_stock
 
-  const currentImage = images[activeImage]
-  const showCurrent = Boolean(currentImage) && !imageBroken[currentImage]
-
   function selectVariant(v: ProductVariant) {
     setSelectedVariantId(v.id)
-    setActiveImage(0)
   }
 
   function handleAdd() {
@@ -276,58 +596,24 @@ export default function ProductDetail() {
         </nav>
 
         <div className="mt-8 grid gap-10 md:grid-cols-2 md:gap-14">
-          {/* GALLERY — right column in RTL */}
+          {/* GALLERY — right column in RTL. Keyed by variant so it resets to
+              the variant's first image when the color changes. */}
           <Reveal>
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-white">
-              {showCurrent ? (
-                <img
-                  src={currentImage}
-                  alt={product.name_ar}
-                  onError={() => setImageBroken((m) => ({ ...m, [currentImage]: true }))}
-                  className="h-full w-full object-contain p-4"
-                />
-              ) : (
-                <Placeholder className="h-full w-full" />
-              )}
-
-              {/* Badges */}
-              <div className="absolute start-3 top-3 flex flex-col items-start gap-2">
-                {product.featured && (
-                  <span className="rounded-full bg-yellow px-3 py-1 text-xs font-bold text-ink">الأكثر مبيعاً</span>
-                )}
-                {allOutOfStock && (
-                  <span className="rounded-full bg-ink/70 px-3 py-1 text-xs font-medium text-white">غير متوفر</span>
-                )}
-              </div>
-            </div>
-
-            {/* Thumbnails */}
-            {images.length > 1 && (
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-                {images.map((img, i) => (
-                  <button
-                    key={`${selectedVariant.id}-${i}`}
-                    type="button"
-                    onClick={() => setActiveImage(i)}
-                    aria-label={`صورة ${i + 1}`}
-                    className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-white ring-2 transition ${
-                      i === activeImage ? 'ring-yellow' : 'ring-transparent hover:ring-gray-300'
-                    }`}
-                  >
-                    {imageBroken[img] ? (
-                      <Placeholder className="h-full w-full" />
-                    ) : (
-                      <img
-                        src={img}
-                        alt=""
-                        onError={() => setImageBroken((m) => ({ ...m, [img]: true }))}
-                        className="h-full w-full object-contain p-1"
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
+            <Gallery
+              key={selectedVariant.id}
+              images={images}
+              alt={product.name_ar}
+              overlay={
+                <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-2">
+                  {product.featured && (
+                    <span className="rounded-full bg-yellow px-3 py-1 text-xs font-bold text-ink">الأكثر مبيعاً</span>
+                  )}
+                  {allOutOfStock && (
+                    <span className="rounded-full bg-ink/70 px-3 py-1 text-xs font-medium text-white">غير متوفر</span>
+                  )}
+                </div>
+              }
+            />
           </Reveal>
 
           {/* INFO — left column in RTL */}
