@@ -1,6 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ProductImagePlaceholder from '../../components/ProductImagePlaceholder'
+import { supabase } from '../../lib/supabase'
 import {
   CATEGORY_LABELS_AR,
   type Audience,
@@ -191,11 +192,11 @@ function ToggleRow({
 }
 
 /* ---- Image thumbnail with graceful fallback ---- */
-function ImageThumb({ src }: { src: string }) {
+function ImageThumb({ src, className = 'h-11 w-11' }: { src: string; className?: string }) {
   const [broken, setBroken] = useState(false)
   useEffect(() => setBroken(false), [src])
   return (
-    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-gray-900">
+    <div className={`${className} shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-gray-900`}>
       {src && !broken ? (
         <img
           src={src}
@@ -208,6 +209,20 @@ function ImageThumb({ src }: { src: string }) {
       )}
     </div>
   )
+}
+
+/** In-progress / failed uploads shown alongside the gallery. */
+interface UploadItem {
+  key: string
+  name: string
+  status: 'uploading' | 'error'
+  message?: string
+}
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // ~5MB
+
+function sanitizeFilename(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_')
 }
 
 export default function ProductForm() {
@@ -224,6 +239,9 @@ export default function ProductForm() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [newImage, setNewImage] = useState('')
+  const [uploads, setUploads] = useState<UploadItem[]>([])
+  const uploadCounter = useRef(0)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // Load brands (always) + the product (edit mode).
   useEffect(() => {
@@ -301,13 +319,63 @@ export default function ProductForm() {
     set('images', [...form.images, v])
     setNewImage('')
   }
-  const removeImage = (i: number) => set('images', form.images.filter((_, idx) => idx !== i))
+  function removeImage(i: number) {
+    setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }))
+  }
   function moveImage(i: number, dir: -1 | 1) {
-    const j = i + dir
-    if (j < 0 || j >= form.images.length) return
-    const next = [...form.images]
-    ;[next[i], next[j]] = [next[j], next[i]]
-    set('images', next)
+    setForm((f) => {
+      const j = i + dir
+      if (j < 0 || j >= f.images.length) return f
+      const next = [...f.images]
+      ;[next[i], next[j]] = [next[j], next[i]]
+      return { ...f, images: next }
+    })
+  }
+
+  const removeUpload = (key: string) => setUploads((u) => u.filter((x) => x.key !== key))
+
+  /* Upload files to the public 'product-images' Storage bucket, then append the
+     resulting public URLs to images[]. Each file is independent — one failure
+     does not lose the others. */
+  async function uploadOne(file: File) {
+    if (!file.type.startsWith('image/')) {
+      const key = `u${uploadCounter.current++}`
+      setUploads((u) => [...u, { key, name: file.name, status: 'error', message: 'الملف ليس صورة' }])
+      return
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      const key = `u${uploadCounter.current++}`
+      setUploads((u) => [
+        ...u,
+        { key, name: file.name, status: 'error', message: 'حجم الصورة يتجاوز 5 ميغابايت' },
+      ])
+      return
+    }
+
+    const key = `u${uploadCounter.current++}`
+    setUploads((u) => [...u, { key, name: file.name, status: 'uploading' }])
+
+    const path = `${Date.now()}-${sanitizeFilename(file.name)}`
+    try {
+      const { error } = await supabase.storage
+        .from('product-images')
+        .upload(path, file, { cacheControl: '3600', upsert: false })
+      if (error) throw error
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path)
+      const url = data.publicUrl
+      setForm((f) => ({ ...f, images: [...f.images, url] }))
+      setUploads((u) => u.filter((x) => x.key !== key))
+    } catch {
+      setUploads((u) =>
+        u.map((x) => (x.key === key ? { ...x, status: 'error', message: 'تعذّر رفع الصورة' } : x)),
+      )
+    }
+  }
+
+  async function handleFiles(fileList: FileList | null) {
+    const files = Array.from(fileList ?? [])
+    if (fileInputRef.current) fileInputRef.current.value = '' // allow re-selecting the same file
+    await Promise.all(files.map((f) => uploadOne(f)))
   }
 
   function validate(): Errors {
@@ -702,71 +770,143 @@ export default function ProductForm() {
           {/* Images */}
           <Section title="الصور">
             <p className="text-xs text-gray-600">
-              أدخل مسار الصورة (مثل ‎/products/rayban-rb3025-gold.jpg‎ لملف داخل مجلد public) أو رابطاً
-              كاملاً. لا يوجد رفع ملفات في هذه الخطوة.
+              الصورة الأولى هي الصورة الرئيسية. يمكنك رفع صور أو إضافتها برابط. صور متعددة مسموحة.
             </p>
-            <div className="flex gap-2">
-              <input
-                dir="ltr"
-                className={numField}
-                value={newImage}
-                onChange={(e) => setNewImage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addImage()
-                  }
-                }}
-                placeholder="/products/example.jpg"
-              />
-              <button type="button" onClick={addImage} className="btn btn-secondary shrink-0">
-                إضافة
-              </button>
-            </div>
 
+            {/* Current images — horizontal thumbnails */}
             {form.images.length > 0 && (
-              <ul className="space-y-2">
+              <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
                 {form.images.map((src, i) => (
-                  <li
-                    key={`${src}-${i}`}
-                    className="flex items-center gap-3 rounded-[var(--radius-sm)] border border-gray-300 p-2"
-                  >
-                    <ImageThumb src={src} />
-                    <span className="min-w-0 flex-1 truncate text-sm text-ink" dir="ltr">
-                      {src}
-                    </span>
-                    <div className="flex items-center gap-1">
+                  <div key={`${src}-${i}`} className="w-24 shrink-0">
+                    <div className="relative">
+                      <ImageThumb src={src} className="h-24 w-24" />
+                      {i === 0 && (
+                        <span className="absolute inset-x-0 bottom-0 rounded-b-[var(--radius-sm)] bg-yellow px-1 py-0.5 text-center text-[10px] font-bold text-ink">
+                          الصورة الرئيسية
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        aria-label="إزالة الصورة"
+                        className="absolute end-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div className="mt-1 flex items-center justify-center gap-1">
+                      {/* In RTL the primary sits on the right, so "toward primary" moves right. */}
                       <button
                         type="button"
                         onClick={() => moveImage(i, -1)}
                         disabled={i === 0}
-                        aria-label="تحريك للأعلى"
-                        className="rounded px-2 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
+                        aria-label="نقل نحو الرئيسية"
+                        className="rounded px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
                       >
-                        ↑
+                        ›
                       </button>
                       <button
                         type="button"
                         onClick={() => moveImage(i, 1)}
                         disabled={i === form.images.length - 1}
-                        aria-label="تحريك للأسفل"
-                        className="rounded px-2 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
+                        aria-label="نقل بعيداً عن الرئيسية"
+                        className="rounded px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
                       >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeImage(i)}
-                        className="rounded px-2 py-1 text-sm font-medium hover:opacity-70"
-                        style={{ color: 'var(--color-error)' }}
-                      >
-                        حذف
+                        ‹
                       </button>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Upload dropzone */}
+            <label
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault()
+                handleFiles(e.dataTransfer.files)
+              }}
+              className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[var(--radius)] border-2 border-dashed border-gray-300 bg-gray-100 px-4 py-6 text-center transition-colors hover:border-yellow-deep"
+            >
+              <span className="text-sm font-medium text-ink">ارفع صورة</span>
+              <span className="text-xs text-gray-600">
+                اسحب وأفلت الصور هنا أو انقر للاختيار — JPG / PNG / WebP، حتى ٥ ميغابايت
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+            </label>
+
+            {/* Upload progress / errors */}
+            {uploads.length > 0 && (
+              <ul className="space-y-2">
+                {uploads.map((u) => (
+                  <li
+                    key={u.key}
+                    className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    {u.status === 'uploading' ? (
+                      <span
+                        className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-gray-300 border-t-yellow"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <span className="shrink-0" style={{ color: 'var(--color-error)' }}>
+                        ⚠
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1 truncate text-gray-600" dir="ltr">
+                      {u.name}
+                    </span>
+                    <span
+                      className="shrink-0 text-xs"
+                      style={{ color: u.status === 'error' ? 'var(--color-error)' : 'var(--color-gray-600)' }}
+                    >
+                      {u.status === 'uploading' ? 'جارٍ الرفع…' : u.message}
+                    </span>
+                    {u.status === 'error' && (
+                      <button
+                        type="button"
+                        onClick={() => removeUpload(u.key)}
+                        aria-label="إزالة"
+                        className="shrink-0 text-gray-600 hover:text-ink"
+                      >
+                        ×
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
             )}
+
+            {/* Add by URL / path */}
+            <div>
+              <p className="mb-1.5 text-xs text-gray-600">أو أضِف صورة برابط أو مسار داخل public</p>
+              <div className="flex gap-2">
+                <input
+                  dir="ltr"
+                  className={numField}
+                  value={newImage}
+                  onChange={(e) => setNewImage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addImage()
+                    }
+                  }}
+                  placeholder="https://… أو /products/example.jpg"
+                />
+                <button type="button" onClick={addImage} className="btn btn-secondary shrink-0">
+                  إضافة برابط
+                </button>
+              </div>
+            </div>
           </Section>
         </div>
 
