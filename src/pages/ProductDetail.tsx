@@ -278,7 +278,7 @@ export default function ProductDetail() {
         <div className="mt-8 grid gap-10 md:grid-cols-2 md:gap-14">
           {/* GALLERY — right column in RTL */}
           <Reveal>
-            <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius-lg)] bg-cream shadow-card">
+            <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-white">
               {showCurrent ? (
                 <img
                   src={currentImage}
@@ -310,7 +310,7 @@ export default function ProductDetail() {
                     type="button"
                     onClick={() => setActiveImage(i)}
                     aria-label={`صورة ${i + 1}`}
-                    className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-cream ring-2 transition ${
+                    className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-white ring-2 transition ${
                       i === activeImage ? 'ring-yellow' : 'ring-transparent hover:ring-gray-300'
                     }`}
                   >
