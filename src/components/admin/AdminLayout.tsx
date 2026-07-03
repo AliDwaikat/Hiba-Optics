@@ -81,7 +81,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100 text-ink">
+    <div dir="rtl" className="flex min-h-screen bg-gray-100 text-ink">
       {/* Sidebar — right edge in RTL */}
       <aside className="hidden w-64 shrink-0 flex-col border-l border-gray-300 bg-white md:flex">
         <div className="flex h-16 items-center border-b border-gray-300 px-5">

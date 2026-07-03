@@ -33,7 +33,7 @@ export default function Login() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
+    <main dir="rtl" className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-sm rounded-[var(--radius-lg)] border border-gray-300 bg-white p-8 shadow-card">
         <div className="text-center">
           <span className="font-latin text-xl font-bold tracking-tight" dir="ltr">

@@ -51,8 +51,10 @@
 }
 
 html {
-  /* Arabic-first: RTL and Arabic are the defaults (also set on the <html> tag). */
-  direction: rtl;
+  /* Direction is driven by the [dir] attribute on <html> (rtl for Arabic, ltr
+     for English), set in index.html and updated live by the language toggle.
+     Do NOT hardcode `direction` here or it would override the attribute and
+     keep the layout RTL in English mode. */
   /* Force Western digits (0-9) everywhere — never Arabic-Indic numerals. */
   font-variant-numeric: lining-nums;
   -webkit-font-feature-settings: 'lnum' 1;
