@@ -20,6 +20,7 @@ import AdminProducts from './pages/admin/Products'
 import AdminProductForm from './pages/admin/ProductForm'
 import AdminOrders from './pages/admin/Orders'
 import AdminBookings from './pages/admin/Bookings'
+import AdminReviews from './pages/admin/Reviews'
 import AdminPlaceholder from './pages/admin/Placeholder'
 
 export default function App() {
@@ -51,7 +52,7 @@ export default function App() {
           <Route path="products/:id/edit" element={<AdminProductForm />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="bookings" element={<AdminBookings />} />
-          <Route path="reviews" element={<AdminPlaceholder title="التقييمات" />} />
+          <Route path="reviews" element={<AdminReviews />} />
           <Route path="branches" element={<AdminPlaceholder title="الفروع" />} />
         </Route>
       </Route>
