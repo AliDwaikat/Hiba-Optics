@@ -37,6 +37,7 @@ const AUDIENCE_LABELS: Record<Audience, string> = {
   unisex: 'للجنسين',
   kids: 'أطفال',
 }
+const AUDIENCE_VALUES = new Set<string>(['men', 'women', 'unisex', 'kids'])
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'newest', label: 'الأحدث' },
@@ -97,12 +98,16 @@ export default function Shop() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // URL-backed filters (shareable + back/forward): category + brand.
+  // URL-backed filters (shareable + back/forward): category + brand + audience.
   const categoryParam = searchParams.get('category')
   const category: CategoryTab = categoryParam && CATEGORY_VALUES.has(categoryParam)
     ? (categoryParam as Category)
     : 'all'
   const brandId = searchParams.get('brand')
+  const audienceParam = searchParams.get('audience')
+  const audience: AudienceTab = audienceParam && AUDIENCE_VALUES.has(audienceParam)
+    ? (audienceParam as Audience)
+    : 'all'
 
   function updateParams(mut: (p: URLSearchParams) => void, replace = false) {
     setSearchParams(
@@ -118,11 +123,12 @@ export default function Shop() {
     updateParams((p) => (c === 'all' ? p.delete('category') : p.set('category', c)))
   const setBrandId = (id: string | null) =>
     updateParams((p) => (id ? p.set('brand', id) : p.delete('brand')))
+  const setAudience = (a: AudienceTab) =>
+    updateParams((p) => (a === 'all' ? p.delete('audience') : p.set('audience', a)))
 
   // Local (non-URL) filters + sort.
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
-  const [audience, setAudience] = useState<AudienceTab>('all')
   const [inStockOnly, setInStockOnly] = useState(false)
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set())
   const [priceRange, setPriceRange] = useState<{ min: number; max: number } | null>(null)
@@ -241,13 +247,13 @@ export default function Shop() {
   function clearAll() {
     setSearchInput('')
     setSearch('')
-    setAudience('all')
     setInStockOnly(false)
     setSelectedColors(new Set())
     setPriceRange({ min: bounds.min, max: bounds.max })
     updateParams((p) => {
       p.delete('category')
       p.delete('brand')
+      p.delete('audience')
     })
   }
 

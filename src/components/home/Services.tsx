@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { Reveal, RevealGroup, RevealItem } from './Reveal'
 
 /* Simple line icons (ink stroke, one yellow accent detail). */
@@ -48,13 +49,14 @@ interface Service {
   icon: ReactNode
   title: string
   desc: string
+  to: string
 }
 
 const SERVICES: Service[] = [
-  { icon: <EyeExamIcon />, title: 'فحص نظر شامل', desc: 'فحص دقيق بأحدث الأجهزة لتحديد مقاسك بدقة.' },
-  { icon: <SunglassesIcon />, title: 'نظارات شمسية', desc: 'أرقى البراندات العالمية وإصدارات محدودة.' },
-  { icon: <ContactLensIcon />, title: 'عدسات لاصقة', desc: 'عدسات مريحة وآمنة لكل الاستخدامات.' },
-  { icon: <KidsGlassesIcon />, title: 'نظارات أطفال', desc: 'إطارات مرنة ومتينة مصممة خصيصاً للأطفال.' },
+  { icon: <EyeExamIcon />, title: 'فحص نظر شامل', desc: 'فحص دقيق بأحدث الأجهزة لتحديد مقاسك بدقة.', to: '/services/eye-exam' },
+  { icon: <SunglassesIcon />, title: 'نظارات شمسية', desc: 'أرقى البراندات العالمية وإصدارات محدودة.', to: '/shop?category=sunglasses' },
+  { icon: <ContactLensIcon />, title: 'عدسات لاصقة', desc: 'عدسات مريحة وآمنة لكل الاستخدامات.', to: '/shop?category=contact_lenses' },
+  { icon: <KidsGlassesIcon />, title: 'نظارات أطفال', desc: 'إطارات مرنة ومتينة مصممة خصيصاً للأطفال.', to: '/shop?audience=kids' },
 ]
 
 export default function Services() {
@@ -74,11 +76,18 @@ export default function Services() {
         <RevealGroup className="mt-10 grid grid-cols-2 gap-4 sm:gap-6 md:mt-12 md:grid-cols-4">
           {SERVICES.map((s) => (
             <RevealItem key={s.title}>
-              <div className="h-full rounded-[var(--radius-lg)] border border-gray-100 bg-cream p-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-7">
-                <span className="text-ink">{s.icon}</span>
+              <Link
+                to={s.to}
+                aria-label={s.title}
+                className="group flex h-full flex-col rounded-[var(--radius-lg)] border border-gray-100 bg-cream p-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-yellow-deep hover:shadow-lg focus-visible:outline-none focus-visible:-translate-y-1 focus-visible:shadow-lg focus-visible:ring-2 focus-visible:ring-yellow-deep motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-7"
+              >
+                <span className="text-ink transition-colors group-hover:text-yellow-deep">{s.icon}</span>
                 <h3 className="mt-4 text-base font-bold text-ink sm:text-lg">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-gray-600">{s.desc}</p>
-              </div>
+                <span className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold text-yellow-deep opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+                  اعرف المزيد <span aria-hidden="true">←</span>
+                </span>
+              </Link>
             </RevealItem>
           ))}
         </RevealGroup>
