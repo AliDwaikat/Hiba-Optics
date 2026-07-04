@@ -77,14 +77,18 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
     navigate(`/product/${product.id}`)
   }
 
-  // Quick-add reveal: always visible on touch (hover: none); hover-revealed on
-  // pointer devices. Under reduced motion the reveal has no transition/translate.
+  // Quick-add reveal: a bar anchored to the BOTTOM edge of the image so it never
+  // covers the centred frame. It slides up + fades in (~0.25s). Always visible on
+  // touch (hover: none); hover-revealed on pointer devices (slides fully below the
+  // image when hidden). Reduced motion keeps it in place, no transition.
   const revealClass =
-    'absolute inset-x-2 bottom-2 z-10 transition-all duration-300 ' +
-    'opacity-100 translate-y-0 ' +
-    '[@media(hover:hover)]:translate-y-2 [@media(hover:hover)]:opacity-0 ' +
+    'absolute inset-x-0 bottom-0 z-10 px-2 pb-2 pt-6 ' +
+    'bg-gradient-to-t from-white via-[rgba(255,255,255,0.85)] to-transparent ' +
+    'transition-all duration-[250ms] ease-out ' +
+    'translate-y-0 opacity-100 ' +
+    '[@media(hover:hover)]:translate-y-full [@media(hover:hover)]:opacity-0 ' +
     '[@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100 ' +
-    'motion-reduce:transition-none motion-reduce:!translate-y-0'
+    'motion-reduce:transition-none motion-reduce:!translate-y-0 motion-reduce:!opacity-100'
 
   const quickBtnClass =
     'flex w-full items-center justify-center gap-1 rounded-full bg-yellow px-3 py-2 text-xs font-bold text-ink shadow-sm transition-colors hover:bg-yellow-deep'
@@ -142,7 +146,8 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
             <ProductImagePlaceholder light />
           )}
 
-          {/* Favorite toggle — does not open the product link */}
+          {/* Favorite toggle — light backing chip so the heart stays visible on
+              white photos; top-start corner (dir-aware). Does not open the link. */}
           <button
             type="button"
             onClick={(e) => {
@@ -152,13 +157,13 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
             }}
             aria-label={t('header.favorites')}
             aria-pressed={fav}
-            className="absolute end-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+            className="absolute start-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(255,255,255,0.85)] text-ink shadow-sm ring-1 ring-[rgba(0,0,0,0.08)] backdrop-blur-sm transition-colors hover:bg-white"
           >
             <HeartIcon filled={fav} />
           </button>
 
           {product.requires_consultation && (
-            <span className="absolute start-2 top-2 z-10 rounded-full border border-yellow bg-black/70 px-2 py-1 text-xs font-medium text-yellow">
+            <span className="absolute end-2 top-2 z-10 rounded-full border border-yellow bg-black/70 px-2 py-1 text-xs font-medium text-yellow">
               {t('card.consultation')}
             </span>
           )}
