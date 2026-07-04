@@ -51,6 +51,9 @@ export default function Checkout() {
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Set once the order is placed so clearing the cart (below) doesn't trip the
+  // empty-cart guard and bounce us to /shop before the success redirect lands.
+  const [placed, setPlaced] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -62,8 +65,9 @@ export default function Checkout() {
     }
   }, [])
 
-  // Guard: nothing to check out.
-  if (itemCount === 0) return <Navigate to="/shop" replace />
+  // Guard: nothing to check out. Skip once the order is placed — clearing the
+  // cart on success empties it, and we want the /order-success redirect to win.
+  if (itemCount === 0 && !placed) return <Navigate to="/shop" replace />
 
   const hasConsultation = items.some((i) => i.requiresConsultation)
   const deliveryFee = fulfillment === 'delivery' && subtotal > 0 ? DELIVERY_FEE : 0
@@ -126,8 +130,14 @@ export default function Checkout() {
       })
       // Success = insert returned no error. We rely on the client-side
       // order_number (no read-back), since guests can't SELECT orders.
+      // Mark placed BEFORE clearing so the empty-cart guard doesn't bounce to
+      // /shop, then go to the confirmation page (order_number in state + query
+      // param, so it survives a reload / direct share).
+      setPlaced(true)
       clear()
-      navigate('/order-success', { state: { orderNumber, hasConsultation } })
+      navigate(`/order-success?order=${encodeURIComponent(orderNumber)}`, {
+        state: { orderNumber, hasConsultation },
+      })
     } catch (err) {
       // Surface the raw insert error so any remaining issue stays visible.
       const e = err as { message?: string; details?: string; code?: string }

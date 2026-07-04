@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { Reveal } from '../components/home/Reveal'
 import { useLanguage } from '../lib/language'
 import { fetchBranches } from '../lib/branches'
@@ -28,8 +28,11 @@ function WhatsAppIcon() {
 export default function OrderSuccess() {
   const { t } = useLanguage()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const state = (location.state ?? {}) as SuccessState
-  const orderNumber = state.orderNumber
+  // Prefer router state; fall back to the ?order= query param so a reload or a
+  // shared link still shows the confirmation.
+  const orderNumber = state.orderNumber ?? searchParams.get('order') ?? undefined
   const hasConsultation = Boolean(state.hasConsultation)
 
   const [whatsapp, setWhatsapp] = useState<string>(PRIMARY_WHATSAPP)
@@ -81,7 +84,8 @@ export default function OrderSuccess() {
           <p className="latin mt-1 text-2xl font-bold tracking-wide text-ink" dir="ltr">{orderNumber}</p>
 
           <p className="mt-6 leading-relaxed text-gray-600">
-            {hasConsultation ? t('ok.contactLineConsult') : t('ok.contactLine')}
+            {t('ok.contactLine')}
+            {hasConsultation && <> {t('ok.contactLineConsult')}</>}
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-3">
@@ -94,8 +98,11 @@ export default function OrderSuccess() {
               <WhatsAppIcon />
               {t('common.whatsappContact')}
             </a>
-            <Link to="/shop" className="text-sm text-gray-600 transition-colors hover:text-ink">
-              {t('common.backShop')}
+            <Link to="/shop" className="btn btn-secondary w-full sm:w-auto">
+              {t('cart.continue')}
+            </Link>
+            <Link to="/" className="text-sm text-gray-600 transition-colors hover:text-ink">
+              {t('common.backHome')}
             </Link>
           </div>
         </Reveal>

@@ -333,15 +333,16 @@ export const UI = {
   },
 
   // ---- Order success ----
-  'ok.title': { ar: 'تم استلام طلبك ✓', en: 'Your order has been received ✓' },
+  'ok.title': { ar: 'شكراً لك! تم استلام طلبك ✓', en: 'Thank you! Your order has been received ✓' },
   'ok.orderNo': { ar: 'رقم الطلب', en: 'Order number' },
   'ok.contactLine': {
-    ar: 'سنتواصل معك على الرقم الذي أدخلته لتأكيد الطلب.',
-    en: "We'll contact you on the number you entered to confirm your order.",
+    ar: 'سنتواصل معك على الرقم الذي أدخلته لتأكيد الطلب وترتيب التوصيل/الاستلام.',
+    en: "We'll contact you on the number you entered to confirm your order and arrange delivery/pickup.",
   },
+  // Additional line shown only when the order includes consultation/reserve items.
   'ok.contactLineConsult': {
-    ar: 'سنتواصل معك على الرقم الذي أدخلته لتأكيد الطلب ولتحديد موعد فحص النظر.',
-    en: "We'll contact you on the number you entered to confirm your order and schedule your eye exam.",
+    ar: 'وسنحدّد معك موعد فحص النظر لإتمام الإطارات الطبية.',
+    en: "And we'll schedule your eye exam to complete the prescription frames.",
   },
   'ok.none': { ar: 'لا يوجد طلب لعرضه.', en: 'No order to show.' },
 
