@@ -185,7 +185,7 @@ export default function FrameSpinner({ frames }: { frames: HeroFrame[] }) {
         >
           {frames.map((f, i) => (
             <FrameCard
-              key={f.id}
+              key={`${f.id}-${i}`}
               frame={f}
               width={cardW}
               height={cardH}

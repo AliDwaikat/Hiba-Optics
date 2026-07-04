@@ -7,26 +7,38 @@ import { primaryImage } from '../lib/productImages'
 import FrameSpinner, { type HeroFrame } from './home/FrameSpinner'
 
 const MAX_FRAMES = 8
-const MIN_FRAMES = 3 // below this, keep the line-art fallback (never look empty)
+const RING_MIN = 3 // when fewer unique photos exist, loop them so the ring still looks full
 
-/** Featured-first frames that actually have a photo; falls back to any published
- *  product with an image when there are fewer than ~5 featured. */
+/**
+ * Frames for the hero spinner: every published product that has a real image
+ * (variants[].images[0]), featured ones first but NOT required — any published
+ * product with a photo fills the rest. When only 1–2 photos exist, the images
+ * are looped to fill a nice rotating ring; only a total absence of images
+ * yields an empty list (→ line-art fallback).
+ */
 async function loadHeroFrames(): Promise<HeroFrame[]> {
   const all = await fetchProducts({})
   const withImage = all
     .map((p) => ({ p, image: primaryImage(p) }))
     .filter((x): x is { p: (typeof all)[number]; image: string } => Boolean(x.image))
 
+  // Featured first, then any other published product that has a photo.
   const featured = withImage.filter((x) => x.p.featured)
-  const ordered =
-    featured.length >= 5 ? featured : [...featured, ...withImage.filter((x) => !x.p.featured)]
+  const ordered = [...featured, ...withImage.filter((x) => !x.p.featured)]
 
-  return ordered.slice(0, MAX_FRAMES).map(({ p, image }) => ({
+  const unique: HeroFrame[] = ordered.slice(0, MAX_FRAMES).map(({ p, image }) => ({
     id: p.id,
     image,
     name_ar: p.name_ar,
     name_en: p.name_en,
   }))
+
+  if (unique.length === 0) return []
+  if (unique.length >= RING_MIN) return unique
+
+  // Only 1–2 photos: loop them to fill a fuller ring (3 for one, 4 for two).
+  const target = unique.length === 1 ? 3 : 4
+  return Array.from({ length: target }, (_, i) => unique[i % unique.length])
 }
 
 /* Yellow dot separator for the trust line. */
@@ -76,7 +88,9 @@ export default function Hero() {
       active = false
     }
   }, [])
-  const showSpinner = frames !== null && frames.length >= MIN_FRAMES
+  // Show the spinner whenever there's at least one product photo (the loader
+  // loops a few images to fill the ring); only a total absence → line-art.
+  const showSpinner = frames !== null && frames.length >= 1
 
   // Entrance: staggered fade-up (nested for the two headline lines).
   const container: Variants = {
