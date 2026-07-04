@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import ProductImagePlaceholder from '../../components/ProductImagePlaceholder'
 import { formatPrice } from '../../lib/format'
 import { CATEGORY_LABELS_AR, type Category, type Product } from '../../lib/products'
 import {
+  bulkDeleteProducts,
+  bulkSetProductFlag,
   deleteAdminProduct,
   fetchAdminBrands,
   fetchAdminProducts,
@@ -76,14 +78,16 @@ function Thumb({ src, alt }: { src?: string; alt: string }) {
   )
 }
 
-/* ---- Delete confirmation dialog ---- */
+/* ---- Delete confirmation dialog (single or bulk) ---- */
 function ConfirmDialog({
-  name,
+  title,
+  message,
   busy,
   onCancel,
   onConfirm,
 }: {
-  name: string
+  title: string
+  message: string
   busy: boolean
   onCancel: () => void
   onConfirm: () => void
@@ -101,10 +105,8 @@ function ConfirmDialog({
         className="absolute inset-0"
       />
       <div className="relative w-full max-w-sm rounded-[var(--radius-lg)] border border-gray-300 bg-white p-6 shadow-card">
-        <h3 className="text-lg font-bold text-ink">حذف المنتج</h3>
-        <p className="mt-2 text-sm text-gray-600">
-          هل أنت متأكد من حذف «{name}»؟ لا يمكن التراجع.
-        </p>
+        <h3 className="text-lg font-bold text-ink">{title}</h3>
+        <p className="mt-2 text-sm text-gray-600">{message}</p>
         <div className="mt-6 flex justify-start gap-3">
           <button
             type="button"
@@ -121,6 +123,31 @@ function ConfirmDialog({
         </div>
       </div>
     </div>
+  )
+}
+
+/* ---- Bulk-action bar button ---- */
+function BulkBtn({
+  onClick,
+  disabled,
+  danger,
+  children,
+}: {
+  onClick: () => void
+  disabled?: boolean
+  danger?: boolean
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-[var(--radius)] border border-gray-300 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+      style={danger ? { color: 'var(--color-error)', borderColor: 'var(--color-error)' } : undefined}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -160,6 +187,11 @@ export default function AdminProducts() {
   const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState<{ text: string; kind: 'success' | 'error' } | null>(null)
   const toastTimer = useRef<number | undefined>(undefined)
+
+  // Bulk multi-select state
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
   function showToast(text: string, kind: 'success' | 'error') {
     window.clearTimeout(toastTimer.current)
@@ -261,6 +293,69 @@ export default function AdminProducts() {
 
   const saving = (id: string, flag: ProductFlag) => savingKeys.has(`${id}:${flag}`)
 
+  /* ---- Selection (respects the current filters) ---- */
+  const allFilteredSelected =
+    filtered.length > 0 && filtered.every((p) => selected.has(p.id))
+  const someFilteredSelected = filtered.some((p) => selected.has(p.id)) && !allFilteredSelected
+
+  function toggleRow(id: string) {
+    setSelected((prev) => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  }
+  function toggleSelectAll() {
+    setSelected((prev) => {
+      const n = new Set(prev)
+      if (allFilteredSelected) filtered.forEach((p) => n.delete(p.id))
+      else filtered.forEach((p) => n.add(p.id))
+      return n
+    })
+  }
+  const clearSelection = () => setSelected(new Set())
+
+  /* ---- Bulk actions (operate on the selected ids via an `in` filter) ---- */
+  async function runBulkFlag(flag: ProductFlag, value: boolean) {
+    if (bulkBusy || selected.size === 0) return
+    const ids = Array.from(selected)
+    const n = ids.length
+    setBulkBusy(true)
+    try {
+      await bulkSetProductFlag(ids, flag, value)
+      // Only reflect the change after the server confirmed success.
+      const idSet = new Set(ids)
+      setProducts((prev) => prev.map((p) => (idSet.has(p.id) ? { ...p, [flag]: value } : p)))
+      clearSelection()
+      showToast(`تم تحديث ${n} منتج`, 'success')
+    } catch {
+      showToast('تعذّر التحديث، حاول مرة أخرى', 'error')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  async function runBulkDelete() {
+    if (bulkBusy || selected.size === 0) return
+    const ids = Array.from(selected)
+    const n = ids.length
+    setBulkBusy(true)
+    try {
+      await bulkDeleteProducts(ids)
+      const idSet = new Set(ids)
+      setProducts((prev) => prev.filter((p) => !idSet.has(p.id)))
+      clearSelection()
+      setBulkDeleteOpen(false)
+      showToast(`تم حذف ${n} منتج`, 'success')
+    } catch {
+      // Keep the selection (and the dialog) so the admin can retry.
+      showToast('تعذّر حذف المنتجات، حاول مرة أخرى', 'error')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
   return (
     <div>
       {/* Header row */}
@@ -339,6 +434,19 @@ export default function AdminProducts() {
             <table className="w-full min-w-[720px] text-right text-sm">
               <thead>
                 <tr className="border-b border-gray-300 text-xs text-gray-600">
+                  <th className="w-10 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label="تحديد الكل"
+                      checked={allFilteredSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = someFilteredSelected
+                      }}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 cursor-pointer align-middle"
+                      style={{ accentColor: 'var(--color-yellow-deep)' }}
+                    />
+                  </th>
                   <th className="px-4 py-3 font-medium">المنتج</th>
                   <th className="px-4 py-3 font-medium">الفئة</th>
                   <th className="px-4 py-3 font-medium">السعر</th>
@@ -355,8 +463,29 @@ export default function AdminProducts() {
                     p.sale_price != null ? Number(p.sale_price) : null
                   const price = Number(p.price)
                   const onSale = salePrice != null && salePrice < price
+                  const isSelected = selected.has(p.id)
                   return (
-                    <tr key={p.id} className="hover:bg-gray-100/60">
+                    <tr
+                      key={p.id}
+                      className="hover:bg-gray-100/60"
+                      style={
+                        isSelected
+                          ? { backgroundColor: 'color-mix(in srgb, var(--color-yellow) 12%, white)' }
+                          : undefined
+                      }
+                    >
+                      {/* Select */}
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          aria-label={`تحديد: ${p.name_ar}`}
+                          checked={isSelected}
+                          onChange={() => toggleRow(p.id)}
+                          className="h-4 w-4 cursor-pointer align-middle"
+                          style={{ accentColor: 'var(--color-yellow-deep)' }}
+                        />
+                      </td>
+
                       {/* Product */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -451,19 +580,69 @@ export default function AdminProducts() {
         )}
       </div>
 
-      {/* Delete confirmation */}
+      {/* Bulk-action bar — floats above the list while a selection exists (no
+          layout shift). */}
+      {selected.size > 0 && (
+        <div
+          className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4"
+          role="region"
+          aria-label="إجراءات جماعية"
+        >
+          <div className="flex max-w-full flex-wrap items-center justify-center gap-2 overflow-x-auto rounded-[var(--radius-lg)] border border-gray-300 bg-white px-4 py-3 shadow-card">
+            <span className="num whitespace-nowrap text-sm font-medium text-ink">
+              تم تحديد {selected.size}
+            </span>
+            <span className="mx-1 h-5 w-px bg-gray-300" aria-hidden="true" />
+            <BulkBtn onClick={() => runBulkFlag('published', true)} disabled={bulkBusy}>نشر</BulkBtn>
+            <BulkBtn onClick={() => runBulkFlag('published', false)} disabled={bulkBusy}>إلغاء النشر</BulkBtn>
+            <BulkBtn onClick={() => runBulkFlag('featured', true)} disabled={bulkBusy}>تمييز</BulkBtn>
+            <BulkBtn onClick={() => runBulkFlag('featured', false)} disabled={bulkBusy}>إلغاء التمييز</BulkBtn>
+            <BulkBtn onClick={() => runBulkFlag('in_stock', true)} disabled={bulkBusy}>متوفر</BulkBtn>
+            <BulkBtn onClick={() => runBulkFlag('in_stock', false)} disabled={bulkBusy}>غير متوفر</BulkBtn>
+            <BulkBtn onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy} danger>حذف</BulkBtn>
+            <span className="mx-1 h-5 w-px bg-gray-300" aria-hidden="true" />
+            <button
+              type="button"
+              onClick={clearSelection}
+              disabled={bulkBusy}
+              className="text-sm font-medium text-gray-600 transition-colors hover:text-ink disabled:opacity-50"
+            >
+              إلغاء التحديد
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Single delete confirmation */}
       {deleteTarget && (
         <ConfirmDialog
-          name={deleteTarget.name_ar}
+          title="حذف المنتج"
+          message={`هل أنت متأكد من حذف «${deleteTarget.name_ar}»؟ لا يمكن التراجع.`}
           busy={deleting}
           onCancel={() => (deleting ? undefined : setDeleteTarget(null))}
           onConfirm={handleConfirmDelete}
         />
       )}
 
-      {/* Toast */}
+      {/* Bulk delete confirmation */}
+      {bulkDeleteOpen && (
+        <ConfirmDialog
+          title="حذف المنتجات"
+          message={`هل أنت متأكد من حذف ${selected.size} منتج؟ لا يمكن التراجع.`}
+          busy={bulkBusy}
+          onCancel={() => (bulkBusy ? undefined : setBulkDeleteOpen(false))}
+          onConfirm={runBulkDelete}
+        />
+      )}
+
+      {/* Toast — lifts above the bulk bar when a selection is present */}
       {toast && (
-        <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4" aria-live="polite">
+        <div
+          className={`fixed inset-x-0 z-50 flex justify-center px-4 ${
+            selected.size > 0 ? 'bottom-24' : 'bottom-6'
+          }`}
+          aria-live="polite"
+        >
           <div
             className="rounded-[var(--radius)] px-4 py-2.5 text-sm font-medium text-white shadow-card"
             style={{

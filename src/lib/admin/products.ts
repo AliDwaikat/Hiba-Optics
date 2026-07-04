@@ -71,6 +71,28 @@ export async function deleteAdminProduct(id: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
+/** Set one boolean flag on many products at once (bulk action). Throws on error. */
+export async function bulkSetProductFlag(
+  ids: string[],
+  flag: ProductFlag,
+  value: boolean,
+): Promise<void> {
+  if (ids.length === 0) return
+  const { error } = await supabase
+    .from('products')
+    .update({ [flag]: value })
+    .in('id', ids)
+
+  if (error) throw new Error(error.message)
+}
+
+/** Permanently delete many products at once (bulk action). Throws on error. */
+export async function bulkDeleteProducts(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  const { error } = await supabase.from('products').delete().in('id', ids)
+  if (error) throw new Error(error.message)
+}
+
 /* ---- Single-product read + writes for the add/edit form ---- */
 
 /** A product row including the admin-only `model` column. */
