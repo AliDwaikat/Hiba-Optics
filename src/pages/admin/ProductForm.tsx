@@ -225,6 +225,231 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_')
 }
 
+/* ---- Eyedropper: sample a color hex from an uploaded frame photo ---- */
+function EyedropperIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="m2 22 1-1h3l9-9" />
+      <path d="M3 21v-3l9-9" />
+      <path d="m15 6 3.4-3.4a2.1 2.1 0 0 1 3 3L18 9l.4.4a2.1 2.1 0 0 1 0 3 2.1 2.1 0 0 1-3 0l-7.8-7.8a2.1 2.1 0 0 1 0-3 2.1 2.1 0 0 1 3 0Z" />
+    </svg>
+  )
+}
+
+function toHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * Modal that renders one of the product's uploaded photos into a canvas and lets
+ * the admin click a pixel to sample its color. Images load with
+ * crossOrigin="anonymous" so the Supabase public bucket can be read without
+ * tainting the canvas; if a read still fails (foreign/no-CORS URL) we show a
+ * friendly Arabic message and the manual color picker remains the fallback.
+ */
+function ImageColorPicker({
+  images,
+  onPick,
+  onClose,
+}: {
+  images: string[]
+  onPick: (hex: string) => void
+  onClose: () => void
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [idx, setIdx] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [readError, setReadError] = useState(false)
+  const [hover, setHover] = useState<{ x: number; y: number; hex: string } | null>(null)
+
+  // (Re)draw the selected image whenever it changes.
+  useEffect(() => {
+    setLoading(true)
+    setLoadError(false)
+    setReadError(false)
+    setHover(null)
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    let cancelled = false
+    img.onload = () => {
+      if (cancelled) return
+      const maxW = 440
+      const maxH = 340
+      const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1)
+      const w = Math.max(1, Math.round(img.naturalWidth * scale))
+      const h = Math.max(1, Math.round(img.naturalHeight * scale))
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.drawImage(img, 0, 0, w, h)
+      setLoading(false)
+    }
+    img.onerror = () => {
+      if (cancelled) return
+      setLoadError(true)
+      setLoading(false)
+    }
+    img.src = images[idx]
+    return () => {
+      cancelled = true
+    }
+  }, [images, idx])
+
+  /** Read the pixel under a client point; may throw on a tainted canvas. */
+  function sampleAt(clientX: number, clientY: number): string {
+    const canvas = canvasRef.current
+    if (!canvas) throw new Error('no-canvas')
+    const rect = canvas.getBoundingClientRect()
+    const x = Math.min(canvas.width - 1, Math.max(0, Math.floor(clientX - rect.left)))
+    const y = Math.min(canvas.height - 1, Math.max(0, Math.floor(clientY - rect.top)))
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('no-ctx')
+    const d = ctx.getImageData(x, y, 1, 1).data
+    return toHex(d[0], d[1], d[2])
+  }
+
+  function handleMove(e: React.MouseEvent<HTMLCanvasElement>) {
+    if (loading || loadError) return
+    try {
+      const hex = sampleAt(e.clientX, e.clientY)
+      const rect = canvasRef.current!.getBoundingClientRect()
+      setHover({ x: e.clientX - rect.left, y: e.clientY - rect.top, hex })
+    } catch {
+      // Tainted canvas — surface it on click, keep the loupe quiet.
+      setHover(null)
+    }
+  }
+
+  function handleClick(e: React.MouseEvent<HTMLCanvasElement>) {
+    if (loading || loadError) return
+    try {
+      const hex = sampleAt(e.clientX, e.clientY)
+      onPick(hex)
+      onClose()
+    } catch {
+      setReadError(true)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto px-4 py-8"
+      role="dialog"
+      aria-modal="true"
+      aria-label="اختر اللون من الصورة"
+    >
+      <div
+        onClick={onClose}
+        style={{ backgroundColor: 'color-mix(in srgb, var(--color-black) 45%, transparent)' }}
+        className="fixed inset-0"
+      />
+      <div className="relative w-full max-w-lg rounded-[var(--radius-lg)] border border-gray-300 bg-white p-5 shadow-card">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-ink">اختر اللون من الصورة</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="إغلاق"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100 hover:text-ink"
+          >
+            ×
+          </button>
+        </div>
+
+        <p className="mt-1 text-xs text-gray-600">مرّر فوق الصورة وانقر على النقطة لأخذ لونها.</p>
+
+        {/* Image selector when the product has more than one photo */}
+        {images.length > 1 && (
+          <div className="mt-3 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {images.map((src, i) => (
+              <button
+                key={`${src}-${i}`}
+                type="button"
+                onClick={() => setIdx(i)}
+                aria-label={`صورة ${i + 1}`}
+                aria-current={i === idx}
+                className={`h-12 w-12 flex-shrink-0 overflow-hidden rounded-[var(--radius-sm)] border bg-white ring-2 transition ${
+                  i === idx ? 'ring-yellow' : 'ring-transparent hover:ring-gray-300'
+                } border-gray-300`}
+              >
+                <img src={src} alt="" className="h-full w-full object-contain p-0.5" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-3 flex justify-center">
+          <div className="relative inline-block">
+            {loadError ? (
+              <p className="px-6 py-10 text-sm" style={{ color: 'var(--color-error)' }}>
+                تعذّر تحميل الصورة
+              </p>
+            ) : (
+              <canvas
+                ref={canvasRef}
+                onMouseMove={handleMove}
+                onMouseLeave={() => setHover(null)}
+                onClick={handleClick}
+                className="max-w-full cursor-crosshair rounded-[var(--radius-sm)] border border-gray-300"
+              />
+            )}
+            {loading && !loadError && (
+              <span className="absolute inset-0 flex items-center justify-center text-sm text-gray-600">
+                جارٍ التحميل…
+              </span>
+            )}
+            {/* Loupe: color under the cursor */}
+            {hover && (
+              <span
+                className="pointer-events-none absolute z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow"
+                style={{
+                  backgroundColor: hover.hex,
+                  left: hover.x + 14,
+                  top: hover.y + 14,
+                }}
+                aria-hidden="true"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Live preview of the color under the cursor */}
+        <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+          <span
+            className="inline-block h-6 w-6 rounded-[var(--radius-sm)] border border-gray-300"
+            style={{ backgroundColor: hover?.hex ?? 'transparent' }}
+            aria-hidden="true"
+          />
+          <span className="num" dir="ltr">
+            {hover?.hex ?? '—'}
+          </span>
+        </div>
+
+        {readError && (
+          <p className="mt-3 text-sm" style={{ color: 'var(--color-error)' }}>
+            تعذّر قراءة اللون من هذه الصورة. استخدم منتقي الألوان اليدوي.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function ProductForm() {
   const { id } = useParams()
   const isEdit = Boolean(id)
@@ -241,6 +466,8 @@ export default function ProductForm() {
   const [newImage, setNewImage] = useState('')
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const uploadCounter = useRef(0)
+  // Which color row's "pick from image" popover is open (null = none).
+  const [pickerFor, setPickerFor] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // Load brands (always) + the product (edit mode).
@@ -754,6 +981,17 @@ export default function ProductForm() {
                       onChange={(e) => updateColor(i, { hex: e.target.value })}
                     />
                   </div>
+                  {/* Eyedropper — only when there's an uploaded photo to sample from. */}
+                  {form.images.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPickerFor(i)}
+                      className="btn btn-secondary inline-flex h-[42px] items-center gap-1.5 px-3 py-0"
+                    >
+                      <EyedropperIcon />
+                      اختر من الصورة
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeColor(i)}
@@ -767,6 +1005,15 @@ export default function ProductForm() {
             <button type="button" onClick={addColor} className="btn btn-secondary mt-1">
               + إضافة لون
             </button>
+
+            {/* Pick-color-from-image popover for the active color row */}
+            {pickerFor !== null && form.images.length > 0 && (
+              <ImageColorPicker
+                images={form.images}
+                onPick={(hex) => updateColor(pickerFor, { hex })}
+                onClose={() => setPickerFor(null)}
+              />
+            )}
           </Section>
 
           {/* Features */}
