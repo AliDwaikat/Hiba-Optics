@@ -1,6 +1,33 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
 import { useLanguage } from '../lib/language'
+import { fetchProducts } from '../lib/products'
+import { primaryImage } from '../lib/productImages'
+import FrameSpinner, { type HeroFrame } from './home/FrameSpinner'
+
+const MAX_FRAMES = 8
+const MIN_FRAMES = 3 // below this, keep the line-art fallback (never look empty)
+
+/** Featured-first frames that actually have a photo; falls back to any published
+ *  product with an image when there are fewer than ~5 featured. */
+async function loadHeroFrames(): Promise<HeroFrame[]> {
+  const all = await fetchProducts({})
+  const withImage = all
+    .map((p) => ({ p, image: primaryImage(p) }))
+    .filter((x): x is { p: (typeof all)[number]; image: string } => Boolean(x.image))
+
+  const featured = withImage.filter((x) => x.p.featured)
+  const ordered =
+    featured.length >= 5 ? featured : [...featured, ...withImage.filter((x) => !x.p.featured)]
+
+  return ordered.slice(0, MAX_FRAMES).map(({ p, image }) => ({
+    id: p.id,
+    image,
+    name_ar: p.name_ar,
+    name_en: p.name_en,
+  }))
+}
 
 /* Yellow dot separator for the trust line. */
 function Dot() {
@@ -36,6 +63,20 @@ function GlassesArt() {
 export default function Hero() {
   const reduce = useReducedMotion()
   const { t } = useLanguage()
+
+  // Hero frame photos (dynamic). null = still loading → show the line-art
+  // fallback so the hero never flashes empty during photo rollout.
+  const [frames, setFrames] = useState<HeroFrame[] | null>(null)
+  useEffect(() => {
+    let active = true
+    loadHeroFrames()
+      .then((f) => active && setFrames(f))
+      .catch(() => active && setFrames([]))
+    return () => {
+      active = false
+    }
+  }, [])
+  const showSpinner = frames !== null && frames.length >= MIN_FRAMES
 
   // Entrance: staggered fade-up (nested for the two headline lines).
   const container: Variants = {
@@ -109,30 +150,35 @@ export default function Hero() {
           </motion.div>
         </motion.div>
 
-        {/* LINE-ART — left column in RTL */}
-        <div className="relative flex items-center justify-center py-4">
-          {/* Thin yellow rings behind the glasses (crisp, no fills) */}
-          <motion.div
-            aria-hidden="true"
-            className="pointer-events-none absolute h-[206px] w-[206px] rounded-full border-[1.5px] border-yellow opacity-[0.35]"
-            animate={ringFloat}
-            transition={ringTrans}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute h-[248px] w-[248px] rounded-full border border-yellow opacity-[0.15]"
-          />
+        {/* VISUAL — left column in RTL. 3D frame spinner when enough photos
+            exist, otherwise the line-art fallback. */}
+        {showSpinner ? (
+          <FrameSpinner frames={frames as HeroFrame[]} />
+        ) : (
+          <div className="relative flex items-center justify-center py-4">
+            {/* Thin yellow rings behind the glasses (crisp, no fills) */}
+            <motion.div
+              aria-hidden="true"
+              className="pointer-events-none absolute h-[206px] w-[206px] rounded-full border-[1.5px] border-yellow opacity-[0.35]"
+              animate={ringFloat}
+              transition={ringTrans}
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute h-[248px] w-[248px] rounded-full border border-yellow opacity-[0.15]"
+            />
 
-          {/* Glasses line-art */}
-          <motion.div
-            initial={reduce ? false : { opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10"
-          >
-            <GlassesArt />
-          </motion.div>
-        </div>
+            {/* Glasses line-art */}
+            <motion.div
+              initial={reduce ? false : { opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="relative z-10"
+            >
+              <GlassesArt />
+            </motion.div>
+          </div>
+        )}
       </div>
     </section>
   )
