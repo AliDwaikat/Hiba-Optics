@@ -124,10 +124,14 @@ export default function Checkout() {
         has_consultation_items: hasConsultation,
         notes: notes.trim() || null,
       })
-      // Only on confirmed success:
+      // Success = insert returned no error. We rely on the client-side
+      // order_number (no read-back), since guests can't SELECT orders.
       clear()
       navigate('/order-success', { state: { orderNumber, hasConsultation } })
-    } catch {
+    } catch (err) {
+      // Surface the raw insert error so any remaining issue stays visible.
+      const e = err as { message?: string; details?: string; code?: string }
+      console.error('Order insert failed:', { message: e?.message, details: e?.details, code: e?.code })
       setSubmitError(t('checkout.err.submit'))
       setSubmitting(false)
     }

@@ -42,15 +42,17 @@ export interface OrderInput {
 }
 
 /**
- * Insert an order and confirm it via the returned row.
- * Throws on error (or if no row is returned) so the caller can keep the cart
- * and let the customer retry.
+ * Insert an order as a guest (anon role). Deliberately does NOT chain
+ * `.select()`: anon has INSERT but not SELECT on `orders` (SELECT stays
+ * restricted to authenticated/admin), so reading the row back would 401.
+ * Success is confirmed by the insert `error` being null; the caller relies on
+ * the client-side generated order_number for the success page. Throws the raw
+ * Supabase error (with details/code) on failure so the caller can log it, show
+ * a friendly message, and keep the cart for retry.
  */
-export async function createOrder(input: OrderInput): Promise<OrderInput> {
-  const { data, error } = await supabase.from('orders').insert(input).select().single()
-  if (error) throw new Error(error.message)
-  if (!data) throw new Error('لم يتم تأكيد الطلب')
-  return data as OrderInput
+export async function createOrder(input: OrderInput): Promise<void> {
+  const { error } = await supabase.from('orders').insert(input)
+  if (error) throw error
 }
 
 /** Order number in the format HIB-YYYYMMDD-XXXX (Western digits). */
