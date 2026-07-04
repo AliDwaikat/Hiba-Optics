@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
 import {
   BookingsIcon,
@@ -31,12 +31,26 @@ const NAV: NavItem[] = [
   { to: '/admin/brands', label: 'البراندات', icon: BrandsIcon },
 ]
 
+/* Admin brand logo — bare on the light (white) admin chrome; text fallback if
+   the image is missing. Links to the dashboard. */
 function Wordmark() {
+  const [broken, setBroken] = useState(false)
   return (
-    <span className="font-latin text-lg font-bold tracking-tight" dir="ltr">
-      <span className="text-ink">Hiba</span>{' '}
-      <span className="text-gray-600 tracking-[0.12em]">OPTICS</span>
-    </span>
+    <Link to="/admin" aria-label="Hiba Optics" className="inline-flex items-center">
+      {broken ? (
+        <span className="font-latin text-lg font-bold tracking-tight" dir="ltr">
+          <span className="text-ink">Hiba</span>{' '}
+          <span className="text-gray-600 tracking-[0.12em]">OPTICS</span>
+        </span>
+      ) : (
+        <img
+          src="/hiba-logo.png"
+          alt="Hiba Optics"
+          onError={() => setBroken(true)}
+          className="block h-8 w-auto"
+        />
+      )}
+    </Link>
   )
 }
 

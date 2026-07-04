@@ -2,6 +2,27 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
 
+/* Login brand logo — bare on the light card; text fallback if the image fails. */
+function LoginLogo() {
+  const [broken, setBroken] = useState(false)
+  if (broken) {
+    return (
+      <span className="font-latin text-xl font-bold tracking-tight" dir="ltr">
+        <span className="text-ink">Hiba</span>{' '}
+        <span className="text-gray-600 tracking-[0.12em]">OPTICS</span>
+      </span>
+    )
+  }
+  return (
+    <img
+      src="/hiba-logo.png"
+      alt="Hiba Optics"
+      onError={() => setBroken(true)}
+      className="mx-auto block h-10 w-auto"
+    />
+  )
+}
+
 export default function Login() {
   const { session, loading, signIn } = useAuth()
   const navigate = useNavigate()
@@ -36,11 +57,8 @@ export default function Login() {
     <main dir="rtl" className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-sm rounded-[var(--radius-lg)] border border-gray-300 bg-white p-8 shadow-card">
         <div className="text-center">
-          <span className="font-latin text-xl font-bold tracking-tight" dir="ltr">
-            <span className="text-ink">Hiba</span>{' '}
-            <span className="text-gray-600 tracking-[0.12em]">OPTICS</span>
-          </span>
-          <p className="mt-2 text-sm text-gray-600">لوحة التحكم</p>
+          <LoginLogo />
+          <p className="mt-3 text-sm text-gray-600">لوحة التحكم</p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">

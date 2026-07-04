@@ -5,6 +5,31 @@ import { useLanguage } from '../lib/language'
 import { fetchBranches, type Branch } from '../lib/branches'
 import { telLink, whatsappLink } from '../lib/contact'
 
+/* Footer brand logo — on a light chip so the light-background logo reads on the
+   dark footer. Falls back to the styled text wordmark if the image is missing. */
+function FooterLogo() {
+  const [broken, setBroken] = useState(false)
+  return (
+    <Link to="/" aria-label="Hiba Optics" className="inline-flex">
+      {broken ? (
+        <span className="font-latin text-2xl font-bold tracking-wide">
+          <span className="text-yellow">Hiba</span>{' '}
+          <span className="text-cream tracking-[0.2em]">OPTICS</span>
+        </span>
+      ) : (
+        <span className="inline-flex items-center rounded-[var(--radius)] bg-white px-3 py-2">
+          <img
+            src="/hiba-logo.png"
+            alt="Hiba Optics"
+            onError={() => setBroken(true)}
+            className="block h-8 w-auto"
+          />
+        </span>
+      )}
+    </Link>
+  )
+}
+
 function InstagramIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
@@ -52,10 +77,7 @@ export default function Footer() {
         <div className="grid gap-10 md:grid-cols-3">
           {/* Brand block */}
           <div>
-            <div className="font-latin text-2xl font-bold tracking-wide">
-              <span className="text-yellow">Hiba</span>{' '}
-              <span className="text-cream tracking-[0.2em]">OPTICS</span>
-            </div>
+            <FooterLogo />
             <p className="mt-3 text-sm leading-relaxed text-gray-300">
               {t('footer.tagline')}
             </p>
