@@ -152,7 +152,7 @@ function Lightbox({
       role="dialog"
       aria-modal="true"
       aria-label={t('pd.lightbox.aria')}
-      style={{ backgroundColor: 'var(--color-black)' }}
+      style={{ backgroundColor: '#000000' }}
       onClick={onClose}
     >
       <button
@@ -298,7 +298,7 @@ function Gallery({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onClick={() => zoomable && setLightbox(true)}
-        className={`group relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] border border-gray-900 bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep ${
+        className={`group relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] bg-[#000] shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep ${
           zoomable ? 'cursor-zoom-in' : ''
         }`}
       >
@@ -365,7 +365,7 @@ function Gallery({
               onClick={() => setIndex(i)}
               aria-label={format(t('pd.gallery.thumb'), { n: i + 1 })}
               aria-current={i === index}
-              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-900 bg-black ring-2 transition focus-visible:outline-none focus-visible:ring-yellow-deep ${
+              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[#000] ring-2 transition focus-visible:outline-none focus-visible:ring-yellow-deep ${
                 i === index ? 'ring-yellow' : 'ring-transparent hover:ring-gray-300'
               }`}
             >

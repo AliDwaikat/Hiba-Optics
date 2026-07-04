@@ -8,7 +8,7 @@
 export default function ProductTilePlaceholder({ className = '' }: { className?: string }) {
   return (
     <div
-      className={`flex h-full w-full items-center justify-center bg-black ${className}`}
+      className={`flex h-full w-full items-center justify-center bg-[#000] ${className}`}
     >
       <svg
         viewBox="0 0 56 40"

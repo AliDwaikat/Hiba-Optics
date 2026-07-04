@@ -111,7 +111,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
         }}
       >
         <div
-          className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-gray-900 bg-black ${
+          className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-[#000] ${
             product.in_stock ? '' : 'opacity-60'
           }`}
         >

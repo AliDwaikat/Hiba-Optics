@@ -56,7 +56,7 @@ function FrameCard({
         WebkitBackfaceVisibility: 'hidden',
       }}
     >
-      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[var(--radius)] border border-gray-900 bg-black shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[var(--radius)] bg-[#000] shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
         {broken ? (
           <span className="font-latin text-sm font-bold tracking-tight text-yellow/70" dir="ltr">
             Hiba
