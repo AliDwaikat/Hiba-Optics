@@ -8,6 +8,7 @@ import { useFavorites } from '../lib/favorites'
 import { useLanguage } from '../lib/language'
 import { CATEGORY_LABEL_KEY, format, type UIKey } from '../lib/i18n'
 import HeartIcon from '../components/HeartIcon'
+import ProductTilePlaceholder from '../components/ProductTilePlaceholder'
 import {
   fetchProduct,
   fetchReviews,
@@ -54,19 +55,6 @@ const TRUST: { key: UIKey; path: string }[] = [
   { key: 'pd.trust.quality', path: 'M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5l-8-3Z' },
   { key: 'pd.trust.fitting', path: 'M3 9l1-5h16l1 5M4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9Zm5 4h6' },
 ]
-
-/* Branded placeholder for an empty/broken image (never breaks layout). */
-function Placeholder({ className = '' }: { className?: string }) {
-  return (
-    <div className={`relative flex items-center justify-center overflow-hidden bg-cream ${className}`}>
-      <div className="absolute -bottom-12 -left-10 h-48 w-48 rounded-full bg-yellow/25" />
-      <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full border-[12px] border-yellow/20" />
-      <span className="font-latin text-5xl font-bold tracking-tight text-ink/15" dir="ltr">
-        Hiba
-      </span>
-    </div>
-  )
-}
 
 /* True only on hover-capable, fine-pointer devices (desktop) — where the
    hover magnifier makes sense; touch devices use the tap-to-open lightbox. */
@@ -164,7 +152,7 @@ function Lightbox({
       role="dialog"
       aria-modal="true"
       aria-label={t('pd.lightbox.aria')}
-      style={{ backgroundColor: 'color-mix(in srgb, var(--color-black) 92%, transparent)' }}
+      style={{ backgroundColor: 'var(--color-black)' }}
       onClick={onClose}
     >
       <button
@@ -310,7 +298,7 @@ function Gallery({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onClick={() => zoomable && setLightbox(true)}
-        className={`group relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep ${
+        className={`group relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] border border-gray-900 bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep ${
           zoomable ? 'cursor-zoom-in' : ''
         }`}
       >
@@ -327,7 +315,7 @@ function Gallery({
             }}
           />
         ) : (
-          <Placeholder className="h-full w-full" />
+          <ProductTilePlaceholder className="h-full w-full" />
         )}
 
         {overlay}
@@ -377,12 +365,12 @@ function Gallery({
               onClick={() => setIndex(i)}
               aria-label={format(t('pd.gallery.thumb'), { n: i + 1 })}
               aria-current={i === index}
-              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-white ring-2 transition focus-visible:outline-none focus-visible:ring-yellow-deep ${
+              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-900 bg-black ring-2 transition focus-visible:outline-none focus-visible:ring-yellow-deep ${
                 i === index ? 'ring-yellow' : 'ring-transparent hover:ring-gray-300'
               }`}
             >
               {broken[img] ? (
-                <Placeholder className="h-full w-full" />
+                <ProductTilePlaceholder className="h-full w-full" />
               ) : (
                 <img
                   src={img}
