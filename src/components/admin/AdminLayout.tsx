@@ -4,6 +4,7 @@ import { useAuth } from '../../lib/auth'
 import {
   BookingsIcon,
   BranchesIcon,
+  BrandsIcon,
   CloseIcon,
   DashboardIcon,
   LogoutIcon,
@@ -27,6 +28,7 @@ const NAV: NavItem[] = [
   { to: '/admin/bookings', label: 'الحجوزات', icon: BookingsIcon },
   { to: '/admin/reviews', label: 'التقييمات', icon: ReviewsIcon },
   { to: '/admin/branches', label: 'الفروع', icon: BranchesIcon },
+  { to: '/admin/brands', label: 'البراندات', icon: BrandsIcon },
 ]
 
 function Wordmark() {

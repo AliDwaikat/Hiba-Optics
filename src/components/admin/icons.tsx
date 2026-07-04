@@ -74,6 +74,15 @@ export const BranchesIcon = ({ className }: IconProps) =>
     className,
   )
 
+export const BrandsIcon = ({ className }: IconProps) =>
+  base(
+    <>
+      <circle cx="12" cy="8" r="6" />
+      <path d="M8.2 13.3 7 22l5-3 5 3-1.2-8.7" />
+    </>,
+    className,
+  )
+
 export const MenuIcon = ({ className }: IconProps) =>
   base(<path d="M4 7h16M4 12h16M4 17h16" />, className)
 

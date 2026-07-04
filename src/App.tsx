@@ -24,6 +24,7 @@ import AdminOrders from './pages/admin/Orders'
 import AdminBookings from './pages/admin/Bookings'
 import AdminReviews from './pages/admin/Reviews'
 import AdminBranches from './pages/admin/Branches'
+import AdminBrands from './pages/admin/Brands'
 
 export default function App() {
   return (
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="bookings" element={<AdminBookings />} />
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="branches" element={<AdminBranches />} />
+          <Route path="brands" element={<AdminBrands />} />
         </Route>
       </Route>
     </Routes>
