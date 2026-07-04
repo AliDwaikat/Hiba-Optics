@@ -266,6 +266,205 @@ export const UI = {
   'finder.empty': { ar: 'لا توجد إطارات متاحة حالياً', en: 'No frames available right now' },
   'finder.restart': { ar: 'أعد الاختبار', en: 'Restart quiz' },
   'finder.browseAll': { ar: 'تصفّح كل النظارات', en: 'Browse all eyewear' },
+
+  // ---- Shared (pass 3) ----
+  'common.browseShop': { ar: 'تصفّح المتجر', en: 'Browse the shop' },
+  'common.backHome': { ar: 'العودة للرئيسية', en: 'Back to home' },
+  'common.backShop': { ar: 'العودة للمتجر', en: 'Back to shop' },
+  'common.whatsappContact': { ar: 'تواصل معنا على واتساب', en: 'Contact us on WhatsApp' },
+
+  // ---- Shared form fields + validation ----
+  'form.name': { ar: 'الاسم الكامل', en: 'Full name' },
+  'form.phoneWa': { ar: 'رقم الهاتف / واتساب', en: 'Phone / WhatsApp' },
+  'form.notes': { ar: 'ملاحظات (اختياري)', en: 'Notes (optional)' },
+  'form.chooseBranch': { ar: 'اختر الفرع', en: 'Choose a branch' },
+  'form.err.name': { ar: 'الرجاء إدخال الاسم الكامل', en: 'Please enter your full name' },
+  'form.err.phone': { ar: 'أدخل رقم هاتف صحيح', en: 'Enter a valid phone number' },
+  'form.err.branch': { ar: 'الرجاء اختيار الفرع', en: 'Please choose a branch' },
+
+  // ---- Cart ----
+  'cart.title': { ar: 'السلة', en: 'Cart' },
+  'cart.empty': { ar: 'سلتك فارغة', en: 'Your cart is empty' },
+  'cart.remove': { ar: 'إزالة', en: 'Remove' },
+  'cart.qtyDec': { ar: 'إنقاص الكمية', en: 'Decrease quantity' },
+  'cart.qtyInc': { ar: 'زيادة الكمية', en: 'Increase quantity' },
+  'cart.coordinated': { ar: 'يُنسّق عند الحجز', en: 'Arranged at booking' },
+  'cart.groupShop': { ar: 'سلة الشراء', en: 'Shopping cart' },
+  'cart.groupReserve': { ar: 'طلبات الحجز · بحاجة لفحص نظر', en: 'Reservation items · eye exam required' },
+  'cart.reserveNote': {
+    ar: 'هذه إطارات طبية — سنتواصل معك لتحديد موعد الفحص واختيار العدسات، ولا تُحتسب ضمن المجموع الآن.',
+    en: "These are prescription frames — we'll contact you to schedule the exam and choose lenses; they aren't included in the total yet.",
+  },
+  'cart.reserveBadge.pre': { ar: 'لديك', en: 'You have' },
+  'cart.reserveBadge.post': {
+    ar: 'قطعة بحاجة لفحص نظر — سنتواصل معك بخصوصها.',
+    en: "item(s) that need an eye exam — we'll be in touch about them.",
+  },
+  'cart.summary': { ar: 'ملخص الطلب', en: 'Order summary' },
+  'cart.subtotal': { ar: 'المجموع الفرعي', en: 'Subtotal' },
+  'cart.deliveryNote': { ar: 'تُحسب رسوم التوصيل عند إتمام الطلب.', en: 'Delivery fees are calculated at checkout.' },
+  'cart.checkout': { ar: 'إتمام الطلب', en: 'Checkout' },
+  'cart.continue': { ar: 'متابعة التسوق', en: 'Continue shopping' },
+
+  // ---- Checkout ----
+  'checkout.title': { ar: 'إتمام الطلب', en: 'Checkout' },
+  'checkout.fulfillment': { ar: 'طريقة الاستلام', en: 'Fulfillment method' },
+  'checkout.delivery': { ar: 'توصيل', en: 'Delivery' },
+  'checkout.pickup': { ar: 'استلام من الفرع', en: 'Pickup from branch' },
+  'checkout.address': { ar: 'العنوان', en: 'Address' },
+  'checkout.city': { ar: 'المدينة', en: 'City' },
+  'checkout.payment': { ar: 'طريقة الدفع: الدفع عند الاستلام', en: 'Payment: Cash on delivery' },
+  'checkout.consultInfo': {
+    ar: 'يحتوي طلبك على إطارات طبية بحاجة لفحص نظر — سنتواصل معك لتحديد موعد الفحص واختيار العدسات قبل التسليم.',
+    en: "Your order includes prescription frames that need an eye exam — we'll contact you to schedule the exam and choose lenses before delivery.",
+  },
+  'checkout.summary': { ar: 'ملخص الطلب', en: 'Order summary' },
+  'checkout.subtotal': { ar: 'المجموع الفرعي', en: 'Subtotal' },
+  'checkout.deliveryFee': { ar: 'رسوم التوصيل', en: 'Delivery fee' },
+  'checkout.total': { ar: 'الإجمالي', en: 'Total' },
+  'checkout.submit': { ar: 'تأكيد الطلب', en: 'Confirm order' },
+  'checkout.submitting': { ar: 'جاري التأكيد…', en: 'Confirming…' },
+  'checkout.backToCart': { ar: 'الرجوع إلى السلة', en: 'Back to cart' },
+  'checkout.err.address': { ar: 'الرجاء إدخال العنوان', en: 'Please enter your address' },
+  'checkout.err.city': { ar: 'الرجاء إدخال المدينة', en: 'Please enter your city' },
+  'checkout.err.submit': {
+    ar: 'تعذّر تأكيد الطلب، يرجى المحاولة مرة أخرى.',
+    en: "Couldn't confirm your order, please try again.",
+  },
+
+  // ---- Order success ----
+  'ok.title': { ar: 'تم استلام طلبك ✓', en: 'Your order has been received ✓' },
+  'ok.orderNo': { ar: 'رقم الطلب', en: 'Order number' },
+  'ok.contactLine': {
+    ar: 'سنتواصل معك على الرقم الذي أدخلته لتأكيد الطلب.',
+    en: "We'll contact you on the number you entered to confirm your order.",
+  },
+  'ok.contactLineConsult': {
+    ar: 'سنتواصل معك على الرقم الذي أدخلته لتأكيد الطلب ولتحديد موعد فحص النظر.',
+    en: "We'll contact you on the number you entered to confirm your order and schedule your eye exam.",
+  },
+  'ok.none': { ar: 'لا يوجد طلب لعرضه.', en: 'No order to show.' },
+
+  // ---- Booking ----
+  'book.eyebrow': { ar: 'احجز موعدك', en: 'Book your appointment' },
+  'book.title': { ar: 'احجز فحص نظر', en: 'Book an eye exam' },
+  'book.intro': {
+    ar: 'فحص دقيق بأحدث الأجهزة — اختر الفرع والوقت المناسب لك وسنتواصل لتأكيد الموعد.',
+    en: "A precise exam with modern equipment — choose the branch and time that suit you and we'll be in touch to confirm.",
+  },
+  'book.service': { ar: 'نوع الخدمة', en: 'Service type' },
+  'book.service.eye_exam': { ar: 'فحص نظر', en: 'Eye exam' },
+  'book.service.glasses_consult': { ar: 'استشارة نظارة', en: 'Glasses consultation' },
+  'book.service.general': { ar: 'استفسار عام', en: 'General inquiry' },
+  'book.branch': { ar: 'الفرع', en: 'Branch' },
+  'book.date': { ar: 'التاريخ المفضل (اختياري)', en: 'Preferred date (optional)' },
+  'book.time': { ar: 'الوقت المفضل (اختياري)', en: 'Preferred time (optional)' },
+  'book.time.optional': { ar: 'اختياري', en: 'Optional' },
+  'book.time.morning': { ar: 'صباحاً', en: 'Morning' },
+  'book.time.noon': { ar: 'ظهراً', en: 'Noon' },
+  'book.time.evening': { ar: 'مساءً', en: 'Evening' },
+  'book.submit': { ar: 'تأكيد الحجز', en: 'Confirm booking' },
+  'book.submitting': { ar: 'جاري الحجز…', en: 'Booking…' },
+  'book.err.submit': {
+    ar: 'تعذّر تأكيد الحجز، يرجى المحاولة مرة أخرى.',
+    en: "Couldn't confirm your booking, please try again.",
+  },
+  'book.why': { ar: 'لماذا هبة؟', en: 'Why Hiba?' },
+  'book.reassure.1': { ar: 'فحص دقيق بأحدث الأجهزة', en: 'A precise exam with modern equipment' },
+  'book.reassure.2': { ar: 'فرعان في نابلس وحوارة', en: 'Two branches in Nablus & Huwara' },
+  'book.reassure.3': { ar: 'سنتواصل معك لتأكيد الموعد', en: "We'll contact you to confirm the appointment" },
+
+  // ---- Booking success ----
+  'bk.title': { ar: 'تم استلام طلب الحجز ✓', en: 'Your booking request has been received ✓' },
+  'bk.bookingNo': { ar: 'رقم الحجز', en: 'Booking number' },
+  'bk.contactLine': {
+    ar: 'سنتواصل معك على الرقم الذي أدخلته لتأكيد الموعد.',
+    en: "We'll contact you on the number you entered to confirm the appointment.",
+  },
+  'bk.none': { ar: 'لا يوجد حجز لعرضه.', en: 'No booking to show.' },
+
+  // ---- Branches page ----
+  'branches.pageEyebrow': { ar: 'زورونا', en: 'Visit Us' },
+  'branches.pageTitle': { ar: 'فروعنا', en: 'Our branches' },
+  'branches.pageSub': { ar: 'فرعان لخدمتكم في نابلس وحوارة', en: 'Two branches to serve you in Nablus & Huwara' },
+  'branches.callBtn': { ar: 'اتصال', en: 'Call' },
+  'branches.directions': { ar: 'الاتجاهات', en: 'Directions' },
+  'branches.empty': { ar: 'سيتم إضافة الفروع قريباً', en: 'Branches will be added soon' },
+  'branches.mapTitle': { ar: 'خريطة {name}', en: '{name} map' },
+
+  // ---- Contact ----
+  'contact.eyebrow': { ar: 'تواصل معنا', en: 'Contact us' },
+  'contact.title': { ar: 'نحن هنا لمساعدتك', en: "We're here to help" },
+  'contact.intro': {
+    ar: 'أي سؤال عن النظارات أو فحص النظر؟ راسلنا أو زُر أحد فرعينا.',
+    en: 'Any question about eyewear or eye exams? Message us or visit one of our branches.',
+  },
+  'contact.card.whatsapp.title': { ar: 'واتساب', en: 'WhatsApp' },
+  'contact.card.whatsapp.line': { ar: 'الأسرع للرد على استفساراتك', en: 'The fastest way to get answers' },
+  'contact.card.whatsapp.action': { ar: 'راسلنا الآن', en: 'Message us now' },
+  'contact.card.call.title': { ar: 'اتصل بنا', en: 'Call us' },
+  'contact.card.call.line': { ar: 'خلال ساعات العمل', en: 'During working hours' },
+  'contact.card.visit.title': { ar: 'زورونا', en: 'Visit us' },
+  'contact.card.visit.line': { ar: 'فرعان في نابلس وحوارة', en: 'Two branches in Nablus & Huwara' },
+  'contact.card.visit.action': { ar: 'صفحة الفروع', en: 'Branches page' },
+  'contact.card.hours.title': { ar: 'ساعات العمل', en: 'Working hours' },
+  'contact.card.hours.days': { ar: 'السبت - الخميس', en: 'Saturday – Thursday' },
+  'contact.card.hours.time': { ar: '9 صباحاً - 8 مساءً', en: '9 AM – 8 PM' },
+  'contact.form.title': { ar: 'أرسل لنا رسالة', en: 'Send us a message' },
+  'contact.form.name': { ar: 'الاسم', en: 'Name' },
+  'contact.form.phone': { ar: 'رقم الهاتف', en: 'Phone number' },
+  'contact.form.subject': { ar: 'الموضوع', en: 'Subject' },
+  'contact.form.message': { ar: 'الرسالة', en: 'Message' },
+  'contact.form.send': { ar: 'إرسال عبر واتساب', en: 'Send via WhatsApp' },
+  'contact.subject.product': { ar: 'استفسار عن منتج', en: 'Product inquiry' },
+  'contact.subject.booking': { ar: 'حجز فحص نظر', en: 'Book an eye exam' },
+  'contact.subject.general': { ar: 'استفسار عام', en: 'General inquiry' },
+  'contact.subject.other': { ar: 'أخرى', en: 'Other' },
+  'contact.err.name': { ar: 'الرجاء إدخال الاسم', en: 'Please enter your name' },
+  'contact.err.phone': { ar: 'الرجاء إدخال رقم الهاتف', en: 'Please enter your phone number' },
+  'contact.err.message': { ar: 'الرجاء كتابة رسالتك', en: 'Please write your message' },
+  'contact.faq.title': { ar: 'الأسئلة الشائعة', en: 'FAQ' },
+  'contact.faq.q1': { ar: 'هل تجرون فحص نظر شامل؟', en: 'Do you offer comprehensive eye exams?' },
+  'contact.faq.a1': {
+    ar: 'نعم، نوفر فحص نظر دقيق بأحدث الأجهزة في كلا الفرعين.',
+    en: 'Yes, we offer precise eye exams with modern equipment at both branches.',
+  },
+  'contact.faq.q2': { ar: 'كم يستغرق تجهيز النظارة الطبية؟', en: 'How long does it take to prepare prescription glasses?' },
+  'contact.faq.a2': {
+    ar: 'غالباً من يوم إلى ثلاثة أيام حسب نوع العدسات، وسنبلغك فور جاهزيتها.',
+    en: "Usually one to three days depending on the lens type, and we'll let you know as soon as they're ready.",
+  },
+  'contact.faq.q3': { ar: 'هل جميع النظارات أصلية؟', en: 'Are all your glasses authentic?' },
+  'contact.faq.a3': {
+    ar: 'نعم، جميع منتجاتنا أصلية من البراندات العالمية المعتمدة.',
+    en: 'Yes, all our products are authentic, from certified global brands.',
+  },
+  'contact.faq.q4': { ar: 'هل تتوفر عدسات لاصقة؟', en: 'Do you offer contact lenses?' },
+  'contact.faq.a4': {
+    ar: 'نعم، نوفر عدسات لاصقة طبية وتجميلية بأنواع متعددة.',
+    en: 'Yes, we offer prescription and cosmetic contact lenses in many types.',
+  },
+  'contact.faq.q5': { ar: 'هل يوجد خدمة توصيل؟', en: 'Do you offer delivery?' },
+  'contact.faq.a5': {
+    ar: 'نعم، نوفر توصيل للطلبات مع الدفع عند الاستلام.',
+    en: 'Yes, we deliver orders with cash on delivery.',
+  },
+  'contact.faqMore.pre': { ar: 'لم تجد إجابتك؟', en: "Didn't find your answer?" },
+  'contact.faqMore.link': { ar: 'راسلنا على واتساب', en: 'Message us on WhatsApp' },
+
+  // ---- Brands page ----
+  'brands.eyebrow': { ar: 'علاماتنا التجارية', en: 'Our brands' },
+  'brands.title': { ar: 'براندات عالمية', en: 'Global brands' },
+  'brands.sub': { ar: 'نختار لك أرقى الأسماء في عالم النظارات.', en: 'We curate the finest names in eyewear for you.' },
+  'brands.products': { ar: 'منتج', en: 'products' },
+  'brands.soon': { ar: 'قريباً', en: 'Coming soon' },
+  'brands.browse': { ar: 'تصفّح المجموعة', en: 'Browse the collection' },
+  'brands.empty': { ar: 'سيتم إضافة البراندات قريباً', en: 'Brands will be added soon' },
+
+  // ---- Favorites ----
+  'fav.count': { ar: '{n} منتج في المفضلة', en: '{n} in your favorites' },
+  'fav.error': { ar: 'تعذّر تحميل المفضلة', en: "Couldn't load favorites" },
+  'fav.empty': { ar: 'لا توجد منتجات في المفضلة بعد', en: 'No favorites yet' },
 } satisfies Record<string, Entry>
 
 export type UIKey = keyof typeof UI

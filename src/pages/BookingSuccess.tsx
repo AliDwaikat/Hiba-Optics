@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Reveal } from '../components/home/Reveal'
+import { useLanguage } from '../lib/language'
 import { PRIMARY_WHATSAPP, whatsappLink } from '../lib/contact'
 
 interface SuccessState {
@@ -22,6 +23,7 @@ function WhatsAppIcon() {
 }
 
 export default function BookingSuccess() {
+  const { t } = useLanguage()
   const location = useLocation()
   const state = (location.state ?? {}) as SuccessState
   const bookingNumber = state.bookingNumber
@@ -31,8 +33,8 @@ export default function BookingSuccess() {
     return (
       <main className="bg-white">
         <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
-          <p className="text-lg text-gray-600">لا يوجد حجز لعرضه.</p>
-          <Link to="/" className="btn btn-primary mt-6">العودة للرئيسية</Link>
+          <p className="text-lg text-gray-600">{t('bk.none')}</p>
+          <Link to="/" className="btn btn-primary mt-6">{t('common.backHome')}</Link>
         </div>
       </main>
     )
@@ -49,13 +51,13 @@ export default function BookingSuccess() {
             <CheckIcon />
           </span>
 
-          <h1 className="mt-6 text-2xl font-extrabold text-ink sm:text-3xl">تم استلام طلب الحجز ✓</h1>
+          <h1 className="mt-6 text-2xl font-extrabold text-ink sm:text-3xl">{t('bk.title')}</h1>
 
-          <p className="mt-4 text-sm text-gray-600">رقم الحجز</p>
+          <p className="mt-4 text-sm text-gray-600">{t('bk.bookingNo')}</p>
           <p className="latin mt-1 text-2xl font-bold tracking-wide text-ink" dir="ltr">{bookingNumber}</p>
 
           <p className="mt-6 leading-relaxed text-gray-600">
-            سنتواصل معك على الرقم الذي أدخلته لتأكيد الموعد.
+            {t('bk.contactLine')}
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-3">
@@ -66,10 +68,10 @@ export default function BookingSuccess() {
               className="btn btn-primary w-full sm:w-auto"
             >
               <WhatsAppIcon />
-              تواصل معنا على واتساب
+              {t('common.whatsappContact')}
             </a>
             <Link to="/" className="text-sm text-gray-600 transition-colors hover:text-ink">
-              العودة للرئيسية
+              {t('common.backHome')}
             </Link>
           </div>
         </Reveal>

@@ -1,6 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Reveal } from '../components/home/Reveal'
+import { useLanguage } from '../lib/language'
+import { type UIKey } from '../lib/i18n'
 import { fetchBranches, type Branch } from '../lib/branches'
 import {
   createBooking,
@@ -9,13 +11,18 @@ import {
   type BookingService,
 } from '../lib/bookings'
 
-const SERVICES: { value: BookingService; label: string }[] = [
-  { value: 'eye_exam', label: 'فحص نظر' },
-  { value: 'glasses_consult', label: 'استشارة نظارة' },
-  { value: 'general', label: 'استفسار عام' },
+const SERVICES: { value: BookingService; labelKey: UIKey }[] = [
+  { value: 'eye_exam', labelKey: 'book.service.eye_exam' },
+  { value: 'glasses_consult', labelKey: 'book.service.glasses_consult' },
+  { value: 'general', labelKey: 'book.service.general' },
 ]
 
-const TIME_SLOTS = ['صباحاً', 'ظهراً', 'مساءً']
+// The stored value stays Arabic (admin is Arabic-only); the label is localized.
+const TIME_SLOTS: { value: string; labelKey: UIKey }[] = [
+  { value: 'صباحاً', labelKey: 'book.time.morning' },
+  { value: 'ظهراً', labelKey: 'book.time.noon' },
+  { value: 'مساءً', labelKey: 'book.time.evening' },
+]
 
 /* Reassurance icons */
 function EyeIcon() {
@@ -43,10 +50,10 @@ function ChatIcon() {
   )
 }
 
-const REASSURANCE = [
-  { icon: <EyeIcon />, text: 'فحص دقيق بأحدث الأجهزة' },
-  { icon: <PinIcon />, text: 'فرعان في نابلس وحوارة' },
-  { icon: <ChatIcon />, text: 'سنتواصل معك لتأكيد الموعد' },
+const REASSURANCE: { icon: ReactNode; key: UIKey }[] = [
+  { icon: <EyeIcon />, key: 'book.reassure.1' },
+  { icon: <PinIcon />, key: 'book.reassure.2' },
+  { icon: <ChatIcon />, key: 'book.reassure.3' },
 ]
 
 interface FieldErrors {
@@ -57,6 +64,7 @@ interface FieldErrors {
 
 export default function Book() {
   const navigate = useNavigate()
+  const { t, localize } = useLanguage()
 
   const [branches, setBranches] = useState<Branch[]>([])
   const [name, setName] = useState('')
@@ -83,12 +91,12 @@ export default function Book() {
 
   function validate(): FieldErrors {
     const e: FieldErrors = {}
-    if (!name.trim()) e.name = 'الرجاء إدخال الاسم الكامل'
+    if (!name.trim()) e.name = t('form.err.name')
     const digits = phone.replace(/\D/g, '')
     if (!phone.trim() || digits.length < 7 || !/^[\d\s+()-]+$/.test(phone.trim())) {
-      e.phone = 'أدخل رقم هاتف صحيح'
+      e.phone = t('form.err.phone')
     }
-    if (!branchId) e.branch = 'الرجاء اختيار الفرع'
+    if (!branchId) e.branch = t('form.err.branch')
     return e
   }
 
@@ -116,7 +124,7 @@ export default function Book() {
       })
       navigate('/booking-success', { state: { bookingNumber } })
     } catch {
-      setSubmitError('تعذّر تأكيد الحجز، يرجى المحاولة مرة أخرى.')
+      setSubmitError(t('book.err.submit'))
       setSubmitting(false)
     }
   }
@@ -128,15 +136,13 @@ export default function Book() {
     <main className="bg-white">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16">
         {/* Intro */}
-        <Reveal className="text-right">
+        <Reveal className="text-start">
           <div className="flex items-center justify-start gap-3">
             <span className="h-px w-8 bg-yellow" aria-hidden="true" />
-            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">احجز موعدك</span>
+            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">{t('book.eyebrow')}</span>
           </div>
-          <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">احجز فحص نظر</h1>
-          <p className="mt-3 max-w-2xl text-gray-600">
-            فحص دقيق بأحدث الأجهزة — اختر الفرع والوقت المناسب لك وسنتواصل لتأكيد الموعد.
-          </p>
+          <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">{t('book.title')}</h1>
+          <p className="mt-3 max-w-2xl text-gray-600">{t('book.intro')}</p>
         </Reveal>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-3 lg:gap-12">
@@ -145,21 +151,21 @@ export default function Book() {
             <form onSubmit={handleSubmit} noValidate className="space-y-6 rounded-[var(--radius-lg)] border border-gray-100 bg-white p-6 shadow-card sm:p-8">
               {/* Name */}
               <div>
-                <label htmlFor="name" className={labelClass}>الاسم الكامل</label>
+                <label htmlFor="name" className={labelClass}>{t('form.name')}</label>
                 <input id="name" type="text" className="field" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
                 {errors.name && <p className="mt-1 text-xs" style={errStyle}>{errors.name}</p>}
               </div>
 
               {/* Phone */}
               <div>
-                <label htmlFor="phone" className={labelClass}>رقم الهاتف / واتساب</label>
-                <input id="phone" type="tel" inputMode="tel" dir="ltr" className="field text-right" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="0599 000 000" />
+                <label htmlFor="phone" className={labelClass}>{t('form.phoneWa')}</label>
+                <input id="phone" type="tel" inputMode="tel" dir="ltr" className="field text-end" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="0599 000 000" />
                 {errors.phone && <p className="mt-1 text-xs" style={errStyle}>{errors.phone}</p>}
               </div>
 
               {/* Service */}
               <div>
-                <span className={labelClass}>نوع الخدمة</span>
+                <span className={labelClass}>{t('book.service')}</span>
                 <div className="grid grid-cols-3 gap-2">
                   {SERVICES.map((s) => (
                     <button
@@ -170,7 +176,7 @@ export default function Book() {
                         service === s.value ? 'border-yellow bg-yellow/10 text-ink' : 'border-gray-300 text-gray-600 hover:border-ink/30'
                       }`}
                     >
-                      {s.label}
+                      {t(s.labelKey)}
                     </button>
                   ))}
                 </div>
@@ -178,14 +184,18 @@ export default function Book() {
 
               {/* Branch */}
               <div>
-                <label htmlFor="branch" className={labelClass}>الفرع</label>
+                <label htmlFor="branch" className={labelClass}>{t('book.branch')}</label>
                 <select id="branch" className="field" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-                  <option value="">اختر الفرع</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name_ar}{b.landmark_ar ? ` — ${b.landmark_ar}` : ''}
-                    </option>
-                  ))}
+                  <option value="">{t('form.chooseBranch')}</option>
+                  {branches.map((b) => {
+                    const bn = localize(b, 'name')
+                    const lm = localize(b, 'landmark')
+                    return (
+                      <option key={b.id} value={b.id}>
+                        {bn}{lm ? ` — ${lm}` : ''}
+                      </option>
+                    )
+                  })}
                 </select>
                 {errors.branch && <p className="mt-1 text-xs" style={errStyle}>{errors.branch}</p>}
               </div>
@@ -193,15 +203,15 @@ export default function Book() {
               {/* Date + time */}
               <div className="grid gap-6 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="date" className={labelClass}>التاريخ المفضل (اختياري)</label>
+                  <label htmlFor="date" className={labelClass}>{t('book.date')}</label>
                   <input id="date" type="date" min={todayISO()} className="field" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} />
                 </div>
                 <div>
-                  <label htmlFor="time" className={labelClass}>الوقت المفضل (اختياري)</label>
+                  <label htmlFor="time" className={labelClass}>{t('book.time')}</label>
                   <select id="time" className="field" value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)}>
-                    <option value="">اختياري</option>
+                    <option value="">{t('book.time.optional')}</option>
                     {TIME_SLOTS.map((slot) => (
-                      <option key={slot} value={slot}>{slot}</option>
+                      <option key={slot.value} value={slot.value}>{t(slot.labelKey)}</option>
                     ))}
                   </select>
                 </div>
@@ -209,14 +219,14 @@ export default function Book() {
 
               {/* Notes */}
               <div>
-                <label htmlFor="notes" className={labelClass}>ملاحظات (اختياري)</label>
+                <label htmlFor="notes" className={labelClass}>{t('form.notes')}</label>
                 <textarea id="notes" rows={3} className="field resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
 
               {submitError && <p className="text-sm" style={errStyle}>{submitError}</p>}
 
               <button type="submit" disabled={submitting} className="btn btn-primary w-full">
-                {submitting ? 'جاري الحجز…' : 'تأكيد الحجز'}
+                {submitting ? t('book.submitting') : t('book.submit')}
               </button>
             </form>
           </Reveal>
@@ -225,12 +235,12 @@ export default function Book() {
           <aside className="lg:col-span-1">
             <Reveal delay={0.08} className="lg:sticky lg:top-24">
               <div className="rounded-[var(--radius-lg)] border border-gray-100 bg-cream p-6 shadow-card">
-                <h2 className="text-lg font-bold text-ink">لماذا هبة؟</h2>
+                <h2 className="text-lg font-bold text-ink">{t('book.why')}</h2>
                 <ul className="mt-4 space-y-4">
                   {REASSURANCE.map((r) => (
-                    <li key={r.text} className="flex items-start gap-3 text-sm text-gray-600">
+                    <li key={r.key} className="flex items-start gap-3 text-sm text-gray-600">
                       {r.icon}
-                      <span className="leading-relaxed">{r.text}</span>
+                      <span className="leading-relaxed">{t(r.key)}</span>
                     </li>
                   ))}
                 </ul>

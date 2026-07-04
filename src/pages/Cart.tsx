@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Reveal, RevealGroup, RevealItem } from '../components/home/Reveal'
 import { formatPrice } from '../lib/format'
 import { useCart, type CartItem } from '../lib/cart'
+import { useLanguage } from '../lib/language'
 
 // Cart prices are all in shekels (₪); CartItem doesn't carry a currency.
 const CURRENCY = 'ILS'
@@ -45,9 +46,11 @@ function lineKey(item: CartItem): string | null {
 /* ---------- Line item ---------- */
 function CartLine({ item }: { item: CartItem }) {
   const { updateQty, removeItem } = useCart()
+  const { t, localize } = useLanguage()
   const [broken, setBroken] = useState(false)
   const vid = lineKey(item)
   const showImage = Boolean(item.image) && !broken
+  const name = localize(item, 'name')
 
   return (
     <div className="flex gap-4 p-4 sm:p-5">
@@ -55,7 +58,7 @@ function CartLine({ item }: { item: CartItem }) {
         {showImage ? (
           <img
             src={item.image}
-            alt={item.name_ar}
+            alt={name}
             onError={() => setBroken(true)}
             className="h-full w-full object-contain p-1.5"
           />
@@ -68,14 +71,14 @@ function CartLine({ item }: { item: CartItem }) {
         <div className="flex items-start justify-between gap-2">
           <div>
             {item.brand_ar && <p className="text-xs text-gray-600">{item.brand_ar}</p>}
-            <p className="font-semibold text-ink">{item.name_ar}</p>
+            <p className="font-semibold text-ink">{name}</p>
             {item.color && (
               <span className="mt-1 inline-flex items-center gap-1.5 text-xs text-gray-600">
                 <span
                   className="h-3.5 w-3.5 rounded-full border border-gray-300"
                   style={{ backgroundColor: item.color.hex }}
                 />
-                {item.color.name_ar}
+                {localize(item.color, 'name')}
               </span>
             )}
           </div>
@@ -83,7 +86,7 @@ function CartLine({ item }: { item: CartItem }) {
           <button
             type="button"
             onClick={() => removeItem(item.productId, vid)}
-            aria-label="إزالة"
+            aria-label={t('cart.remove')}
             className="text-gray-600 transition-colors hover:text-error"
           >
             <TrashIcon />
@@ -97,7 +100,7 @@ function CartLine({ item }: { item: CartItem }) {
               type="button"
               onClick={() => updateQty(item.productId, vid, Math.max(1, item.quantity - 1))}
               disabled={item.quantity <= 1}
-              aria-label="إنقاص الكمية"
+              aria-label={t('cart.qtyDec')}
               className="h-8 w-8 rounded-full border border-gray-300 text-lg leading-none text-ink transition-colors hover:border-yellow disabled:opacity-40"
             >
               −
@@ -106,7 +109,7 @@ function CartLine({ item }: { item: CartItem }) {
             <button
               type="button"
               onClick={() => updateQty(item.productId, vid, item.quantity + 1)}
-              aria-label="زيادة الكمية"
+              aria-label={t('cart.qtyInc')}
               className="h-8 w-8 rounded-full border border-gray-300 text-lg leading-none text-ink transition-colors hover:border-yellow"
             >
               +
@@ -118,7 +121,7 @@ function CartLine({ item }: { item: CartItem }) {
             <p className="num text-xs text-gray-600">{formatPrice(item.price, CURRENCY)}</p>
             {item.requiresConsultation ? (
               <span className="mt-0.5 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                يُنسّق عند الحجز
+                {t('cart.coordinated')}
               </span>
             ) : (
               <p className="num font-bold text-ink">{formatPrice(item.price * item.quantity, CURRENCY)}</p>
@@ -145,20 +148,22 @@ function ItemGroup({ items }: { items: CartItem[] }) {
 
 /* ---------- Empty state ---------- */
 function EmptyCart() {
+  const { t } = useLanguage()
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
       <span className="text-gray-300">
         <BagIcon />
       </span>
-      <p className="mt-5 text-xl font-bold text-ink">سلتك فارغة</p>
+      <p className="mt-5 text-xl font-bold text-ink">{t('cart.empty')}</p>
       <Link to="/shop" className="btn btn-primary mt-6">
-        تصفّح المتجر
+        {t('common.browseShop')}
       </Link>
     </div>
   )
 }
 
 export default function Cart() {
+  const { t } = useLanguage()
   const { items, itemCount, subtotal } = useCart()
 
   if (itemCount === 0) {
@@ -177,31 +182,30 @@ export default function Cart() {
 
   const ReserveNote = () => (
     <div className="rounded-[var(--radius)] border border-yellow/40 bg-yellow/10 p-3 text-sm text-ink">
-      لديك <span className="num font-bold">{reserveCount}</span> قطعة بحاجة لفحص نظر — سنتواصل معك بخصوصها.
+      {t('cart.reserveBadge.pre')} <span className="num font-bold">{reserveCount}</span>{' '}
+      {t('cart.reserveBadge.post')}
     </div>
   )
 
   return (
     <main className="bg-white">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-12">
-        <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">السلة</h1>
+        <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">{t('cart.title')}</h1>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12">
           {/* Item list (main / right) */}
           <div className="lg:col-span-2">
             {groupA.length > 0 && (
               <section>
-                <h2 className="text-lg font-bold text-ink">سلة الشراء</h2>
+                <h2 className="text-lg font-bold text-ink">{t('cart.groupShop')}</h2>
                 <ItemGroup items={groupA} />
               </section>
             )}
 
             {hasReserve && (
               <section className={groupA.length > 0 ? 'mt-10' : ''}>
-                <h2 className="text-lg font-bold text-ink">طلبات الحجز · بحاجة لفحص نظر</h2>
-                <p className="mt-1 text-sm text-gray-600">
-                  هذه إطارات طبية — سنتواصل معك لتحديد موعد الفحص واختيار العدسات، ولا تُحتسب ضمن المجموع الآن.
-                </p>
+                <h2 className="text-lg font-bold text-ink">{t('cart.groupReserve')}</h2>
+                <p className="mt-1 text-sm text-gray-600">{t('cart.reserveNote')}</p>
                 <ItemGroup items={groupB} />
               </section>
             )}
@@ -211,7 +215,7 @@ export default function Cart() {
           <aside className="lg:col-span-1">
             <Reveal className="lg:sticky lg:top-24">
               <div className="rounded-[var(--radius-lg)] border border-gray-100 bg-cream p-6 shadow-card">
-                <h2 className="text-lg font-bold text-ink">ملخص الطلب</h2>
+                <h2 className="text-lg font-bold text-ink">{t('cart.summary')}</h2>
 
                 {onlyReserve && (
                   <div className="mt-4">
@@ -220,10 +224,10 @@ export default function Cart() {
                 )}
 
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="text-gray-600">المجموع الفرعي</span>
+                  <span className="text-gray-600">{t('cart.subtotal')}</span>
                   <span className="num text-xl font-bold text-ink">{formatPrice(subtotal, CURRENCY)}</span>
                 </div>
-                <p className="mt-2 text-xs text-gray-600">تُحسب رسوم التوصيل عند إتمام الطلب.</p>
+                <p className="mt-2 text-xs text-gray-600">{t('cart.deliveryNote')}</p>
 
                 {hasReserve && !onlyReserve && (
                   <div className="mt-4">
@@ -232,13 +236,13 @@ export default function Cart() {
                 )}
 
                 <Link to="/checkout" className="btn btn-primary mt-6 w-full">
-                  إتمام الطلب
+                  {t('cart.checkout')}
                 </Link>
                 <Link
                   to="/shop"
                   className="btn mt-3 w-full border border-ink/20 text-ink transition-colors hover:bg-ink/5"
                 >
-                  متابعة التسوق
+                  {t('cart.continue')}
                 </Link>
               </div>
             </Reveal>

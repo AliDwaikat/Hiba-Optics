@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { Reveal } from '../components/home/Reveal'
 import { formatPrice } from '../lib/format'
 import { useCart } from '../lib/cart'
+import { useLanguage } from '../lib/language'
 import { fetchBranches, type Branch } from '../lib/branches'
 import {
   createOrder,
@@ -35,6 +36,7 @@ interface FieldErrors {
 
 export default function Checkout() {
   const { items, itemCount, subtotal, clear } = useCart()
+  const { t, localize } = useLanguage()
   const navigate = useNavigate()
 
   const [branches, setBranches] = useState<Branch[]>([])
@@ -69,16 +71,16 @@ export default function Checkout() {
 
   function validate(): FieldErrors {
     const e: FieldErrors = {}
-    if (!name.trim()) e.name = 'الرجاء إدخال الاسم الكامل'
+    if (!name.trim()) e.name = t('form.err.name')
     const digits = phone.replace(/\D/g, '')
     if (!phone.trim() || digits.length < 7 || !/^[\d\s+()-]+$/.test(phone.trim())) {
-      e.phone = 'أدخل رقم هاتف صحيح'
+      e.phone = t('form.err.phone')
     }
     if (fulfillment === 'delivery') {
-      if (!address.trim()) e.address = 'الرجاء إدخال العنوان'
-      if (!city.trim()) e.city = 'الرجاء إدخال المدينة'
+      if (!address.trim()) e.address = t('checkout.err.address')
+      if (!city.trim()) e.city = t('checkout.err.city')
     } else if (!branchId) {
-      e.branch = 'الرجاء اختيار الفرع'
+      e.branch = t('form.err.branch')
     }
     return e
   }
@@ -126,7 +128,7 @@ export default function Checkout() {
       clear()
       navigate('/order-success', { state: { orderNumber, hasConsultation } })
     } catch {
-      setSubmitError('تعذّر تأكيد الطلب، يرجى المحاولة مرة أخرى.')
+      setSubmitError(t('checkout.err.submit'))
       setSubmitting(false)
     }
   }
@@ -137,7 +139,7 @@ export default function Checkout() {
   return (
     <main className="bg-white">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-12">
-        <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">إتمام الطلب</h1>
+        <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">{t('checkout.title')}</h1>
 
         <form onSubmit={handleSubmit} noValidate className="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-12">
           {/* FORM (main / right) */}
@@ -145,23 +147,23 @@ export default function Checkout() {
             <div className="space-y-6 rounded-[var(--radius-lg)] border border-gray-100 bg-white p-6 shadow-card sm:p-8">
               {/* Name */}
               <div>
-                <label htmlFor="name" className={labelClass}>الاسم الكامل</label>
+                <label htmlFor="name" className={labelClass}>{t('form.name')}</label>
                 <input id="name" type="text" className="field" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
                 {errors.name && <p className={errClass} style={{ color: 'var(--color-error)' }}>{errors.name}</p>}
               </div>
 
               {/* Phone */}
               <div>
-                <label htmlFor="phone" className={labelClass}>رقم الهاتف / واتساب</label>
-                <input id="phone" type="tel" inputMode="tel" dir="ltr" className="field text-right" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="0599 000 000" />
+                <label htmlFor="phone" className={labelClass}>{t('form.phoneWa')}</label>
+                <input id="phone" type="tel" inputMode="tel" dir="ltr" className="field text-end" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="0599 000 000" />
                 {errors.phone && <p className={errClass} style={{ color: 'var(--color-error)' }}>{errors.phone}</p>}
               </div>
 
               {/* Fulfillment toggle */}
               <div>
-                <span className={labelClass}>طريقة الاستلام</span>
+                <span className={labelClass}>{t('checkout.fulfillment')}</span>
                 <div className="grid grid-cols-2 gap-2">
-                  {([['delivery', 'توصيل'], ['pickup', 'استلام من الفرع']] as const).map(([value, text]) => (
+                  {([['delivery', t('checkout.delivery')], ['pickup', t('checkout.pickup')]] as const).map(([value, text]) => (
                     <button
                       key={value}
                       type="button"
@@ -180,12 +182,12 @@ export default function Checkout() {
               {fulfillment === 'delivery' && (
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div className="sm:col-span-2">
-                    <label htmlFor="address" className={labelClass}>العنوان</label>
+                    <label htmlFor="address" className={labelClass}>{t('checkout.address')}</label>
                     <input id="address" type="text" className="field" value={address} onChange={(e) => setAddress(e.target.value)} autoComplete="street-address" />
                     {errors.address && <p className={errClass} style={{ color: 'var(--color-error)' }}>{errors.address}</p>}
                   </div>
                   <div>
-                    <label htmlFor="city" className={labelClass}>المدينة</label>
+                    <label htmlFor="city" className={labelClass}>{t('checkout.city')}</label>
                     <input id="city" type="text" className="field" value={city} onChange={(e) => setCity(e.target.value)} autoComplete="address-level2" />
                     {errors.city && <p className={errClass} style={{ color: 'var(--color-error)' }}>{errors.city}</p>}
                   </div>
@@ -195,14 +197,18 @@ export default function Checkout() {
               {/* Pickup branch selector */}
               {fulfillment === 'pickup' && (
                 <div>
-                  <label htmlFor="branch" className={labelClass}>اختر الفرع</label>
+                  <label htmlFor="branch" className={labelClass}>{t('form.chooseBranch')}</label>
                   <select id="branch" className="field" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-                    <option value="">اختر الفرع</option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name_ar}{b.landmark_ar ? ` — ${b.landmark_ar}` : ''}
-                      </option>
-                    ))}
+                    <option value="">{t('form.chooseBranch')}</option>
+                    {branches.map((b) => {
+                      const bn = localize(b, 'name')
+                      const lm = localize(b, 'landmark')
+                      return (
+                        <option key={b.id} value={b.id}>
+                          {bn}{lm ? ` — ${lm}` : ''}
+                        </option>
+                      )
+                    })}
                   </select>
                   {errors.branch && <p className={errClass} style={{ color: 'var(--color-error)' }}>{errors.branch}</p>}
                 </div>
@@ -210,20 +216,20 @@ export default function Checkout() {
 
               {/* Notes */}
               <div>
-                <label htmlFor="notes" className={labelClass}>ملاحظات (اختياري)</label>
+                <label htmlFor="notes" className={labelClass}>{t('form.notes')}</label>
                 <textarea id="notes" rows={3} className="field resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
 
               {/* Payment line */}
               <div className="flex items-center gap-2 rounded-[var(--radius)] border border-gray-300 bg-cream p-3 text-sm text-ink">
                 <CashIcon />
-                طريقة الدفع: الدفع عند الاستلام
+                {t('checkout.payment')}
               </div>
 
               {/* Consultation info */}
               {hasConsultation && (
                 <div className="rounded-[var(--radius)] border border-yellow/40 bg-yellow/10 p-3 text-sm leading-relaxed text-ink">
-                  يحتوي طلبك على إطارات طبية بحاجة لفحص نظر — سنتواصل معك لتحديد موعد الفحص واختيار العدسات قبل التسليم.
+                  {t('checkout.consultInfo')}
                 </div>
               )}
             </div>
@@ -233,13 +239,13 @@ export default function Checkout() {
           <aside className="lg:col-span-1">
             <Reveal delay={0.08} className="lg:sticky lg:top-24">
               <div className="rounded-[var(--radius-lg)] border border-gray-100 bg-cream p-6 shadow-card">
-                <h2 className="text-lg font-bold text-ink">ملخص الطلب</h2>
+                <h2 className="text-lg font-bold text-ink">{t('checkout.summary')}</h2>
 
                 <ul className="mt-4 space-y-3">
                   {items.map((i) => (
                     <li key={`${i.productId}-${i.variantId ?? ''}`} className="flex items-start justify-between gap-3 text-sm">
                       <span className="text-ink">
-                        {i.name_ar}
+                        {localize(i, 'name')}
                         {i.color && (
                           <span className="inline-flex items-center gap-1 text-gray-600">
                             {' — '}
@@ -248,13 +254,13 @@ export default function Checkout() {
                               style={{ backgroundColor: i.color.hex }}
                               aria-hidden="true"
                             />
-                            {i.color.name_ar}
+                            {localize(i.color, 'name')}
                           </span>
                         )}
                         <span className="num text-gray-600"> × {i.quantity}</span>
                       </span>
                       {i.requiresConsultation ? (
-                        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">يُنسّق عند الحجز</span>
+                        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{t('cart.coordinated')}</span>
                       ) : (
                         <span className="num shrink-0 font-semibold text-ink">{formatPrice(i.price * i.quantity, CURRENCY)}</span>
                       )}
@@ -264,15 +270,15 @@ export default function Checkout() {
 
                 <div className="mt-5 space-y-2 border-t border-gray-100 pt-4 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">المجموع الفرعي</span>
+                    <span className="text-gray-600">{t('checkout.subtotal')}</span>
                     <span className="num text-ink">{formatPrice(subtotal, CURRENCY)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">رسوم التوصيل</span>
+                    <span className="text-gray-600">{t('checkout.deliveryFee')}</span>
                     <span className="num text-ink">{formatPrice(deliveryFee, CURRENCY)}</span>
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-100 pt-2 text-base">
-                    <span className="font-bold text-ink">الإجمالي</span>
+                    <span className="font-bold text-ink">{t('checkout.total')}</span>
                     <span className="num text-lg font-bold text-ink">{formatPrice(total, CURRENCY)}</span>
                   </div>
                 </div>
@@ -282,10 +288,10 @@ export default function Checkout() {
                 )}
 
                 <button type="submit" disabled={submitting} className="btn btn-primary mt-6 w-full">
-                  {submitting ? 'جاري التأكيد…' : 'تأكيد الطلب'}
+                  {submitting ? t('checkout.submitting') : t('checkout.submit')}
                 </button>
                 <Link to="/cart" className="mt-3 block text-center text-sm text-gray-600 transition-colors hover:text-ink">
-                  الرجوع إلى السلة
+                  {t('checkout.backToCart')}
                 </Link>
               </div>
             </Reveal>

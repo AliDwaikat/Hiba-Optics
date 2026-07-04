@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Reveal } from '../components/home/Reveal'
+import { useLanguage } from '../lib/language'
+import { format } from '../lib/i18n'
 import { fetchBranches, type Branch } from '../lib/branches'
 import { telLink, whatsappLink } from '../lib/contact'
 
@@ -56,27 +58,31 @@ function directionsLink(b: Branch): string {
 
 /* ---------- Branch block ---------- */
 function BranchBlock({ branch, index }: { branch: Branch; index: number }) {
+  const { t, localize } = useLanguage()
   const even = index % 2 === 0
   // DOM order is info-then-map (info first on mobile); order utilities alternate
-  // sides on desktop. In RTL, order-1 lands on the right, order-2 on the left.
+  // sides on desktop and flip with the writing direction automatically.
   const infoOrder = even ? 'md:order-2' : 'md:order-1'
   const mapOrder = even ? 'md:order-1' : 'md:order-2'
+  const name = localize(branch, 'name')
+  const address = localize(branch, 'address')
+  const landmark = localize(branch, 'landmark')
 
   return (
     <Reveal>
       <div className="grid items-stretch gap-6 md:grid-cols-2 md:gap-10">
         {/* Info */}
         <div className={`flex flex-col rounded-[var(--radius-lg)] border border-gray-100 bg-cream p-6 shadow-card sm:p-8 ${infoOrder}`}>
-          <h2 className="text-2xl font-extrabold text-ink">{branch.name_ar}</h2>
+          <h2 className="text-2xl font-extrabold text-ink">{name}</h2>
 
           <div className="mt-4 flex items-start gap-2 text-gray-600">
             <PinIcon />
             <span className="leading-relaxed">
-              {branch.address_ar}
-              {branch.landmark_ar && (
+              {address}
+              {landmark && (
                 <>
-                  {branch.address_ar ? ' — ' : ''}
-                  {branch.landmark_ar}
+                  {address ? ' — ' : ''}
+                  {landmark}
                 </>
               )}
             </span>
@@ -93,17 +99,17 @@ function BranchBlock({ branch, index }: { branch: Branch; index: number }) {
             {branch.whatsapp && (
               <a href={whatsappLink(branch.whatsapp)} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
                 <WhatsAppIcon />
-                واتساب
+                {t('branches.whatsapp')}
               </a>
             )}
             {branch.phone && (
               <a href={telLink(branch.phone)} className="btn btn-secondary">
-                اتصال
+                {t('branches.callBtn')}
               </a>
             )}
             <a href={directionsLink(branch)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
               <DirectionsIcon />
-              الاتجاهات
+              {t('branches.directions')}
             </a>
           </div>
         </div>
@@ -112,7 +118,7 @@ function BranchBlock({ branch, index }: { branch: Branch; index: number }) {
         <div className={`overflow-hidden rounded-[var(--radius-lg)] shadow-card ${mapOrder}`}>
           <iframe
             src={mapSrc(branch)}
-            title={`خريطة ${branch.name_ar}`}
+            title={format(t('branches.mapTitle'), { name })}
             loading="lazy"
             className="h-[240px] w-full border-0 md:h-[320px]"
             referrerPolicy="no-referrer-when-downgrade"
@@ -139,6 +145,7 @@ function BranchSkeleton() {
 }
 
 export default function Branches() {
+  const { t } = useLanguage()
   const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -164,13 +171,13 @@ export default function Branches() {
     <main className="bg-white">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16">
         {/* Intro */}
-        <Reveal className="text-right">
+        <Reveal className="text-start">
           <div className="flex items-center justify-start gap-3">
             <span className="h-px w-8 bg-yellow" aria-hidden="true" />
-            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">زورونا</span>
+            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">{t('branches.pageEyebrow')}</span>
           </div>
-          <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">فروعنا</h1>
-          <p className="mt-3 text-gray-600">فرعان لخدمتكم في نابلس وحوارة</p>
+          <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">{t('branches.pageTitle')}</h1>
+          <p className="mt-3 text-gray-600">{t('branches.pageSub')}</p>
         </Reveal>
 
         {/* Content */}
@@ -178,7 +185,7 @@ export default function Branches() {
           {loading ? (
             <BranchSkeleton />
           ) : branches.length === 0 ? (
-            <p className="py-16 text-center text-lg text-gray-600">سيتم إضافة الفروع قريباً</p>
+            <p className="py-16 text-center text-lg text-gray-600">{t('branches.empty')}</p>
           ) : (
             branches.map((branch, index) => <BranchBlock key={branch.id} branch={branch} index={index} />)
           )}

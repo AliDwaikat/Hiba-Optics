@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import HeartIcon from '../components/HeartIcon'
 import { useFavorites } from '../lib/favorites'
+import { useLanguage } from '../lib/language'
+import { format } from '../lib/i18n'
 import { fetchProductsByIds, type Product } from '../lib/products'
 
 function SkeletonCard() {
@@ -17,6 +19,7 @@ function SkeletonCard() {
 }
 
 export default function Favorites() {
+  const { t } = useLanguage()
   const { favorites, count } = useFavorites()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -62,9 +65,9 @@ export default function Favorites() {
   return (
     <main className="min-h-screen bg-white">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-12">
-        <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">المفضلة</h1>
+        <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">{t('header.favorites')}</h1>
         {count > 0 && (
-          <p className="num mt-2 text-sm text-gray-600">{count} منتج في المفضلة</p>
+          <p className="mt-2 text-sm text-gray-600">{format(t('fav.count'), { n: count })}</p>
         )}
 
         <div className="mt-8">
@@ -77,7 +80,7 @@ export default function Favorites() {
           ) : error ? (
             <div className="py-20 text-center">
               <p className="text-lg" style={{ color: 'var(--color-error)' }}>
-                تعذّر تحميل المفضلة
+                {t('fav.error')}
               </p>
               <p className="mt-2 text-sm text-gray-600">{error}</p>
             </div>
@@ -86,9 +89,9 @@ export default function Favorites() {
               <span className="text-gray-300">
                 <HeartIcon filled={false} className="!h-12 !w-12" />
               </span>
-              <p className="mt-5 text-lg text-ink">لا توجد منتجات في المفضلة بعد</p>
+              <p className="mt-5 text-lg text-ink">{t('fav.empty')}</p>
               <Link to="/shop" className="btn btn-primary mt-6">
-                تصفّح المتجر
+                {t('common.browseShop')}
               </Link>
             </div>
           ) : (

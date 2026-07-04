@@ -2,6 +2,8 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Reveal, RevealGroup, RevealItem } from '../components/home/Reveal'
+import { useLanguage } from '../lib/language'
+import { type UIKey } from '../lib/i18n'
 import { PRIMARY_WHATSAPP, telLink, whatsappLink } from '../lib/contact'
 
 const PHONE = '0599376779'
@@ -56,7 +58,7 @@ function ChevronIcon() {
   )
 }
 
-/* ---------- Info cards ---------- */
+/* ---------- Info card icons (title/lines/action built in-component for i18n) ---------- */
 interface InfoCard {
   icon: ReactNode
   title: string
@@ -64,55 +66,22 @@ interface InfoCard {
   action?: ReactNode
 }
 
-const INFO_CARDS: InfoCard[] = [
-  {
-    icon: <ChatIcon />,
-    title: 'واتساب',
-    lines: ['الأسرع للرد على استفساراتك'],
-    action: (
-      <a href={waBase} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink transition-colors hover:text-yellow-deep">
-        <WhatsAppGlyph />
-        راسلنا الآن
-      </a>
-    ),
-  },
-  {
-    icon: <PhoneIcon />,
-    title: 'اتصل بنا',
-    lines: ['خلال ساعات العمل'],
-    action: (
-      <a href={telLink(PHONE)} dir="ltr" className="num inline-block text-sm font-semibold text-ink transition-colors hover:text-yellow-deep">
-        {PHONE}
-      </a>
-    ),
-  },
-  {
-    icon: <PinIcon />,
-    title: 'زورونا',
-    lines: ['فرعان في نابلس وحوارة'],
-    action: (
-      <Link to="/branches" className="text-sm font-semibold text-ink underline decoration-yellow underline-offset-4 transition-colors hover:text-yellow-deep">
-        صفحة الفروع
-      </Link>
-    ),
-  },
-  {
-    icon: <ClockIcon />,
-    title: 'ساعات العمل',
-    lines: ['السبت - الخميس', '9 صباحاً - 8 مساءً'],
-  },
+/* ---------- FAQ (localized via keys) ---------- */
+const FAQS: { q: UIKey; a: UIKey }[] = [
+  { q: 'contact.faq.q1', a: 'contact.faq.a1' },
+  { q: 'contact.faq.q2', a: 'contact.faq.a2' },
+  { q: 'contact.faq.q3', a: 'contact.faq.a3' },
+  { q: 'contact.faq.q4', a: 'contact.faq.a4' },
+  { q: 'contact.faq.q5', a: 'contact.faq.a5' },
 ]
 
-/* ---------- FAQ ---------- */
-const FAQS: { q: string; a: string }[] = [
-  { q: 'هل تجرون فحص نظر شامل؟', a: 'نعم، نوفر فحص نظر دقيق بأحدث الأجهزة في كلا الفرعين.' },
-  { q: 'كم يستغرق تجهيز النظارة الطبية؟', a: 'غالباً من يوم إلى ثلاثة أيام حسب نوع العدسات، وسنبلغك فور جاهزيتها.' },
-  { q: 'هل جميع النظارات أصلية؟', a: 'نعم، جميع منتجاتنا أصلية من البراندات العالمية المعتمدة.' },
-  { q: 'هل تتوفر عدسات لاصقة؟', a: 'نعم، نوفر عدسات لاصقة طبية وتجميلية بأنواع متعددة.' },
-  { q: 'هل يوجد خدمة توصيل؟', a: 'نعم، نوفر توصيل للطلبات مع الدفع عند الاستلام.' },
+// Subject value stays Arabic (it's sent to Hiba in the WhatsApp message); label localized.
+const SUBJECTS: { value: string; labelKey: UIKey }[] = [
+  { value: 'استفسار عن منتج', labelKey: 'contact.subject.product' },
+  { value: 'حجز فحص نظر', labelKey: 'contact.subject.booking' },
+  { value: 'استفسار عام', labelKey: 'contact.subject.general' },
+  { value: 'أخرى', labelKey: 'contact.subject.other' },
 ]
-
-const SUBJECTS = ['استفسار عن منتج', 'حجز فحص نظر', 'استفسار عام', 'أخرى']
 
 interface FormErrors {
   name?: string
@@ -122,20 +91,60 @@ interface FormErrors {
 
 export default function Contact() {
   const reduce = useReducedMotion()
+  const { t } = useLanguage()
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [subject, setSubject] = useState(SUBJECTS[0])
+  const [subject, setSubject] = useState(SUBJECTS[0].value)
   const [message, setMessage] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
+  const INFO_CARDS: InfoCard[] = [
+    {
+      icon: <ChatIcon />,
+      title: t('contact.card.whatsapp.title'),
+      lines: [t('contact.card.whatsapp.line')],
+      action: (
+        <a href={waBase} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink transition-colors hover:text-yellow-deep">
+          <WhatsAppGlyph />
+          {t('contact.card.whatsapp.action')}
+        </a>
+      ),
+    },
+    {
+      icon: <PhoneIcon />,
+      title: t('contact.card.call.title'),
+      lines: [t('contact.card.call.line')],
+      action: (
+        <a href={telLink(PHONE)} dir="ltr" className="num inline-block text-sm font-semibold text-ink transition-colors hover:text-yellow-deep">
+          {PHONE}
+        </a>
+      ),
+    },
+    {
+      icon: <PinIcon />,
+      title: t('contact.card.visit.title'),
+      lines: [t('contact.card.visit.line')],
+      action: (
+        <Link to="/branches" className="text-sm font-semibold text-ink underline decoration-yellow underline-offset-4 transition-colors hover:text-yellow-deep">
+          {t('contact.card.visit.action')}
+        </Link>
+      ),
+    },
+    {
+      icon: <ClockIcon />,
+      title: t('contact.card.hours.title'),
+      lines: [t('contact.card.hours.days'), t('contact.card.hours.time')],
+    },
+  ]
+
   function handleSubmit(ev: FormEvent) {
     ev.preventDefault()
     const e: FormErrors = {}
-    if (!name.trim()) e.name = 'الرجاء إدخال الاسم'
-    if (!phone.trim()) e.phone = 'الرجاء إدخال رقم الهاتف'
-    if (!message.trim()) e.message = 'الرجاء كتابة رسالتك'
+    if (!name.trim()) e.name = t('contact.err.name')
+    if (!phone.trim()) e.phone = t('contact.err.phone')
+    if (!message.trim()) e.message = t('contact.err.message')
     setErrors(e)
     if (Object.keys(e).length > 0) return
 
@@ -150,15 +159,13 @@ export default function Contact() {
     <main className="bg-white">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16">
         {/* Intro */}
-        <Reveal className="text-right">
+        <Reveal className="text-start">
           <div className="flex items-center justify-start gap-3">
             <span className="h-px w-8 bg-yellow" aria-hidden="true" />
-            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">تواصل معنا</span>
+            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">{t('contact.eyebrow')}</span>
           </div>
-          <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">نحن هنا لمساعدتك</h1>
-          <p className="mt-3 max-w-xl text-gray-600">
-            أي سؤال عن النظارات أو فحص النظر؟ راسلنا أو زُر أحد فرعينا.
-          </p>
+          <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">{t('contact.title')}</h1>
+          <p className="mt-3 max-w-xl text-gray-600">{t('contact.intro')}</p>
         </Reveal>
 
         {/* Info cards */}
@@ -184,39 +191,39 @@ export default function Contact() {
           {/* FORM — right column in RTL (first in DOM) */}
           <Reveal>
             <form onSubmit={handleSubmit} noValidate className="rounded-[var(--radius-lg)] border border-gray-100 bg-white p-6 shadow-card sm:p-8">
-              <h2 className="text-2xl font-extrabold text-ink">أرسل لنا رسالة</h2>
+              <h2 className="text-2xl font-extrabold text-ink">{t('contact.form.title')}</h2>
 
               <div className="mt-6 space-y-5">
                 <div>
-                  <label htmlFor="name" className={labelClass}>الاسم</label>
+                  <label htmlFor="name" className={labelClass}>{t('contact.form.name')}</label>
                   <input id="name" type="text" className="field" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
                   {errors.name && <p className="mt-1 text-xs" style={errStyle}>{errors.name}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className={labelClass}>رقم الهاتف</label>
-                  <input id="phone" type="tel" inputMode="tel" dir="ltr" className="field text-right" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="0599 000 000" />
+                  <label htmlFor="phone" className={labelClass}>{t('contact.form.phone')}</label>
+                  <input id="phone" type="tel" inputMode="tel" dir="ltr" className="field text-end" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="0599 000 000" />
                   {errors.phone && <p className="mt-1 text-xs" style={errStyle}>{errors.phone}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="subject" className={labelClass}>الموضوع</label>
+                  <label htmlFor="subject" className={labelClass}>{t('contact.form.subject')}</label>
                   <select id="subject" className="field" value={subject} onChange={(e) => setSubject(e.target.value)}>
                     {SUBJECTS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s.value} value={s.value}>{t(s.labelKey)}</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label htmlFor="message" className={labelClass}>الرسالة</label>
+                  <label htmlFor="message" className={labelClass}>{t('contact.form.message')}</label>
                   <textarea id="message" rows={4} className="field resize-none" value={message} onChange={(e) => setMessage(e.target.value)} />
                   {errors.message && <p className="mt-1 text-xs" style={errStyle}>{errors.message}</p>}
                 </div>
 
                 <button type="submit" className="btn btn-primary w-full">
                   <WhatsAppGlyph />
-                  إرسال عبر واتساب
+                  {t('contact.form.send')}
                 </button>
               </div>
             </form>
@@ -224,7 +231,7 @@ export default function Contact() {
 
           {/* FAQ — left column in RTL */}
           <Reveal delay={0.08}>
-            <h2 className="text-2xl font-extrabold text-ink">الأسئلة الشائعة</h2>
+            <h2 className="text-2xl font-extrabold text-ink">{t('contact.faq.title')}</h2>
             <div className="mt-6 divide-y divide-gray-100 overflow-hidden rounded-[var(--radius-lg)] border border-gray-300 bg-cream">
               {FAQS.map((faq, i) => {
                 const open = openFaq === i
@@ -234,9 +241,9 @@ export default function Contact() {
                       type="button"
                       onClick={() => setOpenFaq(open ? null : i)}
                       aria-expanded={open}
-                      className="flex w-full items-center justify-between gap-3 px-5 py-4 text-right"
+                      className="flex w-full items-center justify-between gap-3 px-5 py-4 text-start"
                     >
-                      <span className="font-semibold text-ink">{faq.q}</span>
+                      <span className="font-semibold text-ink">{t(faq.q)}</span>
                       <motion.span
                         className="shrink-0 text-gray-600"
                         animate={reduce ? undefined : { rotate: open ? 180 : 0 }}
@@ -255,7 +262,7 @@ export default function Contact() {
                           transition={{ duration: reduce ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
                           className="overflow-hidden"
                         >
-                          <p className="px-5 pb-5 leading-relaxed text-gray-600">{faq.a}</p>
+                          <p className="px-5 pb-5 leading-relaxed text-gray-600">{t(faq.a)}</p>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -265,9 +272,9 @@ export default function Contact() {
             </div>
 
             <p className="mt-5 text-sm text-gray-600">
-              لم تجد إجابتك؟{' '}
+              {t('contact.faqMore.pre')}{' '}
               <a href={waBase} target="_blank" rel="noopener noreferrer" className="font-semibold text-ink underline decoration-yellow underline-offset-4 transition-colors hover:text-yellow-deep">
-                راسلنا على واتساب
+                {t('contact.faqMore.link')}
               </a>
             </p>
           </Reveal>

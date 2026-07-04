@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Reveal, RevealGroup, RevealItem } from '../components/home/Reveal'
+import { useLanguage } from '../lib/language'
 import { fetchBrandsWithCounts, type BrandWithCount } from '../lib/products'
 
 /* One brand card — logo when present, else an elegant name_en treatment. */
 function BrandCard({ brand }: { brand: BrandWithCount }) {
+  const { t, localize } = useLanguage()
   const [logoBroken, setLogoBroken] = useState(false)
   const showLogo = Boolean(brand.logo_url) && !logoBroken
+  const localizedName = localize(brand, 'name')
 
   return (
     <Link to={`/shop?brand=${brand.id}`} className="group block h-full">
@@ -26,20 +29,24 @@ function BrandCard({ brand }: { brand: BrandWithCount }) {
           )}
         </div>
 
-        <p className="mt-3 text-sm text-gray-600">{brand.name_ar}</p>
+        {localizedName !== brand.name_en && (
+          <p className="mt-3 text-sm text-gray-600">{localizedName}</p>
+        )}
 
         <p className="mt-2 text-xs text-gray-600">
           {brand.product_count > 0 ? (
             <>
-              <span className="num">{brand.product_count}</span> منتج
+              <span className="num">{brand.product_count}</span> {t('brands.products')}
             </>
           ) : (
-            'قريباً'
+            t('brands.soon')
           )}
         </p>
 
         <span className="mt-4 text-xs font-semibold text-yellow-deep opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          تصفّح المجموعة ←
+          {t('brands.browse')}{' '}
+          <span aria-hidden="true" className="rtl:inline ltr:hidden">←</span>
+          <span aria-hidden="true" className="ltr:inline rtl:hidden">→</span>
         </span>
       </div>
     </Link>
@@ -57,6 +64,7 @@ function BrandSkeleton() {
 }
 
 export default function Brands() {
+  const { t } = useLanguage()
   const [brands, setBrands] = useState<BrandWithCount[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -82,13 +90,13 @@ export default function Brands() {
     <main className="bg-white">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16">
         {/* Intro */}
-        <Reveal className="text-right">
+        <Reveal className="text-start">
           <div className="flex items-center justify-start gap-3">
             <span className="h-px w-8 bg-yellow" aria-hidden="true" />
-            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">علاماتنا التجارية</span>
+            <span className="text-xs font-semibold tracking-[0.2em] text-gray-600">{t('brands.eyebrow')}</span>
           </div>
-          <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">براندات عالمية</h1>
-          <p className="mt-3 text-gray-600">نختار لك أرقى الأسماء في عالم النظارات.</p>
+          <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">{t('brands.title')}</h1>
+          <p className="mt-3 text-gray-600">{t('brands.sub')}</p>
         </Reveal>
 
         {/* Grid / states */}
@@ -100,7 +108,7 @@ export default function Brands() {
               ))}
             </div>
           ) : brands.length === 0 ? (
-            <p className="py-16 text-center text-lg text-gray-600">سيتم إضافة البراندات قريباً</p>
+            <p className="py-16 text-center text-lg text-gray-600">{t('brands.empty')}</p>
           ) : (
             <RevealGroup className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3">
               {brands.map((brand) => (

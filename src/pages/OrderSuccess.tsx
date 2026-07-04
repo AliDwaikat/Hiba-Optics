@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Reveal } from '../components/home/Reveal'
+import { useLanguage } from '../lib/language'
 import { fetchBranches } from '../lib/branches'
 import { PRIMARY_WHATSAPP, whatsappLink } from '../lib/contact'
 
@@ -25,6 +26,7 @@ function WhatsAppIcon() {
 }
 
 export default function OrderSuccess() {
+  const { t } = useLanguage()
   const location = useLocation()
   const state = (location.state ?? {}) as SuccessState
   const orderNumber = state.orderNumber
@@ -55,8 +57,8 @@ export default function OrderSuccess() {
     return (
       <main className="bg-white">
         <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
-          <p className="text-lg text-gray-600">لا يوجد طلب لعرضه.</p>
-          <Link to="/shop" className="btn btn-primary mt-6">تصفّح المتجر</Link>
+          <p className="text-lg text-gray-600">{t('ok.none')}</p>
+          <Link to="/shop" className="btn btn-primary mt-6">{t('common.browseShop')}</Link>
         </div>
       </main>
     )
@@ -73,14 +75,13 @@ export default function OrderSuccess() {
             <CheckIcon />
           </span>
 
-          <h1 className="mt-6 text-2xl font-extrabold text-ink sm:text-3xl">تم استلام طلبك ✓</h1>
+          <h1 className="mt-6 text-2xl font-extrabold text-ink sm:text-3xl">{t('ok.title')}</h1>
 
-          <p className="mt-4 text-sm text-gray-600">رقم الطلب</p>
+          <p className="mt-4 text-sm text-gray-600">{t('ok.orderNo')}</p>
           <p className="latin mt-1 text-2xl font-bold tracking-wide text-ink" dir="ltr">{orderNumber}</p>
 
           <p className="mt-6 leading-relaxed text-gray-600">
-            سنتواصل معك على الرقم الذي أدخلته لتأكيد الطلب
-            {hasConsultation ? ' ولتحديد موعد فحص النظر.' : '.'}
+            {hasConsultation ? t('ok.contactLineConsult') : t('ok.contactLine')}
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-3">
@@ -91,10 +92,10 @@ export default function OrderSuccess() {
               className="btn btn-primary w-full sm:w-auto"
             >
               <WhatsAppIcon />
-              تواصل معنا على واتساب
+              {t('common.whatsappContact')}
             </a>
             <Link to="/shop" className="text-sm text-gray-600 transition-colors hover:text-ink">
-              العودة للمتجر
+              {t('common.backShop')}
             </Link>
           </div>
         </Reveal>
