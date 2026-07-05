@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
+import { isOwnerEmail } from '../../lib/admin'
 
 /** Full-screen loading spinner while the session is resolving. */
 function AuthSpinner() {
@@ -14,11 +15,19 @@ function AuthSpinner() {
   )
 }
 
-/** Guards /admin/* — spinner while loading, redirect to login when signed out. */
+/**
+ * Guards /admin/* — OWNER only.
+ *   - spinner while the session resolves
+ *   - signed out            → /admin/login
+ *   - signed in, not owner  → public home (never renders admin content)
+ *   - signed in as owner     → admin
+ * A session alone is not enough: the logged-in email must be the owner's.
+ */
 export default function ProtectedRoute() {
   const { session, loading } = useAuth()
 
   if (loading) return <AuthSpinner />
   if (!session) return <Navigate to="/admin/login" replace />
+  if (!isOwnerEmail(session.user?.email)) return <Navigate to="/" replace />
   return <Outlet />
 }

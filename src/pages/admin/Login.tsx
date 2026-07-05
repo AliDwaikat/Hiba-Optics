@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
+import { isOwnerEmail } from '../../lib/admin'
 
 /* Login brand logo — bare on the light card; text fallback if the image fails. */
 function LoginLogo() {
@@ -24,7 +25,7 @@ function LoginLogo() {
 }
 
 export default function Login() {
-  const { session, loading, signIn } = useAuth()
+  const { session, loading, signIn, signOut } = useAuth()
   const navigate = useNavigate()
 
   const [email, setEmail] = useState('')
@@ -32,8 +33,11 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  // Already signed in → straight to the dashboard.
-  if (!loading && session) return <Navigate to="/admin" replace />
+  // Already signed in AS THE OWNER → straight to the dashboard. A non-owner
+  // session must not auto-enter admin (and would be bounced by the guard anyway).
+  if (!loading && session && isOwnerEmail(session.user?.email)) {
+    return <Navigate to="/admin" replace />
+  }
 
   async function handleSubmit(ev: FormEvent) {
     ev.preventDefault()
@@ -44,9 +48,18 @@ export default function Login() {
       return
     }
     setSubmitting(true)
-    const { error: signInError } = await signIn(email.trim(), password)
+    const trimmedEmail = email.trim()
+    const { error: signInError } = await signIn(trimmedEmail, password)
     if (signInError) {
       setError('بيانات الدخول غير صحيحة')
+      setSubmitting(false)
+      return
+    }
+    // Credentials are valid, but only the owner may enter the admin. A non-owner
+    // (e.g. a customer using the same auth backend) is signed back out here.
+    if (!isOwnerEmail(trimmedEmail)) {
+      await signOut()
+      setError('هذا الحساب غير مخوّل للوصول إلى لوحة التحكم')
       setSubmitting(false)
       return
     }
