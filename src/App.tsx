@@ -14,6 +14,9 @@ import Book from './pages/Book'
 import BookingSuccess from './pages/BookingSuccess'
 import Finder from './pages/Finder'
 import EyeExam from './pages/EyeExam'
+import AccountLogin from './pages/account/Login'
+import AccountRegister from './pages/account/Register'
+import Account from './pages/account/Account'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminLogin from './pages/admin/Login'
@@ -45,6 +48,9 @@ export default function App() {
         <Route path="/booking-success" element={<BookingSuccess />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-success" element={<OrderSuccess />} />
+        <Route path="/account/register" element={<AccountRegister />} />
+        <Route path="/account/login" element={<AccountLogin />} />
+        <Route path="/account" element={<Account />} />
       </Route>
 
       {/* Admin — login is public; everything else is guarded */}

@@ -471,6 +471,76 @@ export const UI = {
   'fav.count': { ar: '{n} منتج في المفضلة', en: '{n} in your favorites' },
   'fav.error': { ar: 'تعذّر تحميل المفضلة', en: "Couldn't load favorites" },
   'fav.empty': { ar: 'لا توجد منتجات في المفضلة بعد', en: 'No favorites yet' },
+
+  // ---- Customer account ----
+  'account.menu': { ar: 'حسابي', en: 'My account' },
+  'account.login': { ar: 'تسجيل الدخول', en: 'Log in' },
+  'account.logout': { ar: 'تسجيل الخروج', en: 'Log out' },
+  'account.register': { ar: 'إنشاء حساب', en: 'Create account' },
+  'account.account': { ar: 'حسابي', en: 'My account' },
+  // Fields
+  'account.name': { ar: 'الاسم', en: 'Name' },
+  'account.email': { ar: 'البريد الإلكتروني', en: 'Email' },
+  'account.password': { ar: 'كلمة المرور', en: 'Password' },
+  'account.confirmPassword': { ar: 'تأكيد كلمة المرور', en: 'Confirm password' },
+  // Login page
+  'account.login.title': { ar: 'تسجيل الدخول', en: 'Log in' },
+  'account.login.subtitle': {
+    ar: 'ادخل إلى حسابك في مركز هبة للبصريات',
+    en: 'Sign in to your Hiba Optics account',
+  },
+  'account.login.submit': { ar: 'تسجيل الدخول', en: 'Log in' },
+  'account.login.noAccount': { ar: 'ليس لديك حساب؟', en: "Don't have an account?" },
+  'account.login.registerLink': { ar: 'أنشئ حساباً', en: 'Create one' },
+  'account.login.error': {
+    ar: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+    en: 'Incorrect email or password.',
+  },
+  // Register page
+  'account.register.title': { ar: 'إنشاء حساب', en: 'Create account' },
+  'account.register.subtitle': {
+    ar: 'أنشئ حسابك للاستفادة من خدماتنا',
+    en: 'Create your account to get started',
+  },
+  'account.register.submit': { ar: 'إنشاء حساب', en: 'Create account' },
+  'account.register.haveAccount': { ar: 'لديك حساب بالفعل؟', en: 'Already have an account?' },
+  'account.register.loginLink': { ar: 'سجّل الدخول', en: 'Log in' },
+  'account.register.confirm': {
+    ar: 'تحقق من بريدك الإلكتروني لتأكيد حسابك.',
+    en: 'Check your email to confirm your account.',
+  },
+  // Validation (Arabic-first, friendly)
+  'account.err.nameRequired': { ar: 'الرجاء إدخال الاسم.', en: 'Please enter your name.' },
+  'account.err.emailRequired': {
+    ar: 'الرجاء إدخال البريد الإلكتروني.',
+    en: 'Please enter your email.',
+  },
+  'account.err.emailInvalid': {
+    ar: 'صيغة البريد الإلكتروني غير صحيحة.',
+    en: 'Please enter a valid email address.',
+  },
+  'account.err.passwordRequired': {
+    ar: 'الرجاء إدخال كلمة المرور.',
+    en: 'Please enter a password.',
+  },
+  'account.err.passwordShort': {
+    ar: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.',
+    en: 'Password must be at least 6 characters.',
+  },
+  'account.err.passwordMismatch': {
+    ar: 'كلمتا المرور غير متطابقتين.',
+    en: 'Passwords do not match.',
+  },
+  'account.err.generic': {
+    ar: 'حدث خطأ ما، حاول مرة أخرى.',
+    en: 'Something went wrong, please try again.',
+  },
+  // Account page
+  'account.greeting': { ar: 'مرحباً، {name}', en: 'Hello, {name}' },
+  'account.soon': {
+    ar: 'قريباً: طلباتك السابقة ومنتجاتك المفضّلة.',
+    en: 'Coming soon: your past orders and favorite products.',
+  },
 } satisfies Record<string, Entry>
 
 export type UIKey = keyof typeof UI

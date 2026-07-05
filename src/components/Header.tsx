@@ -1,9 +1,10 @@
-import { useEffect, useId, useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
-import { motion, useReducedMotion } from 'framer-motion'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useCart } from '../lib/cart'
 import { useFavorites } from '../lib/favorites'
 import { useLanguage } from '../lib/language'
+import { useCustomerAuth } from '../lib/customerAuth'
 import { NAV_ITEMS, type NavItem } from '../lib/nav'
 import { PRIMARY_WHATSAPP, whatsappLink } from '../lib/contact'
 import type { Lang } from '../lib/i18n'
@@ -46,6 +47,107 @@ function WhatsAppIcon() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M12.04 2a9.9 9.9 0 0 0-8.46 15.02L2 22l5.1-1.33A9.9 9.9 0 1 0 12.04 2Zm0 1.8a8.1 8.1 0 0 1 5.73 13.83 8.1 8.1 0 0 1-9.9 1.23l-.36-.21-3.03.79.81-2.95-.24-.38A8.1 8.1 0 0 1 12.04 3.8Zm-2.6 4.03c-.14 0-.36.05-.55.26-.19.2-.72.7-.72 1.72s.74 2 .84 2.14c.1.14 1.44 2.3 3.56 3.13 1.76.7 2.12.56 2.5.52.38-.03 1.23-.5 1.4-.99.18-.48.18-.9.13-.99-.05-.09-.19-.14-.4-.24-.21-.1-1.23-.61-1.42-.68-.19-.07-.33-.1-.47.1-.14.21-.54.68-.66.82-.12.14-.24.16-.45.05-.21-.1-.88-.32-1.68-1.03-.62-.55-1.04-1.24-1.16-1.45-.12-.21-.01-.32.09-.42.09-.09.21-.24.31-.36.1-.12.14-.21.21-.35.07-.14.03-.26-.02-.36-.05-.1-.46-1.13-.64-1.55-.16-.4-.33-.35-.46-.36l-.39-.01Z" />
     </svg>
+  )
+}
+
+function PersonIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20a8 8 0 0 1 16 0" />
+    </svg>
+  )
+}
+
+/* ---- Desktop account control: logged-out → link to login; logged-in → an
+   initial chip that opens a small menu (حسابي / تسجيل الخروج). Uses the
+   isolated customer auth — never the admin session. ---- */
+function AccountMenu() {
+  const { user, displayName, signOut } = useCustomerAuth()
+  const { t } = useLanguage()
+  const navigate = useNavigate()
+  const reduce = useReducedMotion()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  if (!user) {
+    return (
+      <Link
+        to="/account/login"
+        aria-label={t('account.login')}
+        className="inline-flex items-center text-ink transition-colors hover:text-yellow-deep"
+      >
+        <PersonIcon />
+      </Link>
+    )
+  }
+
+  const initial = (displayName?.trim()?.[0] ?? '?').toUpperCase()
+
+  async function handleSignOut() {
+    setOpen(false)
+    await signOut()
+    navigate('/', { replace: true })
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={t('account.menu')}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-yellow text-sm font-bold text-ink transition-colors hover:bg-yellow-deep"
+      >
+        <span className="num" aria-hidden="true">{initial}</span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            role="menu"
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -6 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+            className="absolute end-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-[var(--radius-sm)] border border-gray-200 bg-white py-1 shadow-card"
+          >
+            <p className="truncate px-4 py-2 text-xs text-gray-500">{displayName}</p>
+            <Link
+              to="/account"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 text-sm text-ink transition-colors hover:bg-gray-50"
+            >
+              {t('account.account')}
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleSignOut}
+              className="block w-full px-4 py-2 text-start text-sm text-ink transition-colors hover:bg-gray-50"
+            >
+              {t('account.logout')}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
@@ -155,8 +257,16 @@ export default function Header() {
   const { itemCount } = useCart()
   const { count: favCount } = useFavorites()
   const { lang, setLang, t } = useLanguage()
+  const { user: customerUser, signOut: customerSignOut } = useCustomerAuth()
+  const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+
+  async function handleDrawerSignOut() {
+    setOpen(false)
+    await customerSignOut()
+    navigate('/', { replace: true })
+  }
 
   const label = (n: NavItem) => (lang === 'en' ? n.en : n.ar)
 
@@ -243,6 +353,8 @@ export default function Header() {
                 </span>
               )}
             </Link>
+
+            <AccountMenu />
           </div>
 
           <button
@@ -316,6 +428,44 @@ export default function Header() {
                 </span>
               )}
             </NavLink>
+
+            {/* Customer account (isolated from admin) */}
+            {customerUser ? (
+              <>
+                <NavLink
+                  to="/account"
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 rounded-lg px-3 py-3 text-lg text-ink transition-colors ${
+                      isActive ? 'bg-white font-bold' : 'hover:bg-white'
+                    }`
+                  }
+                >
+                  <PersonIcon />
+                  {t('account.account')}
+                </NavLink>
+                <button
+                  type="button"
+                  onClick={handleDrawerSignOut}
+                  className="rounded-lg px-3 py-3 text-start text-lg text-ink transition-colors hover:bg-white"
+                >
+                  {t('account.logout')}
+                </button>
+              </>
+            ) : (
+              <NavLink
+                to="/account/login"
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 rounded-lg px-3 py-3 text-lg text-ink transition-colors ${
+                    isActive ? 'bg-white font-bold' : 'hover:bg-white'
+                  }`
+                }
+              >
+                <PersonIcon />
+                {t('account.login')}
+              </NavLink>
+            )}
           </nav>
 
           <div className="border-t border-gray-100 px-5 py-4">
