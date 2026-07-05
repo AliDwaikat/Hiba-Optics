@@ -125,6 +125,11 @@ export const UI = {
   },
   'closing.shop': { ar: 'تسوّق الآن', en: 'Shop Now' },
 
+  // ---- Featured products ----
+  'featured.eyebrow': { ar: 'مختارة بعناية', en: 'Handpicked' },
+  'featured.heading': { ar: 'نظارات مميزة', en: 'Featured Eyewear' },
+  'featured.sub': { ar: 'أبرز اختياراتنا لك.', en: 'Our top picks for you.' },
+
   // ---- Shop: finder entry ----
   'shop.finder.title': { ar: 'اعثر على إطارك', en: 'Find your frame' },
   'shop.finder.subtitle': {

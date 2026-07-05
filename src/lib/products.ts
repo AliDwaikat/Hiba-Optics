@@ -183,6 +183,21 @@ export async function fetchFeaturedProduct(): Promise<Product | null> {
   return (data as unknown as Product) ?? null
 }
 
+/** Published, featured products ordered by position (includes variants, so the
+ *  card can derive its image from variants[].images). Throws on a real error. */
+export async function fetchFeaturedProducts(limit = 8): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select(PRODUCT_COLUMNS)
+    .eq('published', true)
+    .eq('featured', true)
+    .order('position', { ascending: true })
+    .limit(limit)
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as unknown as Product[]
+}
+
 /**
  * A single published product by id (with its Arabic brand name and features),
  * or null if not found / not published.
