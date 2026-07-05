@@ -24,6 +24,7 @@ import Dashboard from './pages/admin/Dashboard'
 import AdminProducts from './pages/admin/Products'
 import AdminProductForm from './pages/admin/ProductForm'
 import AdminOrders from './pages/admin/Orders'
+import AdminCustomers from './pages/admin/Customers'
 import AdminBookings from './pages/admin/Bookings'
 import AdminReviews from './pages/admin/Reviews'
 import AdminBranches from './pages/admin/Branches'
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="products/new" element={<AdminProductForm />} />
           <Route path="products/:id/edit" element={<AdminProductForm />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="customers" element={<AdminCustomers />} />
           <Route path="bookings" element={<AdminBookings />} />
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="branches" element={<AdminBranches />} />

@@ -83,6 +83,16 @@ export const BrandsIcon = ({ className }: IconProps) =>
     className,
   )
 
+export const CustomersIcon = ({ className }: IconProps) =>
+  base(
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
+      <path d="M16 4.5a3.5 3.5 0 0 1 0 7M17.5 14.2A5.5 5.5 0 0 1 20.5 19" />
+    </>,
+    className,
+  )
+
 export const MenuIcon = ({ className }: IconProps) =>
   base(<path d="M4 7h16M4 12h16M4 17h16" />, className)
 
