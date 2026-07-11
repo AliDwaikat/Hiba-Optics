@@ -158,6 +158,7 @@ export const UI = {
   'shop.cat.contact_lenses': { ar: 'عدسات لاصقة', en: 'Contact lenses' },
   'shop.cat.accessories': { ar: 'إكسسوارات', en: 'Accessories' },
   'shop.brand.all': { ar: 'كل البراندات', en: 'All brands' },
+  'shop.brand.label': { ar: 'البراند', en: 'Brand' },
   'shop.aud.label': { ar: 'الفئة المستهدفة', en: 'Audience' },
   'shop.aud.all': { ar: 'الكل', en: 'All' },
   'shop.aud.men': { ar: 'رجالي', en: 'Men' },

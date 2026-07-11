@@ -86,6 +86,13 @@ function SearchIcon() {
     </svg>
   )
 }
+function FilterIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 5h18M6 12h12M10 19h4" />
+    </svg>
+  )
+}
 
 export default function Shop() {
   const { t, localize } = useLanguage()
@@ -285,8 +292,15 @@ export default function Shop() {
     return sorted
   }, [products, search, category, brandId, audience, range, inStockOnly, selectedColors, sort])
 
+  // Advanced = everything that now lives inside the filter panel: brand,
+  // audience, price, availability, colors. (Category stays in the always-visible
+  // chip row, so it is intentionally NOT counted here.)
   const advancedActiveCount =
-    (audience !== 'all' ? 1 : 0) + (priceActive ? 1 : 0) + (inStockOnly ? 1 : 0) + selectedColors.size
+    (brandId ? 1 : 0) +
+    (audience !== 'all' ? 1 : 0) +
+    (priceActive ? 1 : 0) +
+    (inStockOnly ? 1 : 0) +
+    selectedColors.size
 
   const anyFilterActive =
     advancedActiveCount > 0 || category !== 'all' || Boolean(brandId) || search.trim() !== ''
@@ -304,6 +318,32 @@ export default function Shop() {
   function renderAdvancedFilters() {
     return (
       <div className="space-y-5">
+        {/* Brand */}
+        {brands.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-semibold text-ink">{t('shop.brand.label')}</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setBrandId(null)}
+                className={pillClass(brandId === null)}
+              >
+                {t('shop.brand.all')}
+              </button>
+              {brands.map((brand) => (
+                <button
+                  key={brand.id}
+                  type="button"
+                  onClick={() => setBrandId(brand.id)}
+                  className={pillClass(brandId === brand.id)}
+                >
+                  {localize(brand, 'name')}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Audience */}
         <div>
           <p className="mb-2 text-sm font-semibold text-ink">{t('shop.aud.label')}</p>
@@ -466,7 +506,8 @@ export default function Shop() {
           </span>
         </Link>
 
-        {/* Search + sort */}
+        {/* Compact top bar: search (flexible) + sort + filters button.
+            Single row on desktop, wraps to search-then-controls on mobile. */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-gray-600">
@@ -493,22 +534,8 @@ export default function Shop() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Mobile: open the filter drawer */}
-            <button
-              type="button"
-              onClick={() => setDrawerOpen(true)}
-              className="inline-flex items-center gap-2 rounded-[var(--radius)] border border-gray-300 px-4 py-2.5 text-sm font-medium text-ink md:hidden"
-            >
-              {t('shop.filters')}
-              {advancedActiveCount > 0 && (
-                <span className="num flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-yellow px-1 text-xs font-bold text-ink">
-                  {advancedActiveCount}
-                </span>
-              )}
-            </button>
-
             <label className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">{t('shop.sort.label')}</span>
+              <span className="hidden text-sm text-gray-600 sm:inline">{t('shop.sort.label')}</span>
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
@@ -522,11 +549,29 @@ export default function Shop() {
                 ))}
               </select>
             </label>
+
+            {/* Filters button — all viewports; opens the filter panel. */}
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={drawerOpen}
+              className="inline-flex shrink-0 items-center gap-2 rounded-[var(--radius)] border border-gray-300 px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-yellow-deep"
+            >
+              <FilterIcon />
+              {t('shop.filters')}
+              {advancedActiveCount > 0 && (
+                <span className="num flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-yellow px-1 text-xs font-bold text-ink">
+                  {advancedActiveCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Category chips */}
-        <div className="mt-4 flex flex-wrap gap-2">
+        {/* Category — the primary, always-visible filter: one line, scrolls
+            horizontally on overflow (never wraps into a second tall row). */}
+        <div className="mt-4 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
           {CATEGORY_TABS.map((tab) => (
             <button
               key={tab.value}
@@ -537,30 +582,6 @@ export default function Shop() {
               {t(tab.labelKey)}
             </button>
           ))}
-        </div>
-
-        {/* Brand chips */}
-        {brands.length > 0 && (
-          <div className="mt-3 -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-            <button type="button" onClick={() => setBrandId(null)} className={pillClass(brandId === null)}>
-              {t('shop.brand.all')}
-            </button>
-            {brands.map((brand) => (
-              <button
-                key={brand.id}
-                type="button"
-                onClick={() => setBrandId(brand.id)}
-                className={pillClass(brandId === brand.id)}
-              >
-                {localize(brand, 'name')}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Advanced filters — inline on desktop */}
-        <div className="mt-4 hidden rounded-[var(--radius-lg)] border border-gray-300 bg-white p-5 md:block">
-          {renderAdvancedFilters()}
         </div>
 
         {/* Active-filters summary + result count */}
@@ -637,9 +658,11 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* Mobile filter drawer (bottom sheet) */}
+      {/* Filter panel — slide-in drawer from the inline-end edge on all
+          viewports; full-width sheet on mobile. dir-aware slide (off the end
+          edge when closed). Backdrop dims + closes; body scroll is locked. */}
       <div
-        className={`fixed inset-0 z-50 md:hidden ${drawerOpen ? '' : 'pointer-events-none'}`}
+        className={`fixed inset-0 z-50 ${drawerOpen ? '' : 'pointer-events-none'}`}
         aria-hidden={!drawerOpen}
       >
         <div
@@ -653,8 +676,8 @@ export default function Shop() {
           role="dialog"
           aria-modal="true"
           aria-label={t('shop.drawer.title')}
-          className={`absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col rounded-t-[var(--radius-lg)] bg-white shadow-xl transition-transform duration-300 ease-out motion-reduce:transition-none ${
-            drawerOpen ? 'translate-y-0' : 'translate-y-full'
+          className={`absolute inset-y-0 end-0 flex h-full w-full max-w-sm flex-col bg-white shadow-xl transition-transform duration-300 ease-out motion-reduce:transition-none ${
+            drawerOpen ? 'translate-x-0' : 'ltr:translate-x-full rtl:-translate-x-full'
           }`}
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
@@ -663,12 +686,12 @@ export default function Shop() {
               type="button"
               onClick={() => setDrawerOpen(false)}
               aria-label={t('header.close')}
-              className="text-ink"
+              className="text-ink transition-colors hover:text-yellow-deep"
             >
               <ClearIcon />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto px-5 py-4">{renderAdvancedFilters()}</div>
+          <div className="flex-1 overflow-y-auto px-5 py-5">{renderAdvancedFilters()}</div>
           <div className="flex items-center gap-3 border-t border-gray-100 px-5 py-4">
             <button
               type="button"
