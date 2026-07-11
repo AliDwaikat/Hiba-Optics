@@ -77,7 +77,7 @@ export default function Favorites() {
 
         <div className="mt-8">
           {loading ? (
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <SkeletonCard key={i} />
               ))}
@@ -100,7 +100,7 @@ export default function Favorites() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
               {display.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

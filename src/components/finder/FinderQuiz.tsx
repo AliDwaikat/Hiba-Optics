@@ -486,7 +486,7 @@ export default function FinderQuiz({ wrapperClassName }: { wrapperClassName?: st
 
             <div className="mt-8">
               {loading ? (
-                <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="animate-pulse">
                       <div className="aspect-square w-full rounded-xl bg-gray-100" />
@@ -500,7 +500,7 @@ export default function FinderQuiz({ wrapperClassName }: { wrapperClassName?: st
                   <p className="text-lg text-ink">{t('finder.empty')}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
                   {list.map((p) => (
                     <ProductCard key={p.id} product={p} />
                   ))}

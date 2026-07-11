@@ -193,12 +193,18 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
           ) : null}
         </div>
 
-        <div className="mt-3 text-start">
-          {brandName && <p className="text-xs text-gray-600">{brandName}</p>}
-          <h3 className="mt-0.5 text-sm text-ink sm:text-base">{name}</h3>
+        {/* Card body — comfortable inline padding (~16px) so text never touches
+            the edges; brand → name → price get a little vertical rhythm. */}
+        <div className="px-4 pb-4 pt-3 text-start">
+          {brandName && <p className="truncate text-xs text-gray-600">{brandName}</p>}
+          {/* Name: up to 2 lines with ellipsis, fixed min-height so 1- and
+              2-line cards stay aligned across the grid. */}
+          <h3 className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm leading-5 text-ink sm:min-h-[3rem] sm:text-base sm:leading-6">
+            {name}
+          </h3>
 
           {onSale ? (
-            <div className="mt-1 flex items-center justify-start gap-2">
+            <div className="mt-2 flex flex-wrap items-baseline justify-start gap-x-2 gap-y-0.5">
               <span className="num font-semibold text-ink">
                 {formatPrice(salePrice as number, product.currency)}
               </span>
@@ -207,7 +213,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
               </span>
             </div>
           ) : (
-            <div className="mt-1">
+            <div className="mt-2 flex items-baseline">
               <span className="num font-semibold text-ink">
                 {formatPrice(price, product.currency)}
               </span>

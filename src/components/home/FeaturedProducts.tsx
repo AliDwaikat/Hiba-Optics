@@ -70,7 +70,7 @@ export default function FeaturedProducts() {
           </div>
         </Reveal>
 
-        <RevealGroup className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+        <RevealGroup className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
           {products.map((p) => (
             <RevealItem key={p.id}>
               <ProductCard product={p} brandName={brandName(p.brand_id)} />
