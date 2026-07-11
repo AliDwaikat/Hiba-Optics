@@ -66,19 +66,35 @@ export default function Account() {
           </div>
         </dl>
 
-        <Link
-          to="/account/orders"
-          className="mt-6 flex items-center justify-between rounded-[var(--radius-sm)] border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-yellow-deep hover:bg-white"
-        >
-          <span>
-            <span className="block text-sm font-semibold text-ink">{t('account.orders')}</span>
-            <span className="mt-0.5 block text-xs text-gray-600">{t('account.ordersDesc')}</span>
-          </span>
-          <span aria-hidden="true" className="text-gray-400">
-            <span className="rtl:inline ltr:hidden">←</span>
-            <span className="ltr:inline rtl:hidden">→</span>
-          </span>
-        </Link>
+        <div className="mt-6 space-y-3">
+          <Link
+            to="/account/orders"
+            className="flex items-center justify-between rounded-[var(--radius-sm)] border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-yellow-deep hover:bg-white"
+          >
+            <span>
+              <span className="block text-sm font-semibold text-ink">{t('account.orders')}</span>
+              <span className="mt-0.5 block text-xs text-gray-600">{t('account.ordersDesc')}</span>
+            </span>
+            <span aria-hidden="true" className="text-gray-400">
+              <span className="rtl:inline ltr:hidden">←</span>
+              <span className="ltr:inline rtl:hidden">→</span>
+            </span>
+          </Link>
+
+          <Link
+            to="/account/profile"
+            className="flex items-center justify-between rounded-[var(--radius-sm)] border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-yellow-deep hover:bg-white"
+          >
+            <span>
+              <span className="block text-sm font-semibold text-ink">{t('account.profile')}</span>
+              <span className="mt-0.5 block text-xs text-gray-600">{t('account.profileDesc')}</span>
+            </span>
+            <span aria-hidden="true" className="text-gray-400">
+              <span className="rtl:inline ltr:hidden">←</span>
+              <span className="ltr:inline rtl:hidden">→</span>
+            </span>
+          </Link>
+        </div>
 
         <button
           type="button"

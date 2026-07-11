@@ -5,6 +5,7 @@ import { formatPrice } from '../lib/format'
 import { useCart } from '../lib/cart'
 import { useLanguage } from '../lib/language'
 import { useCustomerAuth } from '../lib/customerAuth'
+import { fetchMyProfile, updateMyProfile, type ProfileUpdate } from '../lib/profile'
 import { fetchBranches, type Branch } from '../lib/branches'
 import {
   createOrder,
@@ -51,6 +52,8 @@ export default function Checkout() {
   const [city, setCity] = useState('')
   const [branchId, setBranchId] = useState('')
   const [notes, setNotes] = useState('')
+  // Opt-in: logged-in customers can save what they entered back to their profile.
+  const [saveToProfile, setSaveToProfile] = useState(false)
 
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitting, setSubmitting] = useState(false)
@@ -68,6 +71,28 @@ export default function Checkout() {
       active = false
     }
   }, [])
+
+  // Pre-fill from the logged-in customer's profile — ONLY empty fields, so we
+  // never clobber what the user already typed this session. Best-effort and
+  // silent: a profile fetch failure must never disturb checkout (guests too).
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    fetchMyProfile(user.id)
+      .then((p) => {
+        if (!active || !p) return
+        if (p.name) setName((prev) => prev || p.name!)
+        if (p.phone) setPhone((prev) => prev || p.phone!)
+        if (p.address) setAddress((prev) => prev || p.address!)
+        if (p.city) setCity((prev) => prev || p.city!)
+      })
+      .catch(() => {
+        // ignore — pre-fill is a convenience, not a requirement
+      })
+    return () => {
+      active = false
+    }
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Guard: nothing to check out. Skip once the order is placed — clearing the
   // cart on success empties it, and we want the /order-success redirect to win.
@@ -133,6 +158,20 @@ export default function Checkout() {
         notes: notes.trim() || null,
         user_id: user?.id ?? null,
       })
+      // Opt-in: persist the entered details to the customer's profile. Only the
+      // fields that have values (never wipes a saved address on a pickup order).
+      // Best-effort — a profile-save failure must not fail a placed order.
+      if (saveToProfile && user) {
+        const patch: Partial<ProfileUpdate> = { name: name.trim() || null }
+        if (phone.trim()) patch.phone = phone.trim()
+        if (address.trim()) patch.address = address.trim()
+        if (city.trim()) patch.city = city.trim()
+        try {
+          await updateMyProfile(user.id, patch)
+        } catch {
+          // ignore — the order is already placed; profile save is secondary
+        }
+      }
       // Success = insert returned no error. We rely on the client-side
       // order_number (no read-back), since guests can't SELECT orders.
       // Mark placed BEFORE clearing so the empty-cart guard doesn't bounce to
@@ -301,6 +340,19 @@ export default function Checkout() {
                     <span className="num text-lg font-bold text-ink">{formatPrice(total, CURRENCY)}</span>
                   </div>
                 </div>
+
+                {/* Logged-in only: opt-in to save these details to the account. */}
+                {user && (
+                  <label className="mt-5 flex cursor-pointer items-start gap-2 text-sm text-ink">
+                    <input
+                      type="checkbox"
+                      checked={saveToProfile}
+                      onChange={(e) => setSaveToProfile(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-yellow)]"
+                    />
+                    <span>{t('checkout.saveToProfile')}</span>
+                  </label>
+                )}
 
                 {submitError && (
                   <p className="mt-4 text-sm" style={{ color: 'var(--color-error)' }}>{submitError}</p>

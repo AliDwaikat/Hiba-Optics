@@ -550,6 +550,34 @@ export const UI = {
     ar: 'اطّلع على طلباتك السابقة وحالتها.',
     en: 'View your past orders and their status.',
   },
+  'account.profile': { ar: 'بياناتي', en: 'My details' },
+  'account.profileDesc': {
+    ar: 'حدّث اسمك ورقم هاتفك وعنوانك.',
+    en: 'Update your name, phone, and address.',
+  },
+
+  // ---- Profile ----
+  'profile.title': { ar: 'بياناتي', en: 'My details' },
+  'profile.subtitle': {
+    ar: 'تُستخدم هذه المعلومات لتعبئة بيانات الطلب تلقائياً.',
+    en: 'These details are used to pre-fill your checkout.',
+  },
+  'profile.name': { ar: 'الاسم', en: 'Name' },
+  'profile.phone': { ar: 'رقم الهاتف', en: 'Phone number' },
+  'profile.address': { ar: 'العنوان', en: 'Address' },
+  'profile.city': { ar: 'المدينة', en: 'City' },
+  'profile.email': { ar: 'البريد الإلكتروني', en: 'Email' },
+  'profile.save': { ar: 'حفظ', en: 'Save' },
+  'profile.saving': { ar: 'جاري الحفظ…', en: 'Saving…' },
+  'profile.saved': { ar: 'تم حفظ بياناتك', en: 'Your details were saved' },
+  'profile.loadError': { ar: 'تعذّر تحميل بياناتك', en: "Couldn't load your details" },
+  'profile.saveError': { ar: 'تعذّر حفظ بياناتك، حاول مجدداً', en: "Couldn't save your details, try again" },
+  'profile.err.name': { ar: 'الرجاء إدخال الاسم.', en: 'Please enter your name.' },
+  'profile.err.phone': { ar: 'صيغة رقم الهاتف غير صحيحة.', en: 'Please enter a valid phone number.' },
+  'checkout.saveToProfile': {
+    ar: 'حفظ هذه المعلومات في حسابي',
+    en: 'Save these details to my account',
+  },
 
   // ---- Order history ----
   'orders.title': { ar: 'طلباتي', en: 'My orders' },

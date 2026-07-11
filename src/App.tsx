@@ -18,6 +18,7 @@ import AccountLogin from './pages/account/Login'
 import AccountRegister from './pages/account/Register'
 import Account from './pages/account/Account'
 import AccountOrders from './pages/account/Orders'
+import AccountProfile from './pages/account/Profile'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminLogin from './pages/admin/Login'
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="/account/login" element={<AccountLogin />} />
         <Route path="/account" element={<Account />} />
         <Route path="/account/orders" element={<AccountOrders />} />
+        <Route path="/account/profile" element={<AccountProfile />} />
       </Route>
 
       {/* Admin — login is public; everything else is guarded */}
