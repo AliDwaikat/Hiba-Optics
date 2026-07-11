@@ -474,6 +474,7 @@ export const UI = {
   'fav.count': { ar: '{n} منتج في المفضلة', en: '{n} in your favorites' },
   'fav.error': { ar: 'تعذّر تحميل المفضلة', en: "Couldn't load favorites" },
   'fav.empty': { ar: 'لا توجد منتجات في المفضلة بعد', en: 'No favorites yet' },
+  'fav.syncError': { ar: 'تعذّرت مزامنة المفضلة، حاول مجدداً', en: "Couldn't sync favorites, try again" },
 
   // ---- Customer account ----
   'account.menu': { ar: 'حسابي', en: 'My account' },

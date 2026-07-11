@@ -20,47 +20,52 @@ function SkeletonCard() {
 
 export default function Favorites() {
   const { t } = useLanguage()
-  const { favorites, count } = useFavorites()
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  // `favLoading` is true while the logged-in user's DB favorites resolve.
+  const { favorites, count, loading: favLoading } = useFavorites()
+  // Accumulated product cache keyed by id — never drops rows, so un-hearting is
+  // instant (display is derived from LIVE favorites) and new hearts fetch lazily.
+  const [productMap, setProductMap] = useState<Map<string, Product>>(new Map())
+  const [fetching, setFetching] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch the products for the favorites present at mount. The visible list is
-  // then derived from the LIVE favorites, so un-hearting removes items instantly
-  // without a refetch. (favorites captured once on purpose — no dep on it here.)
+  // Fetch products for any favorite ids we don't have yet. Reacts to the source
+  // changing (e.g. DB favorites arriving after login, or a new heart).
   useEffect(() => {
+    const missing = favorites.filter((id) => !productMap.has(id))
+    if (missing.length === 0) return
     let active = true
-    const ids = favorites
-    if (ids.length === 0) {
-      setProducts([])
-      setLoading(false)
-      return
-    }
-    fetchProductsByIds(ids)
+    setFetching(true)
+    fetchProductsByIds(missing)
       .then((data) => {
         if (!active) return
-        setProducts(data)
-        setLoading(false)
+        setProductMap((prev) => {
+          const m = new Map(prev)
+          for (const p of data) m.set(p.id, p)
+          return m
+        })
+        setFetching(false)
       })
       .catch((err: unknown) => {
         if (!active) return
         setError(err instanceof Error ? err.message : String(err))
-        setLoading(false)
+        setFetching(false)
       })
     return () => {
       active = false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [favorites, productMap])
 
   // Newest favorites first; skip any that no longer exist / are unpublished.
   const display = useMemo(() => {
-    const byId = new Map(products.map((p) => [p.id, p]))
     return [...favorites]
       .reverse()
-      .map((id) => byId.get(id))
+      .map((id) => productMap.get(id))
       .filter((p): p is Product => Boolean(p))
-  }, [favorites, products])
+  }, [favorites, productMap])
+
+  // Skeleton while the DB favorites resolve, or while the first product batch
+  // for a non-empty list is still loading.
+  const loading = favLoading || (fetching && display.length === 0 && favorites.length > 0)
 
   return (
     <main className="min-h-screen bg-white">
