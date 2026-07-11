@@ -271,6 +271,8 @@ export const UI = {
   'finder.empty': { ar: 'لا توجد إطارات متاحة حالياً', en: 'No frames available right now' },
   'finder.restart': { ar: 'أعد الاختبار', en: 'Restart quiz' },
   'finder.browseAll': { ar: 'تصفّح كل النظارات', en: 'Browse all eyewear' },
+  'finder.fab': { ar: 'اعثر على إطارك', en: 'Find Your Frame' },
+  'finder.close': { ar: 'إغلاق', en: 'Close' },
 
   // ---- Shared (pass 3) ----
   'common.browseShop': { ar: 'تصفّح المتجر', en: 'Browse the shop' },

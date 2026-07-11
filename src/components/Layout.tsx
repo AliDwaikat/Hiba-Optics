@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import Header from './Header'
 import Footer from './Footer'
 import PageTransition from './PageTransition'
+import FinderFab from './finder/FinderFab'
 
 /** Site shell: header + routed page content + footer on every page. */
 export default function Layout() {
@@ -18,6 +19,7 @@ export default function Layout() {
         <PageTransition key={location.pathname}>{outlet}</PageTransition>
       </AnimatePresence>
       <Footer />
+      <FinderFab />
     </div>
   )
 }
