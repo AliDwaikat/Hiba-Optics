@@ -543,6 +543,22 @@ export const UI = {
     ar: 'قريباً: طلباتك السابقة ومنتجاتك المفضّلة.',
     en: 'Coming soon: your past orders and favorite products.',
   },
+  'account.orders': { ar: 'طلباتي', en: 'My orders' },
+  'account.ordersDesc': {
+    ar: 'اطّلع على طلباتك السابقة وحالتها.',
+    en: 'View your past orders and their status.',
+  },
+
+  // ---- Order history ----
+  'orders.title': { ar: 'طلباتي', en: 'My orders' },
+  'orders.count': { ar: '{n} طلب', en: '{n} orders' },
+  'orders.empty': { ar: 'لا توجد طلبات سابقة بعد', en: 'No past orders yet' },
+  'orders.error': { ar: 'تعذّر تحميل الطلبات', en: "Couldn't load your orders" },
+  'orders.total': { ar: 'الإجمالي', en: 'Total' },
+  'orders.status.new': { ar: 'جديد', en: 'New' },
+  'orders.status.confirmed': { ar: 'مؤكد', en: 'Confirmed' },
+  'orders.status.delivered': { ar: 'تم التسليم', en: 'Delivered' },
+  'orders.status.cancelled': { ar: 'ملغي', en: 'Cancelled' },
 } satisfies Record<string, Entry>
 
 export type UIKey = keyof typeof UI

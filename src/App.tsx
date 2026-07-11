@@ -17,6 +17,7 @@ import EyeExam from './pages/EyeExam'
 import AccountLogin from './pages/account/Login'
 import AccountRegister from './pages/account/Register'
 import Account from './pages/account/Account'
+import AccountOrders from './pages/account/Orders'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminLogin from './pages/admin/Login'
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/account/register" element={<AccountRegister />} />
         <Route path="/account/login" element={<AccountLogin />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/account/orders" element={<AccountOrders />} />
       </Route>
 
       {/* Admin — login is public; everything else is guarded */}

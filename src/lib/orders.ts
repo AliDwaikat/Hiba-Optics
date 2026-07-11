@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { supabaseCustomer } from './supabaseCustomer'
 import type { CartColor } from './cart'
 
 /**
@@ -7,6 +8,7 @@ import type { CartColor } from './cart'
  */
 
 export type FulfillmentType = 'delivery' | 'pickup'
+export type OrderStatus = 'new' | 'confirmed' | 'delivered' | 'cancelled'
 
 /** One line of the cart snapshot stored in orders.items (jsonb). */
 export interface OrderItemSnapshot {
@@ -39,20 +41,53 @@ export interface OrderInput {
   status: string
   has_consultation_items: boolean
   notes: string | null
+  /** Owning customer (auth.users id) when logged in; null for guest checkout. */
+  user_id: string | null
+}
+
+/** A customer's own order, as shown on the order-history page. */
+export interface CustomerOrder {
+  id: string
+  order_number: string
+  status: OrderStatus
+  total: number
+  items: OrderItemSnapshot[]
+  has_consultation_items: boolean
+  created_at: string
 }
 
 /**
- * Insert an order as a guest (anon role). Deliberately does NOT chain
- * `.select()`: anon has INSERT but not SELECT on `orders` (SELECT stays
- * restricted to authenticated/admin), so reading the row back would 401.
- * Success is confirmed by the insert `error` being null; the caller relies on
- * the client-side generated order_number for the success page. Throws the raw
+ * Insert an order via the anon client. Deliberately does NOT chain `.select()`:
+ * anon has INSERT but not SELECT on `orders` (SELECT stays restricted to the
+ * owning customer / admin), so reading the row back would 401. Success is
+ * confirmed by the insert `error` being null; the caller relies on the
+ * client-side generated order_number for the success page. Throws the raw
  * Supabase error (with details/code) on failure so the caller can log it, show
  * a friendly message, and keep the cart for retry.
+ *
+ * `input.user_id` links the order to a logged-in customer (or null for guests);
+ * it is a plain column value, so the guest flow is byte-for-byte unchanged.
  */
 export async function createOrder(input: OrderInput): Promise<void> {
   const { error } = await supabase.from('orders').insert(input)
   if (error) throw error
+}
+
+/**
+ * The logged-in customer's own orders, newest first. Runs on the CUSTOMER
+ * client so the request carries the customer's JWT — the `orders_select_own`
+ * RLS policy (user_id = auth.uid()) then returns only their rows. The explicit
+ * user_id filter is belt-and-suspenders; RLS is the real guard.
+ */
+export async function fetchMyOrders(userId: string): Promise<CustomerOrder[]> {
+  const { data, error } = await supabaseCustomer
+    .from('orders')
+    .select('id, order_number, status, total, items, has_consultation_items, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as unknown as CustomerOrder[]
 }
 
 /** Order number in the format HIB-YYYYMMDD-XXXX (Western digits). */

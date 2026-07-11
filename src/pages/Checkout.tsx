@@ -4,6 +4,7 @@ import { Reveal } from '../components/home/Reveal'
 import { formatPrice } from '../lib/format'
 import { useCart } from '../lib/cart'
 import { useLanguage } from '../lib/language'
+import { useCustomerAuth } from '../lib/customerAuth'
 import { fetchBranches, type Branch } from '../lib/branches'
 import {
   createOrder,
@@ -37,6 +38,9 @@ interface FieldErrors {
 export default function Checkout() {
   const { items, itemCount, subtotal, clear } = useCart()
   const { t, localize } = useLanguage()
+  // Logged-in customer (if any) — used only to link the order. Checkout is NEVER
+  // gated: guests (user == null) keep the exact same flow with user_id = null.
+  const { user } = useCustomerAuth()
   const navigate = useNavigate()
 
   const [branches, setBranches] = useState<Branch[]>([])
@@ -127,6 +131,7 @@ export default function Checkout() {
         status: 'new',
         has_consultation_items: hasConsultation,
         notes: notes.trim() || null,
+        user_id: user?.id ?? null,
       })
       // Success = insert returned no error. We rely on the client-side
       // order_number (no read-back), since guests can't SELECT orders.
