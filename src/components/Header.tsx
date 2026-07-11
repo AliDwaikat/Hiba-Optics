@@ -190,7 +190,7 @@ function HeaderLogo() {
         src="/hiba-logo.png?v=5"
         alt="Hiba Optics"
         onError={() => setBroken(true)}
-        className="block h-[54px] w-auto max-w-none"
+        className="block h-[58px] w-auto max-w-none"
       />
     </span>
   )
