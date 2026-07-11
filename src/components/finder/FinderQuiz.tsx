@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import ProductCard from '../ProductCard'
+import { SkeletonProductGrid } from '../Skeleton'
 import { useLanguage } from '../../lib/language'
 import { format, type Lang, type UIKey } from '../../lib/i18n'
 import {
@@ -486,15 +487,7 @@ export default function FinderQuiz({ wrapperClassName }: { wrapperClassName?: st
 
             <div className="mt-8">
               {loading ? (
-                <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="aspect-square w-full rounded-xl bg-gray-100" />
-                      <div className="mt-3 h-3 w-1/2 rounded bg-gray-100" />
-                      <div className="mt-2 h-4 w-3/4 rounded bg-gray-100" />
-                    </div>
-                  ))}
-                </div>
+                <SkeletonProductGrid count={4} />
               ) : list.length === 0 ? (
                 <div className="py-12 text-center">
                   <p className="text-lg text-ink">{t('finder.empty')}</p>

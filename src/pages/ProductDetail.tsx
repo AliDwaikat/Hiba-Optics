@@ -9,6 +9,7 @@ import { useLanguage } from '../lib/language'
 import { CATEGORY_LABEL_KEY, format, type UIKey } from '../lib/i18n'
 import HeartIcon from '../components/HeartIcon'
 import ProductTilePlaceholder from '../components/ProductTilePlaceholder'
+import { Skeleton } from '../components/Skeleton'
 import {
   fetchProduct,
   fetchReviews,
@@ -400,17 +401,17 @@ function Gallery({
 
 function DetailSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl animate-pulse px-4 py-8 sm:px-8">
-      <div className="h-3 w-64 rounded bg-gray-100" />
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
+      <Skeleton className="h-3 w-64 rounded" />
       <div className="mt-8 grid gap-10 md:grid-cols-2">
-        <div className="aspect-square w-full rounded-[var(--radius-lg)] bg-gray-100" />
+        <Skeleton className="aspect-square w-full rounded-[var(--radius-lg)]" />
         <div className="space-y-4">
-          <div className="h-3 w-24 rounded bg-gray-100" />
-          <div className="h-8 w-3/4 rounded bg-gray-100" />
-          <div className="h-6 w-1/3 rounded bg-gray-100" />
-          <div className="h-4 w-full rounded bg-gray-100" />
-          <div className="h-4 w-5/6 rounded bg-gray-100" />
-          <div className="h-12 w-full rounded bg-gray-100" />
+          <Skeleton className="h-3 w-24 rounded" />
+          <Skeleton className="h-8 w-3/4 rounded" />
+          <Skeleton className="h-6 w-1/3 rounded" />
+          <Skeleton className="h-4 w-full rounded" />
+          <Skeleton className="h-4 w-5/6 rounded" />
+          <Skeleton className="h-12 w-full rounded" />
         </div>
       </div>
     </div>

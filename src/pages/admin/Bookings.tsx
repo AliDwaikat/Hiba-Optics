@@ -9,6 +9,7 @@ import {
   type BookingBranch,
   type BookingStatus,
 } from '../../lib/admin/bookings'
+import { Skeleton } from '../../components/Skeleton'
 
 const SERVICE_LABELS: Record<BookingService, string> = {
   eye_exam: 'فحص نظر',
@@ -129,12 +130,12 @@ function SkeletonList() {
     <div className="space-y-3">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="rounded-[var(--radius-lg)] border border-gray-300 bg-white p-5 shadow-card">
-          <div className="animate-pulse space-y-3">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="h-4 w-44 rounded bg-gray-100" />
-              <div className="h-5 w-16 rounded-full bg-gray-100" />
+              <Skeleton className="h-4 w-44 rounded" />
+              <Skeleton className="h-5 w-16 rounded-full" />
             </div>
-            <div className="h-3 w-56 rounded bg-gray-100" />
+            <Skeleton className="h-3 w-56 rounded" />
           </div>
         </div>
       ))}

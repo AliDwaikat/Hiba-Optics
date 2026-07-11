@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Reveal } from '../components/home/Reveal'
+import { Skeleton } from '../components/Skeleton'
 import { useLanguage } from '../lib/language'
 import { format } from '../lib/i18n'
 import { fetchBranches, type Branch } from '../lib/branches'
@@ -132,14 +133,14 @@ function BranchBlock({ branch, index }: { branch: Branch; index: number }) {
 /* ---------- Skeleton ---------- */
 function BranchSkeleton() {
   return (
-    <div className="grid animate-pulse gap-6 md:grid-cols-2 md:gap-10">
-      <div className="rounded-[var(--radius-lg)] bg-gray-100 p-8">
-        <div className="h-6 w-1/2 rounded bg-gray-300/60" />
-        <div className="mt-4 h-4 w-3/4 rounded bg-gray-300/60" />
-        <div className="mt-2 h-4 w-2/3 rounded bg-gray-300/60" />
-        <div className="mt-6 h-10 w-40 rounded bg-gray-300/60" />
+    <div className="grid gap-6 md:grid-cols-2 md:gap-10">
+      <div className="rounded-[var(--radius-lg)] p-8">
+        <Skeleton className="h-6 w-1/2 rounded" />
+        <Skeleton className="mt-4 h-4 w-3/4 rounded" />
+        <Skeleton className="mt-2 h-4 w-2/3 rounded" />
+        <Skeleton className="mt-6 h-10 w-40 rounded" />
       </div>
-      <div className="h-[240px] rounded-[var(--radius-lg)] bg-gray-100 md:h-[320px]" />
+      <Skeleton className="h-[240px] rounded-[var(--radius-lg)] md:h-[320px]" />
     </div>
   )
 }

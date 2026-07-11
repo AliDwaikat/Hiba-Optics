@@ -5,6 +5,7 @@ import {
   type Customer,
 } from '../../lib/admin/customers'
 import { renewalStatus } from '../../lib/renewal'
+import { Skeleton } from '../../components/Skeleton'
 
 type SortDir = 'newest' | 'oldest'
 
@@ -151,12 +152,12 @@ function SkeletonTable() {
       <div className="divide-y divide-gray-100">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex items-center gap-4 p-4">
-            <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-gray-100" />
+            <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
             <div className="flex-1 space-y-2">
-              <div className="h-3.5 w-40 animate-pulse rounded bg-gray-100" />
-              <div className="h-3 w-56 animate-pulse rounded bg-gray-100" />
+              <Skeleton className="h-3.5 w-40 rounded" />
+              <Skeleton className="h-3 w-56 rounded" />
             </div>
-            <div className="h-3 w-24 animate-pulse rounded bg-gray-100" />
+            <Skeleton className="h-3 w-24 rounded" />
           </div>
         ))}
       </div>

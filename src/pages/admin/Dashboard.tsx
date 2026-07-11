@@ -15,6 +15,7 @@ import {
 } from 'recharts'
 import { fetchAnalyticsRaw, type AnalyticsRaw } from '../../lib/admin/stats'
 import { buildAnalytics, type RangeKey, type StatusSlice } from '../../lib/admin/analytics'
+import { Skeleton } from '../../components/Skeleton'
 import type { OrderStatus } from '../../lib/admin/orders'
 
 /* Brand palette (via CSS variables). */
@@ -119,11 +120,11 @@ function KpiCard({ label, value }: { label: string; value: string }) {
 function CardSkeleton({ height = 300 }: { height?: number }) {
   return (
     <div
-      className="animate-pulse rounded-[var(--radius-lg)] border border-gray-300 bg-white p-5 shadow-card"
+      className="rounded-[var(--radius-lg)] border border-gray-300 bg-white p-5 shadow-card"
       style={{ height }}
     >
-      <div className="h-3.5 w-28 rounded bg-gray-100" />
-      <div className="mt-5 h-[75%] rounded bg-gray-100" />
+      <Skeleton className="h-3.5 w-28 rounded" />
+      <Skeleton className="mt-5 h-[75%] rounded" />
     </div>
   )
 }
@@ -177,7 +178,7 @@ export default function Dashboard() {
           >
             <p className="text-sm text-gray-600">{c.label}</p>
             {loading ? (
-              <div className="mt-3 h-8 w-16 animate-pulse rounded bg-gray-100" />
+              <Skeleton className="mt-3 h-8 w-16 rounded" />
             ) : error ? (
               <p className="num mt-2 text-3xl font-extrabold text-ink">—</p>
             ) : (

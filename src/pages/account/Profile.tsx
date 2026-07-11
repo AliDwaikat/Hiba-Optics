@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { useCustomerAuth } from '../../lib/customerAuth'
 import { useLanguage } from '../../lib/language'
 import { fetchMyProfile, updateMyProfile } from '../../lib/profile'
+import { Skeleton } from '../../components/Skeleton'
 
 interface FieldErrors {
   name?: string
@@ -118,9 +119,9 @@ export default function AccountProfile() {
         {loading ? (
           <div className="space-y-5">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="mb-2 h-3 w-24 rounded bg-gray-100" />
-                <div className="h-11 w-full rounded-[var(--radius-sm)] bg-gray-100" />
+              <div key={i}>
+                <Skeleton className="mb-2 h-3 w-24 rounded" />
+                <Skeleton className="h-11 w-full rounded-[var(--radius-sm)]" />
               </div>
             ))}
           </div>

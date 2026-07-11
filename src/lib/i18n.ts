@@ -281,6 +281,13 @@ export const UI = {
   'common.backShop': { ar: 'العودة للمتجر', en: 'Back to shop' },
   'common.whatsappContact': { ar: 'تواصل معنا على واتساب', en: 'Contact us on WhatsApp' },
 
+  // ---- 404 ----
+  'notfound.title': { ar: 'الصفحة غير موجودة', en: 'Page not found' },
+  'notfound.desc': {
+    ar: 'يبدو أن هذه الصفحة غير متوفرة.',
+    en: "It looks like this page isn't available.",
+  },
+
   // ---- Floating WhatsApp contact button ----
   'wa.fab': { ar: 'تواصل عبر واتساب', en: 'Contact on WhatsApp' },
   'wa.prefill': {

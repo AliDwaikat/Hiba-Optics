@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
+import { SkeletonProductGrid } from '../components/Skeleton'
 import { formatPrice } from '../lib/format'
 import { useLanguage } from '../lib/language'
 import { AUDIENCE_LABEL_KEY, format, type UIKey } from '../lib/i18n'
@@ -58,17 +59,6 @@ function pillClass(active: boolean): string {
     'whitespace-nowrap rounded-full px-4 py-2 text-sm transition-colors',
     active ? 'bg-yellow font-semibold text-ink' : 'bg-gray-100 text-gray-600 hover:text-ink',
   ].join(' ')
-}
-
-function SkeletonCard() {
-  return (
-    <div className="animate-pulse">
-      <div className="aspect-square w-full rounded-xl bg-gray-100" />
-      <div className="mt-3 h-3 w-1/2 rounded bg-gray-100" />
-      <div className="mt-2 h-4 w-3/4 rounded bg-gray-100" />
-      <div className="mt-2 h-4 w-1/3 rounded bg-gray-100" />
-    </div>
-  )
 }
 
 function ClearIcon() {
@@ -625,11 +615,7 @@ export default function Shop() {
         {/* Grid / states */}
         <div className="mt-6">
           {loading ? (
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
+            <SkeletonProductGrid count={8} />
           ) : error ? (
             <div className="py-20 text-center">
               <p className="text-lg" style={{ color: 'var(--color-error)' }}>

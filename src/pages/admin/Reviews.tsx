@@ -10,6 +10,7 @@ import {
   type ReviewProduct,
   type ReviewWritePayload,
 } from '../../lib/admin/reviews'
+import { Skeleton } from '../../components/Skeleton'
 
 type PublishedFilter = 'all' | 'published' | 'unpublished'
 
@@ -127,13 +128,13 @@ function SkeletonList() {
     <div className="space-y-3">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="rounded-[var(--radius-lg)] border border-gray-300 bg-white p-5 shadow-card">
-          <div className="animate-pulse space-y-3">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="h-4 w-40 rounded bg-gray-100" />
-              <div className="h-5 w-16 rounded-full bg-gray-100" />
+              <Skeleton className="h-4 w-40 rounded" />
+              <Skeleton className="h-5 w-16 rounded-full" />
             </div>
-            <div className="h-3 w-64 rounded bg-gray-100" />
-            <div className="h-3 w-1/2 rounded bg-gray-100" />
+            <Skeleton className="h-3 w-64 rounded" />
+            <Skeleton className="h-3 w-1/2 rounded" />
           </div>
         </div>
       ))}

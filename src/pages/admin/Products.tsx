@@ -13,6 +13,7 @@ import {
   type AdminBrand,
   type ProductFlag,
 } from '../../lib/admin/products'
+import { Skeleton } from '../../components/Skeleton'
 
 type CategoryFilter = Category | 'all'
 
@@ -153,16 +154,16 @@ function BulkBtn({
 
 function SkeletonRows() {
   return (
-    <div className="animate-pulse divide-y divide-gray-100">
+    <div className="divide-y divide-gray-100">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 px-4 py-4">
-          <div className="h-12 w-12 shrink-0 rounded-[var(--radius-sm)] bg-gray-100" />
+          <Skeleton className="h-12 w-12 shrink-0 rounded-[var(--radius-sm)]" />
           <div className="flex-1 space-y-2">
-            <div className="h-3.5 w-1/3 rounded bg-gray-100" />
-            <div className="h-3 w-1/4 rounded bg-gray-100" />
+            <Skeleton className="h-3.5 w-1/3 rounded" />
+            <Skeleton className="h-3 w-1/4 rounded" />
           </div>
-          <div className="hidden h-4 w-16 rounded bg-gray-100 sm:block" />
-          <div className="h-5 w-9 rounded-full bg-gray-100" />
+          <Skeleton className="hidden h-4 w-16 rounded sm:block" />
+          <Skeleton className="h-5 w-9 rounded-full" />
         </div>
       ))}
     </div>

@@ -7,6 +7,7 @@ import { format } from '../../lib/i18n'
 import { fetchMyProfile } from '../../lib/profile'
 import { renewalStatus, type RenewalStatus } from '../../lib/renewal'
 import { PRIMARY_WHATSAPP, whatsappLink } from '../../lib/contact'
+import { Skeleton } from '../../components/Skeleton'
 
 /** Renewal date shown with Western digits (dd/mm/yyyy). */
 function formatRenewalDate(dateStr: string): string {
@@ -71,8 +72,16 @@ export default function Account() {
   // deciding — avoids a redirect flash and lets sign-out land on home, not login.
   if (loading || signingOut) {
     return (
-      <main className="mx-auto flex min-h-[60vh] max-w-md items-center justify-center px-4">
-        <span className="text-sm text-gray-500">…</span>
+      <main className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-4 py-16 sm:px-8">
+        <div className="rounded-[var(--radius-lg)] border border-gray-200 bg-white p-8 shadow-card">
+          <Skeleton className="h-8 w-1/2 rounded" />
+          <Skeleton className="mt-3 h-4 w-3/4 rounded" />
+          <div className="mt-6 space-y-4">
+            <Skeleton className="h-12 w-full rounded-[var(--radius-sm)]" />
+            <Skeleton className="h-12 w-full rounded-[var(--radius-sm)]" />
+          </div>
+          <Skeleton className="mt-8 h-11 w-full rounded" />
+        </div>
       </main>
     )
   }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Reveal, RevealGroup, RevealItem } from '../components/home/Reveal'
+import { Skeleton } from '../components/Skeleton'
 import { useLanguage } from '../lib/language'
 import { fetchBrandsWithCounts, type BrandWithCount } from '../lib/products'
 
@@ -55,10 +56,10 @@ function BrandCard({ brand }: { brand: BrandWithCount }) {
 
 function BrandSkeleton() {
   return (
-    <div className="animate-pulse rounded-[var(--radius-lg)] bg-gray-100 p-8">
-      <div className="mx-auto h-10 w-2/3 rounded bg-gray-300/50" />
-      <div className="mx-auto mt-4 h-3 w-1/3 rounded bg-gray-300/50" />
-      <div className="mx-auto mt-3 h-3 w-1/4 rounded bg-gray-300/50" />
+    <div className="rounded-[var(--radius-lg)] p-8">
+      <Skeleton className="mx-auto h-10 w-2/3 rounded" />
+      <Skeleton className="mx-auto mt-4 h-3 w-1/3 rounded" />
+      <Skeleton className="mx-auto mt-3 h-3 w-1/4 rounded" />
     </div>
   )
 }

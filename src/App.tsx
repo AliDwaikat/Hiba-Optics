@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import Shop from './pages/Shop'
@@ -19,6 +19,7 @@ import AccountRegister from './pages/account/Register'
 import Account from './pages/account/Account'
 import AccountOrders from './pages/account/Orders'
 import AccountProfile from './pages/account/Profile'
+import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminLogin from './pages/admin/Login'
@@ -56,6 +57,9 @@ export default function App() {
         <Route path="/account" element={<Account />} />
         <Route path="/account/orders" element={<AccountOrders />} />
         <Route path="/account/profile" element={<AccountProfile />} />
+        {/* Catch-all: branded 404 for any unmatched PUBLIC url. Admin routes
+            below are matched separately and keep their own guard/login flow. */}
+        <Route path="*" element={<NotFound />} />
       </Route>
 
       {/* Admin — login is public; everything else is guarded */}
@@ -72,6 +76,9 @@ export default function App() {
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="branches" element={<AdminBranches />} />
           <Route path="brands" element={<AdminBrands />} />
+          {/* Unknown admin subpaths stay in the guarded admin shell (→ dashboard),
+              never the public 404. */}
+          <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
       </Route>
     </Routes>
