@@ -281,6 +281,13 @@ export const UI = {
   'common.backShop': { ar: 'العودة للمتجر', en: 'Back to shop' },
   'common.whatsappContact': { ar: 'تواصل معنا على واتساب', en: 'Contact us on WhatsApp' },
 
+  // ---- Floating WhatsApp contact button ----
+  'wa.fab': { ar: 'تواصل عبر واتساب', en: 'Contact on WhatsApp' },
+  'wa.prefill': {
+    ar: 'مرحباً هبة أوبتكس، أودّ الاستفسار عن',
+    en: 'Hello Hiba Optics, I would like to ask about',
+  },
+
   // ---- Shared form fields + validation ----
   'form.name': { ar: 'الاسم الكامل', en: 'Full name' },
   'form.phoneWa': { ar: 'رقم الهاتف / واتساب', en: 'Phone / WhatsApp' },

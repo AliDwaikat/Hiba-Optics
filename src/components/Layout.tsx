@@ -4,6 +4,7 @@ import Header from './Header'
 import Footer from './Footer'
 import PageTransition from './PageTransition'
 import FinderFab from './finder/FinderFab'
+import WhatsAppFab from './WhatsAppFab'
 
 /** Site shell: header + routed page content + footer on every page. */
 export default function Layout() {
@@ -20,6 +21,7 @@ export default function Layout() {
       </AnimatePresence>
       <Footer />
       <FinderFab />
+      <WhatsAppFab />
     </div>
   )
 }
