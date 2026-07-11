@@ -1,5 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { fetchCustomers, type Customer } from '../../lib/admin/customers'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import {
+  fetchCustomers,
+  updateCustomerRenewal,
+  type Customer,
+} from '../../lib/admin/customers'
+import { renewalStatus } from '../../lib/renewal'
 
 type SortDir = 'newest' | 'oldest'
 
@@ -12,6 +17,115 @@ function formatDate(iso: string): string {
     month: '2-digit',
     day: '2-digit',
   }).format(d)
+}
+
+/** A due/overdue chip for a customer's renewal date (nothing when not due). */
+function RenewalBadge({ date }: { date: string | null }) {
+  const status = renewalStatus(date)
+  if (status === 'none') return null
+  const overdue = status === 'overdue'
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
+      style={
+        overdue
+          ? { backgroundColor: '#fee2e2', color: '#b91c1c' }
+          : { backgroundColor: 'var(--color-yellow)', color: 'var(--color-ink)' }
+      }
+    >
+      {overdue ? 'متأخّر' : 'قريباً'}
+    </span>
+  )
+}
+
+/* ---- Edit renewal reminder modal ---- */
+function RenewalModal({
+  customer,
+  saving,
+  saveError,
+  onCancel,
+  onSubmit,
+}: {
+  customer: Customer
+  saving: boolean
+  saveError: string | null
+  onCancel: () => void
+  onSubmit: (date: string | null, note: string | null) => void
+}) {
+  const [date, setDate] = useState(customer.renewal_date?.slice(0, 10) ?? '')
+  const [note, setNote] = useState(customer.renewal_note ?? '')
+
+  function handleSubmit(ev: FormEvent) {
+    ev.preventDefault()
+    onSubmit(date.trim() || null, note.trim() || null)
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8"
+      role="dialog"
+      aria-modal="true"
+      aria-label="تذكير التجديد"
+    >
+      <div
+        onClick={saving ? undefined : onCancel}
+        style={{ backgroundColor: 'color-mix(in srgb, var(--color-black) 45%, transparent)' }}
+        className="absolute inset-0"
+      />
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="relative w-full max-w-sm rounded-[var(--radius-lg)] border border-gray-300 bg-white p-6 shadow-card"
+      >
+        <h3 className="text-lg font-bold text-ink">تذكير التجديد</h3>
+        <p className="mt-1 text-sm text-gray-600">{customer.name?.trim() || customer.email || '—'}</p>
+
+        <div className="mt-5 space-y-4">
+          <div>
+            <label htmlFor="rn-date" className="mb-1.5 block text-sm font-medium text-ink">
+              تاريخ التجديد
+            </label>
+            <input
+              id="rn-date"
+              type="date"
+              dir="ltr"
+              className="field"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="rn-note" className="mb-1.5 block text-sm font-medium text-ink">
+              الملاحظة
+            </label>
+            <input
+              id="rn-note"
+              type="text"
+              className="field"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="تجديد عدسات لاصقة / فحص نظر"
+            />
+          </div>
+
+          {saveError && (
+            <p className="text-sm" style={{ color: 'var(--color-error)' }}>
+              {saveError}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-6 flex justify-start gap-3">
+          <button type="submit" disabled={saving} className="btn btn-primary w-28">
+            {saving ? 'جاري الحفظ…' : 'حفظ'}
+          </button>
+          <button type="button" onClick={onCancel} disabled={saving} className="btn btn-secondary">
+            إلغاء
+          </button>
+        </div>
+      </form>
+    </div>
+  )
 }
 
 /** First letter of the name (else the email), for the avatar circle. */
@@ -56,6 +170,37 @@ export default function AdminCustomers() {
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortDir>('newest')
+
+  // Renewal edit modal + toast.
+  const [editTarget, setEditTarget] = useState<Customer | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ text: string; kind: 'success' | 'error' } | null>(null)
+  const toastTimer = useRef<number | undefined>(undefined)
+  function showToast(text: string, kind: 'success' | 'error') {
+    window.clearTimeout(toastTimer.current)
+    setToast({ text, kind })
+    toastTimer.current = window.setTimeout(() => setToast(null), 2200)
+  }
+  useEffect(() => () => window.clearTimeout(toastTimer.current), [])
+
+  async function handleSaveRenewal(date: string | null, note: string | null) {
+    if (!editTarget) return
+    setSaving(true)
+    setSaveError(null)
+    try {
+      await updateCustomerRenewal(editTarget.id, { renewal_date: date, renewal_note: note })
+      setCustomers((cs) =>
+        cs.map((c) => (c.id === editTarget.id ? { ...c, renewal_date: date, renewal_note: note } : c)),
+      )
+      setEditTarget(null)
+      showToast('تم حفظ التذكير', 'success')
+    } catch {
+      setSaveError('تعذّر حفظ التذكير، حاول مجدداً')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   useEffect(() => {
     let active = true
@@ -163,6 +308,9 @@ export default function AdminCustomers() {
                     <th scope="col" className="whitespace-nowrap px-4 py-3 text-start font-semibold">
                       تاريخ الانضمام
                     </th>
+                    <th scope="col" className="whitespace-nowrap px-4 py-3 text-start font-semibold">
+                      تذكير التجديد
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -194,6 +342,35 @@ export default function AdminCustomers() {
                           {formatDate(c.created_at)}
                         </span>
                       </td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {c.renewal_date ? (
+                            <span className="flex flex-col">
+                              <span className="flex items-center gap-2">
+                                <span className="num text-gray-700" dir="ltr">
+                                  {formatDate(c.renewal_date)}
+                                </span>
+                                <RenewalBadge date={c.renewal_date} />
+                              </span>
+                              {c.renewal_note && (
+                                <span className="text-xs text-gray-500">{c.renewal_note}</span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSaveError(null)
+                              setEditTarget(c)
+                            }}
+                            className="ms-1 text-sm font-medium text-yellow-deep transition-colors hover:text-ink"
+                          >
+                            {c.renewal_date ? 'تعديل' : 'تعيين'}
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -202,6 +379,32 @@ export default function AdminCustomers() {
           </div>
         )}
       </div>
+
+      {/* Renewal edit modal */}
+      {editTarget && (
+        <RenewalModal
+          key={editTarget.id}
+          customer={editTarget}
+          saving={saving}
+          saveError={saveError}
+          onCancel={() => (saving ? undefined : setEditTarget(null))}
+          onSubmit={handleSaveRenewal}
+        />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4" aria-live="polite">
+          <div
+            className="rounded-[var(--radius)] px-4 py-2.5 text-sm font-medium text-white shadow-card"
+            style={{
+              backgroundColor: toast.kind === 'success' ? 'var(--color-ink)' : 'var(--color-error)',
+            }}
+          >
+            {toast.text}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

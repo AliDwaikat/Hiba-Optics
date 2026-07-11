@@ -14,9 +14,15 @@ export interface CustomerProfile {
   phone: string | null
   address: string | null
   city: string | null
+  /** Renewal reminder — READ ONLY for the customer; only the owner sets these. */
+  renewal_date: string | null
+  renewal_note: string | null
 }
 
-/** The editable fields a customer can change. */
+/**
+ * The editable fields a customer can change about themselves. Deliberately
+ * EXCLUDES renewal_date / renewal_note — only Hiba (owner) sets those.
+ */
 export interface ProfileUpdate {
   name: string | null
   phone: string | null
@@ -24,7 +30,7 @@ export interface ProfileUpdate {
   city: string | null
 }
 
-const PROFILE_COLUMNS = 'id, name, email, phone, address, city'
+const PROFILE_COLUMNS = 'id, name, email, phone, address, city, renewal_date, renewal_note'
 
 /** The current user's own profile row, or null if it doesn't exist yet. */
 export async function fetchMyProfile(userId: string): Promise<CustomerProfile | null> {

@@ -579,6 +579,14 @@ export const UI = {
     en: 'Save these details to my account',
   },
 
+  // ---- Renewal reminder (in-account) ----
+  'renewal.title': { ar: 'حان وقت {what}', en: 'Time for {what}' },
+  'renewal.default': { ar: 'تجديد عدساتك / فحص نظرك', en: 'your lens renewal / eye exam' },
+  'renewal.overdue': { ar: 'تأخّر موعد التجديد', en: 'Your renewal is overdue' },
+  'renewal.upcoming': { ar: 'يقترب موعد التجديد', en: 'Your renewal is coming up' },
+  'renewal.on': { ar: 'الموعد: {date}', en: 'Due: {date}' },
+  'renewal.book': { ar: 'احجز الآن', en: 'Book now' },
+
   // ---- Order history ----
   'orders.title': { ar: 'طلباتي', en: 'My orders' },
   'orders.count': { ar: '{n} طلب', en: '{n} orders' },
