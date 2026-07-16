@@ -214,6 +214,21 @@ export const UI = {
   'pd.reserve': { ar: 'احجز الآن', en: 'Reserve Now' },
   'pd.added': { ar: 'تمت الإضافة ✓', en: 'Added ✓' },
   'pd.addedReserve': { ar: 'تمت الإضافة للحجز ✓', en: 'Added to reservation ✓' },
+
+  // ---- Virtual try-on (provider-neutral shell) ----
+  'tryon.button': { ar: 'جرّب النظارة افتراضياً', en: 'Try it on' },
+  'tryon.close': { ar: 'إغلاق', en: 'Close' },
+  'tryon.aria': { ar: 'التجربة الافتراضية', en: 'Virtual try-on' },
+  'tryon.soon.title': { ar: 'التجربة الافتراضية قريباً', en: 'Virtual try-on — coming soon' },
+  'tryon.soon.desc': {
+    ar: 'ستتمكنين قريباً من تجربة النظارة عبر الكاميرا.',
+    en: "You'll soon be able to try the frames on with your camera.",
+  },
+  'tryon.soon.whatsapp': { ar: 'تواصلي معنا', en: 'Contact us' },
+  'tryon.footer': {
+    ar: 'أدوات التجربة (تبديل اللون · التقاط صورة) ستتوفر قريباً.',
+    en: 'Try-on controls (switch color · capture) coming soon.',
+  },
   'pd.trust.authentic': { ar: 'منتج أصلي', en: 'Authentic product' },
   'pd.trust.quality': { ar: 'ضمان الجودة', en: 'Quality guarantee' },
   'pd.trust.fitting': { ar: 'فحص وتركيب في المحل', en: 'In-store exam & fitting' },

@@ -10,6 +10,7 @@ import { CATEGORY_LABEL_KEY, format, type UIKey } from '../lib/i18n'
 import HeartIcon from '../components/HeartIcon'
 import ProductTilePlaceholder from '../components/ProductTilePlaceholder'
 import { Skeleton } from '../components/Skeleton'
+import TryOnModal from '../components/tryon/TryOnModal'
 import {
   fetchProduct,
   fetchReviews,
@@ -19,7 +20,24 @@ import {
 } from '../lib/products'
 import { galleryImages } from '../lib/productImages'
 
+/**
+ * Show the "try it on" button on ALL products for the demo. Flip this to `false`
+ * to gate it behind `product.tryon_enabled` instead (per-product opt-in).
+ */
+const SHOW_TRYON_ALWAYS = true
+
 /* ---------- Icons ---------- */
+/* Camera + glasses hint for the virtual try-on button. */
+function TryOnIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 8a2 2 0 0 1 2-2h2l1.2-1.6A1 1 0 0 1 10 4h4a1 1 0 0 1 .8.4L16 6h2a2 2 0 0 1 2 2v3.5" />
+      <path d="M3 16.5h5.5a2.5 2.5 0 0 0 5 0H21" />
+      <circle cx="6" cy="16.5" r="2.4" />
+      <circle cx="16" cy="16.5" r="2.4" />
+    </svg>
+  )
+}
 function StarIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" className={filled ? 'fill-yellow' : 'fill-gray-300'} aria-hidden="true">
@@ -437,6 +455,7 @@ export default function ProductDetail() {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [tryOnOpen, setTryOnOpen] = useState(false)
 
   useEffect(() => {
     if (!id) {
@@ -449,6 +468,7 @@ export default function ProductDetail() {
     setSelectedVariantId(null)
     setQuantity(1)
     setFeedback(null)
+    setTryOnOpen(false)
 
     fetchProduct(id)
       .then((product) => {
@@ -793,6 +813,19 @@ export default function ProductDetail() {
               </button>
             </div>
 
+            {/* Virtual try-on — shown for all products in the demo; flip
+                SHOW_TRYON_ALWAYS to gate by product.tryon_enabled. */}
+            {(SHOW_TRYON_ALWAYS || product.tryon_enabled) && (
+              <button
+                type="button"
+                onClick={() => setTryOnOpen(true)}
+                className="btn btn-secondary mt-3 w-full"
+              >
+                <TryOnIcon />
+                {t('tryon.button')}
+              </button>
+            )}
+
             {feedback && (
               <p className="mt-3 text-center text-sm font-medium" style={{ color: 'var(--color-success)' }}>
                 {feedback}
@@ -844,6 +877,22 @@ export default function ProductDetail() {
           )}
         </div>
       </div>
+
+      {/* Virtual try-on modal — passes the current product + SELECTED variant so
+          the engine (once connected) knows exactly which frame/colour to render.
+          Reflects the live selected variant because these are render-scope values. */}
+      <TryOnModal
+        open={tryOnOpen}
+        onClose={() => setTryOnOpen(false)}
+        productName={name}
+        variantName={hasVariants ? localize(selectedVariant, 'name') : undefined}
+        engine={{
+          productId: product.id,
+          variantId: hasVariants ? selectedVariant.id : null,
+          frameImage: images[0] ?? null,
+          tryonRef: product.tryon_ref,
+        }}
+      />
     </main>
   )
 }

@@ -72,6 +72,10 @@ export interface Product {
   featured: boolean
   published: boolean
   position: number
+  /** Virtual try-on: engine-specific frame id/code/asset path (null until set). */
+  tryon_ref: string | null
+  /** Whether virtual try-on is enabled for this product (default false). */
+  tryon_enabled: boolean
 }
 
 /** A product plus its resolved brand name (from the brands join, both languages). */
@@ -94,7 +98,7 @@ const PRODUCT_COLUMNS =
   'id, brand_id, name_ar, name_en, model, description_ar, description_en, category, audience, ' +
   'frame_shape, ' +
   'price, sale_price, currency, images, colors, features, variants, requires_consultation, in_stock, ' +
-  'featured, published, position'
+  'featured, published, position, tryon_ref, tryon_enabled'
 
 /** Published brands ordered by position. */
 export async function fetchBrands(): Promise<Brand[]> {
