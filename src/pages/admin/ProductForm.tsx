@@ -18,6 +18,7 @@ import {
   type AdminBrand,
   type ProductWritePayload,
 } from '../../lib/admin/products'
+import { createBrand, DuplicateBrandNameError } from '../../lib/admin/brands'
 
 const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
   { value: 'sunglasses', label: CATEGORY_LABELS_AR.sunglasses },
@@ -470,6 +471,69 @@ export default function ProductForm() {
   const [pickerFor, setPickerFor] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
+  // Inline "add new brand" dialog (create a brand without leaving the product form).
+  const [brandDialogOpen, setBrandDialogOpen] = useState(false)
+  const [newBrand, setNewBrand] = useState({
+    name_ar: '',
+    name_en: '',
+    position: '0',
+    published: true,
+  })
+  const [brandErrors, setBrandErrors] = useState<{ name_ar?: string; name_en?: string }>({})
+  const [brandSaving, setBrandSaving] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<number | undefined>(undefined)
+  const showToast = (text: string) => {
+    window.clearTimeout(toastTimer.current)
+    setToast(text)
+    toastTimer.current = window.setTimeout(() => setToast(null), 2200)
+  }
+  useEffect(() => () => window.clearTimeout(toastTimer.current), [])
+
+  function openBrandDialog() {
+    setNewBrand({ name_ar: '', name_en: '', position: '0', published: true })
+    setBrandErrors({})
+    setBrandDialogOpen(true)
+  }
+
+  async function saveNewBrand() {
+    const name_ar = newBrand.name_ar.trim()
+    const name_en = newBrand.name_en.trim()
+    const nextErrors: { name_ar?: string; name_en?: string } = {}
+    if (!name_ar) nextErrors.name_ar = 'اسم البراند بالعربية مطلوب'
+    if (!name_en) nextErrors.name_en = 'اسم البراند بالإنجليزية مطلوب'
+    if (nextErrors.name_ar || nextErrors.name_en) {
+      setBrandErrors(nextErrors)
+      return
+    }
+    setBrandErrors({})
+    setBrandSaving(true)
+    try {
+      const posNum = Number.parseInt(newBrand.position, 10)
+      const { id: newId } = await createBrand({
+        name_ar,
+        name_en,
+        logo_url: null,
+        position: Number.isFinite(posNum) ? posNum : 0,
+        published: newBrand.published,
+      })
+      // Refresh the dropdown and auto-select the freshly created brand.
+      const refreshed = await fetchAdminBrands()
+      setBrands(refreshed)
+      set('brand_id', newId)
+      setBrandDialogOpen(false)
+      showToast('تمت إضافة البراند')
+    } catch (err) {
+      if (err instanceof DuplicateBrandNameError) {
+        setBrandErrors({ name_en: 'هذا البراند موجود مسبقاً' })
+      } else {
+        setBrandErrors({ name_en: 'تعذّر إضافة البراند، حاول مرة أخرى' })
+      }
+    } finally {
+      setBrandSaving(false)
+    }
+  }
+
   // Load brands (always) + the product (edit mode).
   useEffect(() => {
     let active = true
@@ -777,19 +841,30 @@ export default function ProductForm() {
           <Section title="المعلومات الأساسية">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="البراند" htmlFor="brand_id">
-                <select
-                  id="brand_id"
-                  className="field"
-                  value={form.brand_id}
-                  onChange={(e) => set('brand_id', e.target.value)}
-                >
-                  <option value="">بدون براند</option>
-                  {brands.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name_ar}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2">
+                  <select
+                    id="brand_id"
+                    className="field"
+                    value={form.brand_id}
+                    onChange={(e) => set('brand_id', e.target.value)}
+                  >
+                    <option value="">بدون براند</option>
+                    {brands.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name_ar}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={openBrandDialog}
+                    title="إضافة براند جديد"
+                    aria-label="إضافة براند جديد"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius)] border border-gray-300 text-lg font-bold text-ink transition-colors hover:border-yellow-deep hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep"
+                  >
+                    +
+                  </button>
+                </div>
               </Field>
 
               <Field label="الموديل (اختياري)" htmlFor="model">
@@ -1262,6 +1337,115 @@ export default function ProductForm() {
           </div>
         </div>
       </div>
+
+      {/* Inline "add new brand" dialog */}
+      {brandDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 py-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label="إضافة براند جديد"
+        >
+          <div
+            onClick={brandSaving ? undefined : () => setBrandDialogOpen(false)}
+            style={{ backgroundColor: 'color-mix(in srgb, var(--color-black) 45%, transparent)' }}
+            className="fixed inset-0"
+          />
+          <div className="relative w-full max-w-md rounded-[var(--radius-lg)] border border-gray-300 bg-white p-6 shadow-card">
+            <h3 className="text-lg font-bold text-ink">إضافة براند جديد</h3>
+            <p className="mt-1 text-xs text-gray-600">
+              يمكنك إضافة الشعار لاحقاً من صفحة البراندات.
+            </p>
+
+            <div className="mt-5 space-y-4">
+              <Field
+                label="اسم البراند بالعربية"
+                htmlFor="new-br-name-ar"
+                required
+                error={brandErrors.name_ar}
+              >
+                <input
+                  id="new-br-name-ar"
+                  className="field"
+                  value={newBrand.name_ar}
+                  onChange={(e) => setNewBrand((b) => ({ ...b, name_ar: e.target.value }))}
+                  autoFocus
+                />
+              </Field>
+
+              <Field
+                label="اسم البراند بالإنجليزية"
+                htmlFor="new-br-name-en"
+                required
+                error={brandErrors.name_en}
+              >
+                <input
+                  id="new-br-name-en"
+                  dir="ltr"
+                  className="field"
+                  value={newBrand.name_en}
+                  onChange={(e) => setNewBrand((b) => ({ ...b, name_en: e.target.value }))}
+                />
+              </Field>
+
+              <div className="grid grid-cols-2 items-end gap-4">
+                <Field label="الترتيب" htmlFor="new-br-position">
+                  <input
+                    id="new-br-position"
+                    type="number"
+                    step="1"
+                    dir="ltr"
+                    inputMode="numeric"
+                    className="field"
+                    value={newBrand.position}
+                    onChange={(e) => setNewBrand((b) => ({ ...b, position: e.target.value }))}
+                  />
+                </Field>
+                <label className="flex items-center gap-2 pb-2.5 text-sm font-medium text-ink">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={newBrand.published}
+                    onChange={(e) => setNewBrand((b) => ({ ...b, published: e.target.checked }))}
+                  />
+                  منشور
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setBrandDialogOpen(false)}
+                disabled={brandSaving}
+                className="btn btn-secondary"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={saveNewBrand}
+                disabled={brandSaving}
+                className="btn btn-primary"
+              >
+                {brandSaving ? 'جاري الحفظ…' : 'حفظ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4" aria-live="polite">
+          <div
+            className="rounded-full px-5 py-2.5 text-sm font-medium text-white shadow-card"
+            style={{ backgroundColor: 'var(--color-ink)' }}
+          >
+            {toast}
+          </div>
+        </div>
+      )}
     </form>
   )
 }
