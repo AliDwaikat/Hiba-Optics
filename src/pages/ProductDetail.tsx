@@ -171,14 +171,14 @@ function Lightbox({
       role="dialog"
       aria-modal="true"
       aria-label={t('pd.lightbox.aria')}
-      style={{ backgroundColor: '#000000' }}
+      style={{ backgroundColor: 'var(--color-white)' }}
       onClick={onClose}
     >
       <button
         type="button"
         onClick={onClose}
         aria-label={t('header.close')}
-        className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
+        className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-ink/10 text-ink transition-colors hover:bg-ink/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep"
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
           <path d="M6 6l12 12M18 6 6 18" />
@@ -210,7 +210,7 @@ function Lightbox({
               type="button"
               onClick={() => onIndex(clamp(index - 1))}
               aria-label={t('pd.gallery.prev')}
-              className="absolute start-2 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
+              className="absolute start-2 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-ink/10 text-ink transition-colors hover:bg-ink/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep"
             >
               <ChevIcon dir={startChevron} />
             </button>
@@ -218,11 +218,11 @@ function Lightbox({
               type="button"
               onClick={() => onIndex(clamp(index + 1))}
               aria-label={t('pd.gallery.next')}
-              className="absolute end-2 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow"
+              className="absolute end-2 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-ink/10 text-ink transition-colors hover:bg-ink/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep"
             >
               <ChevIcon dir={endChevron} />
             </button>
-            <span className="num absolute bottom-4 start-1/2 z-10 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-sm text-white" dir="ltr">
+            <span className="num absolute bottom-4 start-1/2 z-10 -translate-x-1/2 rounded-full bg-ink/10 px-3 py-1 text-sm text-ink" dir="ltr">
               {index + 1} / {count}
             </span>
           </>
@@ -317,7 +317,7 @@ function Gallery({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onClick={() => zoomable && setLightbox(true)}
-        className={`group relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] bg-[#000] shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep ${
+        className={`group relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-white shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep ${
           zoomable ? 'cursor-zoom-in' : ''
         }`}
       >
@@ -384,8 +384,8 @@ function Gallery({
               onClick={() => setIndex(i)}
               aria-label={format(t('pd.gallery.thumb'), { n: i + 1 })}
               aria-current={i === index}
-              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[#000] ring-2 transition focus-visible:outline-none focus-visible:ring-yellow-deep ${
-                i === index ? 'ring-yellow' : 'ring-transparent hover:ring-gray-300'
+              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-white ring-2 transition focus-visible:outline-none focus-visible:ring-yellow-deep ${
+                i === index ? 'ring-yellow' : 'ring-gray-100 hover:ring-gray-300'
               }`}
             >
               {broken[img] ? (

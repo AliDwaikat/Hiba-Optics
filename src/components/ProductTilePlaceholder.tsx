@@ -1,14 +1,14 @@
 /**
  * Branded placeholder for no-photo products on the storefront, matching Hiba's
- * DARK product tiles: a near-black background with line-art glasses in a soft
- * light stroke and a yellow "smile" accent. Shared by the product card and the
- * product-detail gallery so both blend with the black image tiles during
- * rollout (no light/dark mismatch). object-fit handled by the parent tile.
+ * clean WHITE product tiles: a white background with line-art glasses in a soft
+ * ink stroke and a yellow "smile" accent. Shared by the product card and the
+ * product-detail gallery so photoless products blend with the white image tiles
+ * (no light/dark mismatch). object-fit handled by the parent tile.
  */
 export default function ProductTilePlaceholder({ className = '' }: { className?: string }) {
   return (
     <div
-      className={`flex h-full w-full items-center justify-center bg-[#000] ${className}`}
+      className={`flex h-full w-full items-center justify-center bg-white ${className}`}
     >
       <svg
         viewBox="0 0 56 40"
@@ -17,8 +17,8 @@ export default function ProductTilePlaceholder({ className = '' }: { className?:
         aria-hidden="true"
       >
         <g
-          stroke="var(--color-cream)"
-          strokeOpacity="0.5"
+          stroke="var(--color-ink)"
+          strokeOpacity="0.45"
           strokeWidth="1.6"
           strokeLinecap="round"
           strokeLinejoin="round"

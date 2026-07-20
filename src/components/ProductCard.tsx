@@ -83,7 +83,7 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
   // image when hidden). Reduced motion keeps it in place, no transition.
   const revealClass =
     'absolute inset-x-0 bottom-0 z-10 px-2 pb-2 pt-6 ' +
-    'bg-gradient-to-t from-black via-[rgba(15,15,15,0.85)] to-transparent ' +
+    'bg-gradient-to-t from-white via-[rgba(255,255,255,0.9)] to-transparent ' +
     'transition-all duration-[250ms] ease-out ' +
     'translate-y-0 opacity-100 ' +
     '[@media(hover:hover)]:translate-y-full [@media(hover:hover)]:opacity-0 ' +
@@ -107,11 +107,11 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
         animate={{ y: animateHover ? -3 : 0 }}
         transition={{ duration: 0.28, ease: 'easeOut' }}
         style={{
-          boxShadow: animateHover ? '0 16px 34px rgba(0,0,0,0.45)' : '0 0 0 rgba(0,0,0,0)',
+          boxShadow: animateHover ? '0 14px 30px rgba(0,0,0,0.14)' : '0 0 0 rgba(0,0,0,0)',
         }}
       >
         <div
-          className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-[#000] ${
+          className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-gray-100 bg-white ${
             product.in_stock ? '' : 'opacity-60'
           }`}
         >
@@ -146,9 +146,9 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
             <ProductTilePlaceholder />
           )}
 
-          {/* Favorite toggle — white outline heart on a subtle dark chip so it
-              stays visible on the dark image tile; top-start corner (dir-aware).
-              Does not open the link. */}
+          {/* Favorite toggle — ink outline heart on a subtle light chip so it
+              stays visible on the white image tile; top-start corner (dir-aware).
+              Favorited fills brand yellow. Does not open the link. */}
           <button
             type="button"
             onClick={(e) => {
@@ -158,20 +158,20 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
             }}
             aria-label={t('header.favorites')}
             aria-pressed={fav}
-            className="absolute start-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(0,0,0,0.35)] text-white ring-1 ring-[rgba(255,255,255,0.25)] backdrop-blur-sm transition-colors hover:bg-[rgba(0,0,0,0.55)]"
+            className="absolute start-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/70 text-ink ring-1 ring-gray-100 backdrop-blur-sm transition-colors hover:bg-white"
           >
             <HeartIcon filled={fav} />
           </button>
 
           {product.requires_consultation && (
-            <span className="absolute end-2 top-2 z-10 rounded-full border border-yellow bg-black/70 px-2 py-1 text-xs font-medium text-yellow">
+            <span className="absolute end-2 top-2 z-10 rounded-full bg-yellow px-2 py-1 text-xs font-medium text-ink">
               {t('card.consultation')}
             </span>
           )}
 
           {!product.in_stock && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <span className="rounded-full bg-black/80 px-4 py-1 text-sm font-medium text-white ring-1 ring-white/25">
+            <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+              <span className="rounded-full bg-ink px-4 py-1 text-sm font-medium text-white">
                 {t('card.outOfStock')}
               </span>
             </div>
