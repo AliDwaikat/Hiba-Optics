@@ -25,7 +25,7 @@ function useIsMobile(): boolean {
   return mobile
 }
 
-/* One frame photo on a dark tile (matches Hiba's black-background photos). */
+/* One frame photo on a clean white tile (matches the /shop product cards). */
 function FrameCard({
   frame,
   transform,
@@ -56,9 +56,9 @@ function FrameCard({
         WebkitBackfaceVisibility: 'hidden',
       }}
     >
-      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[var(--radius)] bg-[#000] shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[var(--radius)] border border-gray-100 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.18)]">
         {broken ? (
-          <span className="font-latin text-sm font-bold tracking-tight text-yellow/70" dir="ltr">
+          <span className="font-latin text-sm font-bold tracking-tight text-yellow-deep" dir="ltr">
             Hiba
           </span>
         ) : (
