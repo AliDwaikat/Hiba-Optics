@@ -177,6 +177,7 @@ export const UI = {
   'shop.avail.label': { ar: 'التوفّر', en: 'Availability' },
   'shop.avail.inStock': { ar: 'المتوفر فقط', en: 'In stock only' },
   'shop.color.label': { ar: 'اللون', en: 'Color' },
+  'shop.face.label': { ar: 'شكل الوجه', en: 'Face shape' },
 
   // ---- Shop: results + chips + states ----
   'shop.results': { ar: '{n} نتيجة', en: '{n} results' },
@@ -209,6 +210,7 @@ export const UI = {
   'pd.outOfStockSize': { ar: 'غير متوفر بهذا المقاس', en: 'Out of stock in this size' },
   'pd.size': { ar: 'المقاس', en: 'Size' },
   'pd.inStock': { ar: 'متوفر', en: 'In stock' },
+  'pd.faceShapes': { ar: 'مناسب لأشكال الوجه:', en: 'Suits face shapes:' },
   'pd.remaining': { ar: 'متبقي {n}', en: '{n} left' },
   'pd.consultation': {
     ar: 'هذا إطار طبي يحتاج فحص نظر وتركيب عدسات — سنتواصل معك لإتمام الفحص واختيار العدسات.',
@@ -666,6 +668,16 @@ export const AUDIENCE_LABEL_KEY = {
   women: 'shop.aud.women',
   unisex: 'shop.aud.unisex',
   kids: 'shop.aud.kids',
+} satisfies Record<string, UIKey>
+
+/** Face-shape value → UI key (localized label for the shop filter + product
+ *  page). Reuses the finder's shape labels so wording stays consistent. */
+export const FACE_SHAPE_LABEL_KEY = {
+  round: 'finder.face.round',
+  oval: 'finder.face.oval',
+  square: 'finder.face.square',
+  heart: 'finder.face.heart',
+  long: 'finder.face.long',
 } satisfies Record<string, UIKey>
 
 /**

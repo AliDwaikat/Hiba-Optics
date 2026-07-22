@@ -6,7 +6,7 @@ import { formatPrice } from '../lib/format'
 import { useCart, type CartColor } from '../lib/cart'
 import { useFavorites } from '../lib/favorites'
 import { useLanguage } from '../lib/language'
-import { CATEGORY_LABEL_KEY, format, type UIKey } from '../lib/i18n'
+import { CATEGORY_LABEL_KEY, FACE_SHAPE_LABEL_KEY, format, type UIKey } from '../lib/i18n'
 import HeartIcon from '../components/HeartIcon'
 import ProductTilePlaceholder from '../components/ProductTilePlaceholder'
 import { Skeleton } from '../components/Skeleton'
@@ -757,6 +757,23 @@ export default function ProductDetail() {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {/* Suitable face shapes — only when Hiba has tagged them. */}
+            {Array.isArray(product.face_shapes) && product.face_shapes.length > 0 && (
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <span className="text-sm text-gray-600">{t('pd.faceShapes')}</span>
+                <span className="flex flex-wrap gap-1.5">
+                  {product.face_shapes.map((f) => (
+                    <span
+                      key={f}
+                      className="rounded-full border border-gray-300 bg-gray-100 px-2.5 py-0.5 text-xs text-ink"
+                    >
+                      {t(FACE_SHAPE_LABEL_KEY[f])}
+                    </span>
+                  ))}
+                </span>
+              </div>
             )}
 
             {/* Color / variant switcher */}

@@ -4,13 +4,14 @@ import ProductCard from '../components/ProductCard'
 import { SkeletonProductGrid } from '../components/Skeleton'
 import { formatPrice } from '../lib/format'
 import { useLanguage } from '../lib/language'
-import { AUDIENCE_LABEL_KEY, format, type UIKey } from '../lib/i18n'
+import { AUDIENCE_LABEL_KEY, FACE_SHAPE_LABEL_KEY, format, type UIKey } from '../lib/i18n'
 import {
   fetchBrands,
   fetchProducts,
   type Audience,
   type Brand,
   type Category,
+  type FaceShape,
   type Product,
 } from '../lib/products'
 
@@ -35,6 +36,9 @@ const AUDIENCE_TABS: { value: AudienceTab; labelKey: UIKey }[] = [
   { value: 'kids', labelKey: 'shop.aud.kids' },
 ]
 const AUDIENCE_VALUES = new Set<string>(['men', 'women', 'unisex', 'kids'])
+
+// Face-shape filter options (display order matches the finder + brief).
+const FACE_SHAPE_TABS: FaceShape[] = ['round', 'oval', 'square', 'heart', 'long']
 
 const SORT_OPTIONS: { value: SortKey; labelKey: UIKey }[] = [
   { value: 'newest', labelKey: 'shop.sort.newest' },
@@ -125,6 +129,7 @@ export default function Shop() {
   const [search, setSearch] = useState('')
   const [inStockOnly, setInStockOnly] = useState(false)
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set())
+  const [selectedFaces, setSelectedFaces] = useState<Set<FaceShape>>(new Set())
   const [priceRange, setPriceRange] = useState<{ min: number; max: number } | null>(null)
   const [sort, setSort] = useState<SortKey>('newest')
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -239,11 +244,21 @@ export default function Shop() {
     })
   }
 
+  function toggleFace(face: FaceShape) {
+    setSelectedFaces((prev) => {
+      const n = new Set(prev)
+      if (n.has(face)) n.delete(face)
+      else n.add(face)
+      return n
+    })
+  }
+
   function clearAll() {
     setSearchInput('')
     setSearch('')
     setInStockOnly(false)
     setSelectedColors(new Set())
+    setSelectedFaces(new Set())
     setPriceRange({ min: bounds.min, max: bounds.max })
     updateParams((p) => {
       p.delete('category')
@@ -270,6 +285,12 @@ export default function Shop() {
         const has = (p.colors ?? []).some((c) => selectedColors.has(colorKey(c.name_ar, c.hex)))
         if (!has) return false
       }
+      if (selectedFaces.size > 0) {
+        // OR within the face-shape filter: keep products tagged for ANY selected
+        // face. Products with no face_shapes simply don't match (expected).
+        const faces = Array.isArray(p.face_shapes) ? p.face_shapes : []
+        if (!faces.some((f) => selectedFaces.has(f))) return false
+      }
       return true
     })
 
@@ -280,7 +301,7 @@ export default function Shop() {
       sorted.sort((a, b) => Number(b.featured) - Number(a.featured) || a.position - b.position)
     // 'newest' keeps the fetched order (position ascending).
     return sorted
-  }, [products, search, category, brandId, audience, range, inStockOnly, selectedColors, sort])
+  }, [products, search, category, brandId, audience, range, inStockOnly, selectedColors, selectedFaces, sort])
 
   // Advanced = everything that now lives inside the filter panel: brand,
   // audience, price, availability, colors. (Category stays in the always-visible
@@ -290,7 +311,8 @@ export default function Shop() {
     (audience !== 'all' ? 1 : 0) +
     (priceActive ? 1 : 0) +
     (inStockOnly ? 1 : 0) +
-    selectedColors.size
+    selectedColors.size +
+    selectedFaces.size
 
   const anyFilterActive =
     advancedActiveCount > 0 || category !== 'all' || Boolean(brandId) || search.trim() !== ''
@@ -437,6 +459,24 @@ export default function Shop() {
             </div>
           </div>
         )}
+
+        {/* Face shape — multi-select (OR within), matched against face_shapes[] */}
+        <div>
+          <p className="mb-2 text-sm font-semibold text-ink">{t('shop.face.label')}</p>
+          <div className="flex flex-wrap gap-2">
+            {FACE_SHAPE_TABS.map((face) => (
+              <button
+                key={face}
+                type="button"
+                onClick={() => toggleFace(face)}
+                aria-pressed={selectedFaces.has(face)}
+                className={pillClass(selectedFaces.has(face))}
+              >
+                {t(FACE_SHAPE_LABEL_KEY[face])}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
@@ -601,6 +641,9 @@ export default function Shop() {
               <Chip key={key} label={c ? localize(c, 'name') : ''} onRemove={() => toggleColor(key)} />
             )
           })}
+          {Array.from(selectedFaces).map((face) => (
+            <Chip key={face} label={t(FACE_SHAPE_LABEL_KEY[face])} onRemove={() => toggleFace(face)} />
+          ))}
           {anyFilterActive && (
             <button
               type="button"
