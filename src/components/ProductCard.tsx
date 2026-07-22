@@ -44,10 +44,15 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
   const showImage = Boolean(imageUrl) && !imageBroken
   const hasSecond = showImage && Boolean(secondUrl) && !secondBroken
 
+  // Card pricing reflects the REPRESENTATIVE color (default/first in-stock
+  // variant): its own price/sale each fall back to the product-level values.
   const price = Number(product.price)
   const salePrice = product.sale_price != null ? Number(product.sale_price) : null
-  const onSale = salePrice != null && salePrice < price
-  const effectivePrice = onSale ? (salePrice as number) : price
+  const cardRegular = repVariant?.price != null ? Number(repVariant.price) : price
+  const cardSaleRaw = repVariant?.sale_price != null ? Number(repVariant.sale_price) : salePrice
+  const onSale =
+    cardSaleRaw != null && Number.isFinite(cardSaleRaw) && cardSaleRaw > 0 && cardSaleRaw < cardRegular
+  const effectivePrice = onSale ? (cardSaleRaw as number) : cardRegular
 
   // Motion only when hovered AND the user hasn't asked to reduce motion.
   const animateHover = hovered && !reduce
@@ -221,16 +226,16 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
           {onSale ? (
             <div className="mt-2 flex flex-wrap items-baseline justify-start gap-x-2 gap-y-0.5">
               <span className="num font-semibold text-ink">
-                {formatPrice(salePrice as number, product.currency)}
+                {formatPrice(cardSaleRaw as number, product.currency)}
               </span>
               <span className="num text-sm text-gray-600 line-through">
-                {formatPrice(price, product.currency)}
+                {formatPrice(cardRegular, product.currency)}
               </span>
             </div>
           ) : (
             <div className="mt-2 flex items-baseline">
               <span className="num font-semibold text-ink">
-                {formatPrice(price, product.currency)}
+                {formatPrice(cardRegular, product.currency)}
               </span>
             </div>
           )}

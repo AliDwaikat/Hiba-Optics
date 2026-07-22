@@ -562,7 +562,6 @@ export default function ProductDetail() {
     localize({ name_ar: product.brand_name_ar, name_en: product.brand_name_en }, 'name')
   const price = Number(product.price)
   const salePrice = product.sale_price != null ? Number(product.sale_price) : null
-  const onSale = salePrice != null && salePrice < price
 
   // Variants are the source of truth. Degrade gracefully to one synthetic
   // default when the array is empty (shouldn't happen post-migration).
@@ -609,19 +608,17 @@ export default function ProductDetail() {
   const currentInStock = hasSizes ? Number(activeSizeObj?.stock ?? 0) > 0 : selectedVariant.in_stock
   const canAdd = currentInStock
 
-  // Effective price for the SELECTED color: its override, else the product base.
-  // A product-level sale is applied as the same percentage to the color price
-  // (for base-price colors this reproduces the exact sale_price).
-  const salePct = onSale ? (price - (salePrice as number)) / price : 0
+  // Effective pricing for the SELECTED color. The color's own price/sale each
+  // fall back to the product-level value when unset. A sale only shows when it's
+  // a real discount (below the color's effective price), so a sale_price >= price
+  // never renders a bogus "discount".
   const colorRegular = selectedVariant.price != null ? Number(selectedVariant.price) : price
-  const colorEffective = onSale
-    ? selectedVariant.price != null
-      ? Math.round(colorRegular * (1 - salePct))
-      : (salePrice as number)
-    : colorRegular
-  const colorOnSale = onSale && colorEffective < colorRegular
+  const colorSaleRaw = selectedVariant.sale_price != null ? Number(selectedVariant.sale_price) : salePrice
+  const colorOnSale =
+    colorSaleRaw != null && Number.isFinite(colorSaleRaw) && colorSaleRaw > 0 && colorSaleRaw < colorRegular
+  const colorEffective = colorOnSale ? colorSaleRaw : colorRegular
   const colorSavePercent = colorOnSale
-    ? Math.round(((colorRegular - colorEffective) / colorRegular) * 100)
+    ? Math.round(((colorRegular - colorSaleRaw) / colorRegular) * 100)
     : 0
   // Remaining count for the selected size (only meaningful when sizes exist).
   const remaining = hasSizes ? Number(activeSizeObj?.stock ?? 0) : null

@@ -104,6 +104,7 @@ interface VariantDraft {
   hex: string
   in_stock: boolean
   price: string
+  sale_price: string
   show_stock: boolean
   polarized: boolean
   sizes: SizeDraft[]
@@ -148,6 +149,7 @@ function toVariantDrafts(
         hex: v.hex ?? '#000000',
         in_stock: v.in_stock !== false,
         price: v.price != null ? String(v.price) : '',
+        sale_price: v.sale_price != null ? String(v.sale_price) : '',
         show_stock: Boolean(v.show_stock),
         polarized: Boolean(v.polarized),
         sizes: Array.isArray(v.sizes)
@@ -167,6 +169,7 @@ function toVariantDrafts(
       hex: c.hex ?? '#000000',
       in_stock: true,
       price: '',
+      sale_price: '',
       show_stock: false,
       polarized: false,
       sizes: [],
@@ -594,7 +597,7 @@ export default function ProductForm() {
   const [errors, setErrors] = useState<Errors>({})
   // Per-variant inline validation: keyed by variant index → { price?, sizes: {sizeIndex → msg} }.
   const [variantErrors, setVariantErrors] = useState<
-    Record<number, { price?: string; sizes?: Record<number, string> }>
+    Record<number, { price?: string; sale_price?: string; sizes?: Record<number, string> }>
   >({})
   const [loading, setLoading] = useState(isEdit)
   const [notFound, setNotFound] = useState(false)
@@ -779,6 +782,7 @@ export default function ProductForm() {
         hex: '#000000',
         in_stock: true,
         price: '',
+        sale_price: '',
         show_stock: false,
         polarized: false,
         sizes: [],
@@ -981,17 +985,28 @@ export default function ProductForm() {
     return e
   }
 
-  /** Validate per-color overrides: a filled price must be a positive number, and
-   *  every size's stock must be a non-negative integer. Returns an index-keyed
-   *  error map (empty ⇒ all valid). */
-  function validateVariants(): Record<number, { price?: string; sizes?: Record<number, string> }> {
-    const out: Record<number, { price?: string; sizes?: Record<number, string> }> = {}
+  /** Validate per-color overrides: a filled price must be positive; a filled sale
+   *  price must be positive AND below the color's effective price (its own price,
+   *  else the product base); every size's stock a non-negative integer. Returns an
+   *  index-keyed error map (empty ⇒ all valid). */
+  function validateVariants(): Record<number, { price?: string; sale_price?: string; sizes?: Record<number, string> }> {
+    const out: Record<number, { price?: string; sale_price?: string; sizes?: Record<number, string> }> = {}
+    const basePrice = Number(form.price)
     form.variants.forEach((v, vi) => {
-      const entry: { price?: string; sizes?: Record<number, string> } = {}
-      if (v.price.trim() !== '') {
-        const p = Number(v.price)
-        if (!Number.isFinite(p) || p <= 0) {
-          entry.price = 'يجب أن يكون السعر رقماً موجباً'
+      const entry: { price?: string; sale_price?: string; sizes?: Record<number, string> } = {}
+      const priceFilled = v.price.trim() !== ''
+      const p = Number(v.price)
+      if (priceFilled && (!Number.isFinite(p) || p <= 0)) {
+        entry.price = 'يجب أن يكون السعر رقماً موجباً'
+      }
+      if (v.sale_price.trim() !== '') {
+        // The color's effective price the sale must beat: its own price, else base.
+        const effective = priceFilled && Number.isFinite(p) ? p : basePrice
+        const sp = Number(v.sale_price)
+        if (!Number.isFinite(sp) || sp <= 0) {
+          entry.sale_price = 'يجب أن يكون سعر التخفيض رقماً موجباً'
+        } else if (Number.isFinite(effective) && sp >= effective) {
+          entry.sale_price = 'يجب أن يكون سعر التخفيض أقل من سعر هذا اللون'
         }
       }
       const sizeErrs: Record<number, string> = {}
@@ -1003,7 +1018,7 @@ export default function ProductForm() {
         }
       })
       if (Object.keys(sizeErrs).length > 0) entry.sizes = sizeErrs
-      if (entry.price || entry.sizes) out[vi] = entry
+      if (entry.price || entry.sale_price || entry.sizes) out[vi] = entry
     })
     return out
   }
@@ -1033,6 +1048,7 @@ export default function ProductForm() {
       images: v.images, // each colour's own photos (managed per variant)
       in_stock: v.in_stock,
       price: v.price.trim() === '' ? null : Number(v.price),
+      sale_price: v.sale_price.trim() === '' ? null : Number(v.sale_price),
       show_stock: v.show_stock,
       polarized: v.polarized,
       sizes: v.sizes
@@ -1596,8 +1612,8 @@ export default function ProductForm() {
                       </div>
                     </div>
 
-                    {/* Optional per-color price override */}
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    {/* Optional per-color price + sale price overrides */}
+                    <div className="grid gap-4 sm:grid-cols-3">
                       <div>
                         <label className="mb-1 block text-xs text-gray-600">
                           سعر خاص بهذا اللون (اختياري)
@@ -1618,6 +1634,29 @@ export default function ProductForm() {
                         {vErr?.price && (
                           <p className="mt-1 text-xs" style={{ color: 'var(--color-error)' }}>
                             {vErr.price}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-gray-600">
+                          سعر التخفيض لهذا اللون (اختياري)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          dir="ltr"
+                          inputMode="decimal"
+                          className={numField}
+                          value={v.sale_price}
+                          onChange={(e) => updateVariant(i, { sale_price: e.target.value })}
+                        />
+                        <p className="mt-1 text-xs text-gray-600">
+                          اتركيه فارغاً إذا لا يوجد تخفيض على هذا اللون.
+                        </p>
+                        {vErr?.sale_price && (
+                          <p className="mt-1 text-xs" style={{ color: 'var(--color-error)' }}>
+                            {vErr.sale_price}
                           </p>
                         )}
                       </div>

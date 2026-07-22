@@ -59,6 +59,9 @@ export interface ProductVariant {
   in_stock: boolean
   /** Optional per-color price override; null/absent ⇒ use the product base price. */
   price?: number | null
+  /** Optional per-color sale price; null/absent ⇒ use the product's sale_price.
+   *  Only shown as a discount when it is below the colour's effective price. */
+  sale_price?: number | null
   /** Show exact remaining counts to customers (limited editions); absent ⇒ false. */
   show_stock?: boolean
   /** Optional per-size stock rows; absent/empty ⇒ availability via in_stock. */
