@@ -107,8 +107,11 @@ interface VariantDraft {
   show_stock: boolean
   polarized: boolean
   sizes: SizeDraft[]
+  /** This colour's own photos (products.variants[].images). */
   images: string[]
   customSize: string
+  /** Transient add-by-URL input buffer for this colour; never persisted. */
+  newImageUrl: string
 }
 
 /** Common lens sizes offered as quick-add chips. */
@@ -123,27 +126,38 @@ function newVariantId(): string {
 /** Build editable variant drafts from a loaded product, backward-compatibly:
  *  prefer the extended `variants` jsonb; fall back to the legacy `colors` list
  *  (name/hex only) for products saved before variants were managed here. Missing
- *  price ⇒ '', missing show_stock ⇒ false, missing sizes ⇒ []. */
+ *  price ⇒ '', missing show_stock ⇒ false, missing sizes ⇒ [].
+ *
+ *  Image migration: images are now managed PER COLOUR. A variant with no images
+ *  of its own falls back to the product-level `images[]` so nothing looks empty
+ *  during rollout — the owner can then replace each colour's photos individually.
+ *  The product-level `images[]` is kept untouched as a backup on save. */
 function toVariantDrafts(
   variants: ProductVariant[] | null | undefined,
   colors: ProductColor[] | null | undefined,
+  productImages: string[] | null | undefined,
 ): VariantDraft[] {
+  const fallbackImages = Array.isArray(productImages) ? productImages : []
   if (Array.isArray(variants) && variants.length > 0) {
-    return variants.map((v) => ({
-      id: v.id || newVariantId(),
-      name_ar: v.name_ar ?? '',
-      name_en: v.name_en ?? '',
-      hex: v.hex ?? '#000000',
-      in_stock: v.in_stock !== false,
-      price: v.price != null ? String(v.price) : '',
-      show_stock: Boolean(v.show_stock),
-      polarized: Boolean(v.polarized),
-      sizes: Array.isArray(v.sizes)
-        ? v.sizes.map((s) => ({ size: String(s.size ?? ''), stock: String(s.stock ?? 0) }))
-        : [],
-      images: Array.isArray(v.images) ? v.images : [],
-      customSize: '',
-    }))
+    return variants.map((v) => {
+      const own = Array.isArray(v.images) ? v.images.filter((x) => typeof x === 'string' && x) : []
+      return {
+        id: v.id || newVariantId(),
+        name_ar: v.name_ar ?? '',
+        name_en: v.name_en ?? '',
+        hex: v.hex ?? '#000000',
+        in_stock: v.in_stock !== false,
+        price: v.price != null ? String(v.price) : '',
+        show_stock: Boolean(v.show_stock),
+        polarized: Boolean(v.polarized),
+        sizes: Array.isArray(v.sizes)
+          ? v.sizes.map((s) => ({ size: String(s.size ?? ''), stock: String(s.stock ?? 0) }))
+          : [],
+        images: own.length > 0 ? own : [...fallbackImages],
+        customSize: '',
+        newImageUrl: '',
+      }
+    })
   }
   if (Array.isArray(colors) && colors.length > 0) {
     return colors.map((c) => ({
@@ -156,8 +170,9 @@ function toVariantDrafts(
       show_stock: false,
       polarized: false,
       sizes: [],
-      images: [],
+      images: [...fallbackImages],
       customSize: '',
+      newImageUrl: '',
     }))
   }
   return []
@@ -324,12 +339,14 @@ function ImageThumb({ src, className = 'h-11 w-11' }: { src: string; className?:
   )
 }
 
-/** In-progress / failed uploads shown alongside the gallery. */
+/** In-progress / failed uploads shown alongside a colour's gallery. */
 interface UploadItem {
   key: string
   name: string
   status: 'uploading' | 'error'
   message?: string
+  /** Which variant (colour) this upload belongs to. */
+  variantIndex: number
 }
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // ~5MB
@@ -584,12 +601,11 @@ export default function ProductForm() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [newImage, setNewImage] = useState('')
+  // In-progress / failed image uploads (tagged with their variant index).
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const uploadCounter = useRef(0)
   // Which color row's "pick from image" popover is open (null = none).
   const [pickerFor, setPickerFor] = useState<number | null>(null)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // Inline "add new brand" dialog (create a brand without leaving the product form).
   const [brandDialogOpen, setBrandDialogOpen] = useState(false)
@@ -693,7 +709,7 @@ export default function ProductForm() {
           featured: Boolean(p.featured),
           published: Boolean(p.published),
           position: String(p.position ?? 0),
-          variants: toVariantDrafts(p.variants, p.colors),
+          variants: toVariantDrafts(p.variants, p.colors, p.images),
           features: Array.isArray(p.features) ? p.features : [],
           images: Array.isArray(p.images) ? p.images : [],
         })
@@ -768,6 +784,7 @@ export default function ProductForm() {
         sizes: [],
         images: [],
         customSize: '',
+        newImageUrl: '',
       },
     ])
   const updateVariant = (i: number, patch: Partial<VariantDraft>) =>
@@ -813,48 +830,70 @@ export default function ProductForm() {
   const removeFeature = (i: number) =>
     set('features', form.features.filter((_, idx) => idx !== i))
 
-  /* Images */
-  function addImage() {
-    const v = newImage.trim()
-    if (!v) return
-    set('images', [...form.images, v])
-    setNewImage('')
+  /* Images — now scoped PER COLOUR (variant). Each helper targets a variant by
+     its index so paste/upload/URL always land in the colour being edited. */
+  function appendVariantImage(vi: number, url: string) {
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.map((v, idx) =>
+        idx === vi ? { ...v, images: [...v.images, url] } : v,
+      ),
+    }))
   }
-  function removeImage(i: number) {
-    setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }))
+  function addVariantImage(vi: number) {
+    const url = (form.variants[vi]?.newImageUrl ?? '').trim()
+    if (!url) return
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.map((v, idx) =>
+        idx === vi ? { ...v, images: [...v.images, url], newImageUrl: '' } : v,
+      ),
+    }))
   }
-  function moveImage(i: number, dir: -1 | 1) {
-    setForm((f) => {
-      const j = i + dir
-      if (j < 0 || j >= f.images.length) return f
-      const next = [...f.images]
-      ;[next[i], next[j]] = [next[j], next[i]]
-      return { ...f, images: next }
-    })
+  function removeVariantImage(vi: number, i: number) {
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.map((v, idx) =>
+        idx === vi ? { ...v, images: v.images.filter((_, j) => j !== i) } : v,
+      ),
+    }))
+  }
+  function moveVariantImage(vi: number, i: number, dir: -1 | 1) {
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.map((v, idx) => {
+        if (idx !== vi) return v
+        const j = i + dir
+        if (j < 0 || j >= v.images.length) return v
+        const next = [...v.images]
+        ;[next[i], next[j]] = [next[j], next[i]]
+        return { ...v, images: next }
+      }),
+    }))
   }
 
   const removeUpload = (key: string) => setUploads((u) => u.filter((x) => x.key !== key))
 
-  /* Upload files to the public 'product-images' Storage bucket, then append the
-     resulting public URLs to images[]. Each file is independent — one failure
-     does not lose the others. */
-  async function uploadOne(file: File) {
+  /* Upload one file to the public 'product-images' bucket, then append its URL to
+     the TARGET colour's images[]. Each file is independent — one failure does not
+     lose the others. */
+  async function uploadOne(file: File, vi: number) {
     if (!file.type.startsWith('image/')) {
       const key = `u${uploadCounter.current++}`
-      setUploads((u) => [...u, { key, name: file.name, status: 'error', message: 'الملف ليس صورة' }])
+      setUploads((u) => [...u, { key, name: file.name, status: 'error', message: 'الملف ليس صورة', variantIndex: vi }])
       return
     }
     if (file.size > MAX_IMAGE_BYTES) {
       const key = `u${uploadCounter.current++}`
       setUploads((u) => [
         ...u,
-        { key, name: file.name, status: 'error', message: 'حجم الصورة يتجاوز 5 ميغابايت' },
+        { key, name: file.name, status: 'error', message: 'حجم الصورة يتجاوز 5 ميغابايت', variantIndex: vi },
       ])
       return
     }
 
     const key = `u${uploadCounter.current++}`
-    setUploads((u) => [...u, { key, name: file.name, status: 'uploading' }])
+    setUploads((u) => [...u, { key, name: file.name, status: 'uploading', variantIndex: vi }])
 
     const path = `${Date.now()}-${sanitizeFilename(file.name)}`
     try {
@@ -863,8 +902,7 @@ export default function ProductForm() {
         .upload(path, file, { cacheControl: '3600', upsert: false })
       if (error) throw error
       const { data } = supabase.storage.from('product-images').getPublicUrl(path)
-      const url = data.publicUrl
-      setForm((f) => ({ ...f, images: [...f.images, url] }))
+      appendVariantImage(vi, data.publicUrl)
       setUploads((u) => u.filter((x) => x.key !== key))
     } catch {
       setUploads((u) =>
@@ -873,21 +911,20 @@ export default function ProductForm() {
     }
   }
 
-  async function handleFiles(fileList: FileList | null) {
+  async function handleVariantFiles(vi: number, fileList: FileList | null) {
     const files = Array.from(fileList ?? [])
-    if (fileInputRef.current) fileInputRef.current.value = '' // allow re-selecting the same file
-    await Promise.all(files.map((f) => uploadOne(f)))
+    await Promise.all(files.map((f) => uploadOne(f, vi)))
   }
 
-  /* Paste-to-upload: an image blob (screenshot / copied image) runs through the
-     SAME validate + upload path as the file input; a pasted http(s) URL is
-     appended like "add by link". Images append to the same images[] as the file
-     picker, so the pasted image lands in the current product's list. */
-  function handlePaste(e: React.ClipboardEvent) {
+  /* Paste-to-upload, scoped to the colour whose uploader is focused: an image
+     blob runs through the SAME validate + upload path as the file input; a pasted
+     http(s) URL is appended like "add by link". Because each colour's uploader
+     has its own paste handler, the image lands in the CURRENTLY edited colour. */
+  function handleVariantPaste(vi: number, e: React.ClipboardEvent) {
     const dt = e.clipboardData
     if (!dt) return
 
-    // 1) Image blob → give it a sensible name and upload it.
+    // 1) Image blob → give it a sensible name and upload it to this colour.
     const imageItem = Array.from(dt.items || []).find(
       (it) => it.kind === 'file' && it.type.startsWith('image/'),
     )
@@ -899,13 +936,13 @@ export default function ProductForm() {
         const named = new File([blob], `pasted-${Date.now()}.${ext}`, {
           type: blob.type || 'image/png',
         })
-        void uploadOne(named)
+        void uploadOne(named, vi)
         return
       }
     }
 
     // 2) Plain-text URL — but never hijack a paste into a real text field
-    //    (e.g. the add-by-URL box or the name inputs).
+    //    (e.g. this colour's add-by-URL box).
     const target = e.target as HTMLElement | null
     const editable =
       !!target &&
@@ -917,7 +954,7 @@ export default function ProductForm() {
     const text = dt.getData('text')?.trim()
     if (text && /^https?:\/\/\S+$/i.test(text)) {
       e.preventDefault()
-      setForm((f) => ({ ...f, images: [...f.images, text] }))
+      appendVariantImage(vi, text)
     }
   }
 
@@ -993,7 +1030,7 @@ export default function ProductForm() {
       name_ar: v.name_ar.trim(),
       name_en: v.name_en.trim(),
       hex: v.hex,
-      images: v.images, // preserved untouched — per-variant image editing is a later pass
+      images: v.images, // each colour's own photos (managed per variant)
       in_stock: v.in_stock,
       price: v.price.trim() === '' ? null : Number(v.price),
       show_stock: v.show_stock,
@@ -1109,7 +1146,7 @@ export default function ProductForm() {
   })()
 
   return (
-    <form onSubmit={handleSubmit} onPaste={handlePaste} noValidate className="pb-24">
+    <form onSubmit={handleSubmit} noValidate className="pb-24">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-2xl font-extrabold text-ink">{title}</h2>
       </div>
@@ -1389,8 +1426,8 @@ export default function ProductForm() {
                           onChange={(e) => updateVariant(i, { hex: e.target.value })}
                         />
                       </div>
-                      {/* Eyedropper — only when there's an uploaded photo to sample from. */}
-                      {form.images.length > 0 && (
+                      {/* Eyedropper — only when THIS colour has a photo to sample from. */}
+                      {v.images.length > 0 && (
                         <button
                           type="button"
                           onClick={() => setPickerFor(i)}
@@ -1407,6 +1444,156 @@ export default function ProductForm() {
                       >
                         حذف اللون
                       </button>
+                    </div>
+
+                    {/* Images for THIS colour — upload / URL / paste, scoped to
+                        this variant's images[]. onPaste is attached here so a
+                        Ctrl+V lands in this colour, not a shared list. */}
+                    <div onPaste={(e) => handleVariantPaste(i, e)}>
+                      <span className="mb-1.5 block text-xs text-gray-600">صور هذا اللون</span>
+                      <p className="mb-2 text-xs text-gray-600">
+                        الصورة الأولى هي الصورة الرئيسية لهذا اللون. تظهر في المتجر عند اختيار هذا اللون.
+                      </p>
+
+                      {v.images.length > 0 && (
+                        <div className="-mx-1 mb-2 flex gap-3 overflow-x-auto px-1 pb-2">
+                          {v.images.map((src, j) => (
+                            <div key={`${src}-${j}`} className="w-24 shrink-0">
+                              <div className="relative">
+                                <ImageThumb src={src} className="h-24 w-24" />
+                                {j === 0 && (
+                                  <span className="absolute inset-x-0 bottom-0 rounded-b-[var(--radius-sm)] bg-yellow px-1 py-0.5 text-center text-[10px] font-bold text-ink">
+                                    الصورة الرئيسية
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => removeVariantImage(i, j)}
+                                  aria-label="إزالة الصورة"
+                                  className="absolute end-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              <div className="mt-1 flex items-center justify-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => moveVariantImage(i, j, -1)}
+                                  disabled={j === 0}
+                                  aria-label="نقل نحو الرئيسية"
+                                  className="rounded px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
+                                >
+                                  ›
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveVariantImage(i, j, 1)}
+                                  disabled={j === v.images.length - 1}
+                                  aria-label="نقل بعيداً عن الرئيسية"
+                                  className="rounded px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
+                                >
+                                  ‹
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Dropzone — focusable so the user can click it then paste */}
+                      <label
+                        tabIndex={0}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault()
+                          void handleVariantFiles(i, e.dataTransfer.files)
+                        }}
+                        className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[var(--radius)] border-2 border-dashed border-gray-300 bg-gray-100 px-4 py-5 text-center transition-colors hover:border-yellow-deep focus-visible:border-yellow-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-deep"
+                      >
+                        <span className="text-sm font-medium text-ink">ارفع صورة لهذا اللون</span>
+                        <span className="text-xs text-gray-600">
+                          اسحب وأفلت أو انقر — JPG / PNG / WebP، حتى ٥ ميغابايت، أو الصق (Ctrl+V)
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            const input = e.currentTarget
+                            void handleVariantFiles(i, input.files)
+                            input.value = '' // allow re-selecting the same file
+                          }}
+                        />
+                      </label>
+
+                      {/* Upload progress / errors for this colour */}
+                      {uploads.some((u) => u.variantIndex === i) && (
+                        <ul className="mt-2 space-y-2">
+                          {uploads
+                            .filter((u) => u.variantIndex === i)
+                            .map((u) => (
+                              <li
+                                key={u.key}
+                                className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-gray-300 px-3 py-2 text-sm"
+                              >
+                                {u.status === 'uploading' ? (
+                                  <span
+                                    className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-gray-300 border-t-yellow"
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <span className="shrink-0" style={{ color: 'var(--color-error)' }}>
+                                    ⚠
+                                  </span>
+                                )}
+                                <span className="min-w-0 flex-1 truncate text-gray-600" dir="ltr">
+                                  {u.name}
+                                </span>
+                                <span
+                                  className="shrink-0 text-xs"
+                                  style={{ color: u.status === 'error' ? 'var(--color-error)' : 'var(--color-gray-600)' }}
+                                >
+                                  {u.status === 'uploading' ? 'جارٍ الرفع…' : u.message}
+                                </span>
+                                {u.status === 'error' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeUpload(u.key)}
+                                    aria-label="إزالة"
+                                    className="shrink-0 text-gray-600 hover:text-ink"
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+
+                      {/* Add by URL / path (for this colour) */}
+                      <div className="mt-2 flex gap-2">
+                        <input
+                          dir="ltr"
+                          className={numField}
+                          value={v.newImageUrl}
+                          onChange={(e) => updateVariant(i, { newImageUrl: e.target.value })}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              addVariantImage(i)
+                            }
+                          }}
+                          placeholder="https://… أو /products/example.jpg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => addVariantImage(i)}
+                          className="btn btn-secondary shrink-0"
+                        >
+                          إضافة برابط
+                        </button>
+                      </div>
                     </div>
 
                     {/* Optional per-color price override */}
@@ -1575,10 +1762,10 @@ export default function ProductForm() {
               + إضافة لون
             </button>
 
-            {/* Pick-color-from-image popover for the active color row */}
-            {pickerFor !== null && form.images.length > 0 && (
+            {/* Pick-color-from-image popover — samples the active colour's images */}
+            {pickerFor !== null && (form.variants[pickerFor]?.images.length ?? 0) > 0 && (
               <ImageColorPicker
-                images={form.images}
+                images={form.variants[pickerFor].images}
                 onPick={(hex) => updateVariant(pickerFor, { hex })}
                 onClose={() => setPickerFor(null)}
               />
@@ -1625,149 +1812,9 @@ export default function ProductForm() {
             </button>
           </Section>
 
-          {/* Images */}
-          <Section title="الصور">
-            <p className="text-xs text-gray-600">
-              الصورة الأولى هي الصورة الرئيسية. يمكنك رفع صور أو إضافتها برابط. صور متعددة مسموحة.
-            </p>
-
-            {/* Current images — horizontal thumbnails */}
-            {form.images.length > 0 && (
-              <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
-                {form.images.map((src, i) => (
-                  <div key={`${src}-${i}`} className="w-24 shrink-0">
-                    <div className="relative">
-                      <ImageThumb src={src} className="h-24 w-24" />
-                      {i === 0 && (
-                        <span className="absolute inset-x-0 bottom-0 rounded-b-[var(--radius-sm)] bg-yellow px-1 py-0.5 text-center text-[10px] font-bold text-ink">
-                          الصورة الرئيسية
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeImage(i)}
-                        aria-label="إزالة الصورة"
-                        className="absolute end-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <div className="mt-1 flex items-center justify-center gap-1">
-                      {/* In RTL the primary sits on the right, so "toward primary" moves right. */}
-                      <button
-                        type="button"
-                        onClick={() => moveImage(i, -1)}
-                        disabled={i === 0}
-                        aria-label="نقل نحو الرئيسية"
-                        className="rounded px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
-                      >
-                        ›
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveImage(i, 1)}
-                        disabled={i === form.images.length - 1}
-                        aria-label="نقل بعيداً عن الرئيسية"
-                        className="rounded px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
-                      >
-                        ‹
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Upload dropzone — focusable so the user can click it then paste */}
-            <label
-              tabIndex={0}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault()
-                handleFiles(e.dataTransfer.files)
-              }}
-              className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[var(--radius)] border-2 border-dashed border-gray-300 bg-gray-100 px-4 py-6 text-center transition-colors hover:border-yellow-deep focus-visible:outline-none focus-visible:border-yellow-deep focus-visible:ring-2 focus-visible:ring-yellow-deep"
-            >
-              <span className="text-sm font-medium text-ink">ارفع صورة</span>
-              <span className="text-xs text-gray-600">
-                اسحب وأفلت الصور هنا أو انقر للاختيار — JPG / PNG / WebP، حتى ٥ ميغابايت
-              </span>
-              <span className="text-xs text-gray-600">أو الصق صورة مباشرة (Ctrl+V)</span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => handleFiles(e.target.files)}
-              />
-            </label>
-
-            {/* Upload progress / errors */}
-            {uploads.length > 0 && (
-              <ul className="space-y-2">
-                {uploads.map((u) => (
-                  <li
-                    key={u.key}
-                    className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-gray-300 px-3 py-2 text-sm"
-                  >
-                    {u.status === 'uploading' ? (
-                      <span
-                        className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-gray-300 border-t-yellow"
-                        aria-hidden="true"
-                      />
-                    ) : (
-                      <span className="shrink-0" style={{ color: 'var(--color-error)' }}>
-                        ⚠
-                      </span>
-                    )}
-                    <span className="min-w-0 flex-1 truncate text-gray-600" dir="ltr">
-                      {u.name}
-                    </span>
-                    <span
-                      className="shrink-0 text-xs"
-                      style={{ color: u.status === 'error' ? 'var(--color-error)' : 'var(--color-gray-600)' }}
-                    >
-                      {u.status === 'uploading' ? 'جارٍ الرفع…' : u.message}
-                    </span>
-                    {u.status === 'error' && (
-                      <button
-                        type="button"
-                        onClick={() => removeUpload(u.key)}
-                        aria-label="إزالة"
-                        className="shrink-0 text-gray-600 hover:text-ink"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* Add by URL / path */}
-            <div>
-              <p className="mb-1.5 text-xs text-gray-600">أو أضِف صورة برابط أو مسار داخل public</p>
-              <div className="flex gap-2">
-                <input
-                  dir="ltr"
-                  className={numField}
-                  value={newImage}
-                  onChange={(e) => setNewImage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addImage()
-                    }
-                  }}
-                  placeholder="https://… أو /products/example.jpg"
-                />
-                <button type="button" onClick={addImage} className="btn btn-secondary shrink-0">
-                  إضافة برابط
-                </button>
-              </div>
-            </div>
-          </Section>
+          {/* Product images are now managed PER COLOUR, inside each colour block
+              under "الألوان والمقاسات" (see "صور هذا اللون"). The old product-level
+              images[] is kept only as a backup on save. */}
         </div>
 
         {/* Right column — flags */}
