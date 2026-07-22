@@ -206,6 +206,10 @@ export const UI = {
   'pd.qty.inc': { ar: 'زيادة الكمية', en: 'Increase quantity' },
   'pd.outOfStock': { ar: 'غير متوفر', en: 'Out of stock' },
   'pd.outOfStockColor': { ar: 'غير متوفر بهذا اللون', en: 'Out of stock in this color' },
+  'pd.outOfStockSize': { ar: 'غير متوفر بهذا المقاس', en: 'Out of stock in this size' },
+  'pd.size': { ar: 'المقاس', en: 'Size' },
+  'pd.inStock': { ar: 'متوفر', en: 'In stock' },
+  'pd.remaining': { ar: 'متبقي {n}', en: '{n} left' },
   'pd.consultation': {
     ar: 'هذا إطار طبي يحتاج فحص نظر وتركيب عدسات — سنتواصل معك لإتمام الفحص واختيار العدسات.',
     en: "This is a prescription frame that needs an eye exam and lens fitting — we'll contact you to complete the exam and choose your lenses.",

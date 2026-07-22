@@ -453,6 +453,7 @@ export default function ProductDetail() {
   const [load, setLoad] = useState<LoadState>({ state: 'loading' })
   const [reviews, setReviews] = useState<Review[]>([])
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [tryOnOpen, setTryOnOpen] = useState(false)
@@ -553,8 +554,6 @@ export default function ProductDetail() {
   const price = Number(product.price)
   const salePrice = product.sale_price != null ? Number(product.sale_price) : null
   const onSale = salePrice != null && salePrice < price
-  const effectivePrice = onSale ? (salePrice as number) : price
-  const savePercent = onSale ? Math.round(((price - (salePrice as number)) / price) * 100) : 0
 
   // Variants are the source of truth. Degrade gracefully to one synthetic
   // default when the array is empty (shouldn't happen post-migration).
@@ -577,11 +576,54 @@ export default function ProductDetail() {
   // images → first variant that has images → flat images[] → placeholder). Uses
   // the SAME shared helper as the product card so they never disagree.
   const images = galleryImages(product, selectedVariant)
-  const allOutOfStock = variants.every((v) => !v.in_stock)
-  const canAdd = selectedVariant.in_stock
+
+  // Per-color sizes + availability (backward compatible: no sizes ⇒ use in_stock).
+  const variantSizesOf = (v: ProductVariant) => (Array.isArray(v.sizes) ? v.sizes : [])
+  const variantAvailable = (v: ProductVariant) => {
+    const s = variantSizesOf(v)
+    return s.length > 0 ? s.some((x) => Number(x.stock) > 0) : v.in_stock
+  }
+
+  const sizes = variantSizesOf(selectedVariant)
+  const hasSizes = sizes.length > 0
+  // The active size: the user's pick when it exists on this color, otherwise the
+  // first in-stock size (falling back to the first size so something is shown).
+  const activeSize = !hasSizes
+    ? null
+    : (sizes.find((s) => s.size === selectedSize)?.size ??
+       (sizes.find((s) => Number(s.stock) > 0) ?? sizes[0]).size)
+  const activeSizeObj = hasSizes ? sizes.find((s) => s.size === activeSize) ?? null : null
+
+  const allOutOfStock = variants.every((v) => !variantAvailable(v))
+  const colorAvailable = variantAvailable(selectedVariant)
+  // In stock for the exact color+size combo the customer would add.
+  const currentInStock = hasSizes ? Number(activeSizeObj?.stock ?? 0) > 0 : selectedVariant.in_stock
+  const canAdd = currentInStock
+
+  // Effective price for the SELECTED color: its override, else the product base.
+  // A product-level sale is applied as the same percentage to the color price
+  // (for base-price colors this reproduces the exact sale_price).
+  const salePct = onSale ? (price - (salePrice as number)) / price : 0
+  const colorRegular = selectedVariant.price != null ? Number(selectedVariant.price) : price
+  const colorEffective = onSale
+    ? selectedVariant.price != null
+      ? Math.round(colorRegular * (1 - salePct))
+      : (salePrice as number)
+    : colorRegular
+  const colorOnSale = onSale && colorEffective < colorRegular
+  const colorSavePercent = colorOnSale
+    ? Math.round(((colorRegular - colorEffective) / colorRegular) * 100)
+    : 0
+  // Remaining count for the selected size (only meaningful when sizes exist).
+  const remaining = hasSizes ? Number(activeSizeObj?.stock ?? 0) : null
+  const showStock = selectedVariant.show_stock === true
 
   function selectVariant(v: ProductVariant) {
     setSelectedVariantId(v.id)
+    // Reset the size to this color's first in-stock size (falls back in render).
+    const s = variantSizesOf(v)
+    const first = s.length > 0 ? (s.find((x) => Number(x.stock) > 0) ?? s[0]).size : null
+    setSelectedSize(first)
   }
 
   function handleAdd() {
@@ -598,10 +640,11 @@ export default function ProductDetail() {
       name_ar: product.name_ar,
       name_en: product.name_en,
       brand_ar: product.brand_name_ar ?? '',
-      price: effectivePrice,
+      price: colorEffective,
       image: images[0] ?? '',
       color,
       variantId: hasVariants ? selectedVariant.id : null,
+      size: hasSizes ? activeSize : null,
       quantity,
       requiresConsultation: product.requires_consultation,
     })
@@ -671,18 +714,18 @@ export default function ProductDetail() {
               </button>
             )}
 
-            {/* Price */}
+            {/* Price — reflects the selected color's effective price. */}
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              {onSale ? (
+              {colorOnSale ? (
                 <>
-                  <span className="num text-3xl font-bold text-ink">{formatPrice(effectivePrice, product.currency)}</span>
-                  <span className="num text-lg text-gray-600 line-through">{formatPrice(price, product.currency)}</span>
+                  <span className="num text-3xl font-bold text-ink">{formatPrice(colorEffective, product.currency)}</span>
+                  <span className="num text-lg text-gray-600 line-through">{formatPrice(colorRegular, product.currency)}</span>
                   <span className="num rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
-                    {format(t('pd.save'), { x: savePercent })}
+                    {format(t('pd.save'), { x: colorSavePercent })}
                   </span>
                 </>
               ) : (
-                <span className="num text-3xl font-bold text-ink">{formatPrice(price, product.currency)}</span>
+                <span className="num text-3xl font-bold text-ink">{formatPrice(colorRegular, product.currency)}</span>
               )}
             </div>
 
@@ -709,7 +752,7 @@ export default function ProductDetail() {
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-ink">{t('pd.color')}</span>
                   <span className="text-gray-600">{localize(selectedVariant, 'name')}</span>
-                  {!selectedVariant.in_stock && (
+                  {!colorAvailable && (
                     <span className="text-xs" style={{ color: 'var(--color-error)' }}>
                       {t('pd.outOfStockParen')}
                     </span>
@@ -719,6 +762,7 @@ export default function ProductDetail() {
                   {variants.map((v) => {
                     const activeSwatch = selectedVariant.id === v.id
                     const vName = localize(v, 'name')
+                    const vAvailable = variantAvailable(v)
                     return (
                       <button
                         key={v.id}
@@ -726,13 +770,13 @@ export default function ProductDetail() {
                         onClick={() => selectVariant(v)}
                         aria-label={vName}
                         aria-pressed={activeSwatch}
-                        title={v.in_stock ? vName : `${vName} — ${t('pd.outOfStock')}`}
+                        title={vAvailable ? vName : `${vName} — ${t('pd.outOfStock')}`}
                         className={`relative h-9 w-9 rounded-full border transition-transform ${
                           activeSwatch ? 'scale-110 border-yellow ring-2 ring-yellow' : 'border-gray-300'
-                        } ${v.in_stock ? '' : 'opacity-45'}`}
+                        } ${vAvailable ? '' : 'opacity-45'}`}
                         style={{ backgroundColor: v.hex }}
                       >
-                        {!v.in_stock && (
+                        {!vAvailable && (
                           <span
                             className="pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-bold text-ink"
                             aria-hidden="true"
@@ -740,6 +784,44 @@ export default function ProductDetail() {
                             ✕
                           </span>
                         )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Size selector — only when the selected color has sizes. Out-of-stock
+                sizes stay visible but disabled + struck so the customer sees they
+                exist but can't be picked. */}
+            {hasSizes && (
+              <div className="mt-6">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-ink">{t('pd.size')}</span>
+                  {activeSize && <span className="num text-gray-600" dir="ltr">{activeSize}</span>}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {sizes.map((s) => {
+                    const inStock = Number(s.stock) > 0
+                    const active = s.size === activeSize
+                    return (
+                      <button
+                        key={s.size}
+                        type="button"
+                        onClick={() => inStock && setSelectedSize(s.size)}
+                        disabled={!inStock}
+                        aria-pressed={active}
+                        title={inStock ? s.size : `${s.size} — ${t('pd.outOfStock')}`}
+                        className={`num min-w-[2.75rem] rounded-[var(--radius-sm)] border px-3 py-2 text-sm transition-colors ${
+                          !inStock
+                            ? 'cursor-not-allowed border-gray-300 text-gray-600 line-through opacity-60'
+                            : active
+                              ? 'border-yellow bg-yellow/10 font-bold text-ink ring-1 ring-yellow'
+                              : 'border-gray-300 text-ink hover:border-yellow-deep'
+                        }`}
+                        dir="ltr"
+                      >
+                        {s.size}
                       </button>
                     )
                   })}
@@ -772,17 +854,23 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Out of stock note — all colors vs the selected color */}
-            {allOutOfStock ? (
-              <p className="mt-6 text-sm font-medium" style={{ color: 'var(--color-error)' }}>
-                {t('pd.outOfStock')}
+            {/* Availability line for the current color + size. When show_stock is
+                on (limited editions) it shows the remaining count; otherwise just
+                in/out of stock. */}
+            {currentInStock ? (
+              <p className="mt-6 text-sm font-medium text-ink">
+                {showStock && remaining != null
+                  ? format(t('pd.remaining'), { n: remaining })
+                  : t('pd.inStock')}
               </p>
             ) : (
-              !selectedVariant.in_stock && (
-                <p className="mt-6 text-sm font-medium" style={{ color: 'var(--color-error)' }}>
-                  {t('pd.outOfStockColor')}
-                </p>
-              )
+              <p className="mt-6 text-sm font-medium" style={{ color: 'var(--color-error)' }}>
+                {allOutOfStock
+                  ? t('pd.outOfStock')
+                  : hasSizes
+                    ? t('pd.outOfStockSize')
+                    : t('pd.outOfStockColor')}
+              </p>
             )}
 
             {/* Consultation notice */}
@@ -800,7 +888,13 @@ export default function ProductDetail() {
                 disabled={!canAdd}
                 className="btn btn-primary flex-1"
               >
-                {product.requires_consultation ? t('pd.reserve') : t('pd.addToCart')}
+                {!canAdd
+                  ? hasSizes
+                    ? t('pd.outOfStockSize')
+                    : t('pd.outOfStock')
+                  : product.requires_consultation
+                    ? t('pd.reserve')
+                    : t('pd.addToCart')}
               </button>
               <button
                 type="button"

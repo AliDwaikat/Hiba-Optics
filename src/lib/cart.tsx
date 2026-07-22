@@ -30,6 +30,10 @@ export interface CartItem {
   /** Selected variant id (per-variant model). Optional so older/simple items
    *  still validate; color carries the variant's name_ar/hex, image its photo. */
   variantId?: string | null
+  /** Selected size label (per-size stock model). Optional/null when the color
+   *  has no sizes. Captured here for pass 3 (cart/checkout); cart logic — line
+   *  identity, totals — is unchanged this pass. */
+  size?: string | null
   quantity: number
   requiresConsultation: boolean
 }
