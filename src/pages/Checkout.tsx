@@ -9,6 +9,7 @@ import { fetchMyProfile, updateMyProfile, type ProfileUpdate } from '../lib/prof
 import { fetchBranches, type Branch } from '../lib/branches'
 import {
   createOrder,
+  decrementOrderStock,
   generateOrderNumber,
   type FulfillmentType,
   type OrderItemSnapshot,
@@ -173,13 +174,11 @@ export default function Checkout() {
           // ignore — the order is already placed; profile save is secondary
         }
       }
-      // TODO (inventory): decrement each purchased color+size's stock in the
-      // product's variants jsonb by the quantity bought. NOT done here on
-      // purpose — the storefront runs on the anon/customer client, which has no
-      // UPDATE on `products` (RLS restricts writes to the owner), and a naive
-      // client read-modify-write would also race across concurrent orders. This
-      // belongs in a Postgres RPC / edge function invoked with elevated rights
-      // that decrements atomically. It must never block or fail a placed order.
+      // Inventory: decrement each purchased size's stock via the atomic
+      // decrement_stock RPC (supabase/decrement_stock.sql). Fire-and-forget and
+      // fully best-effort — it never throws and must never block or roll back a
+      // placed order; failures are logged and can be corrected in admin.
+      void decrementOrderStock(snapshot)
 
       // Success = insert returned no error. We rely on the client-side
       // order_number (no read-back), since guests can't SELECT orders.

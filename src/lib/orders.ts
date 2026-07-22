@@ -77,6 +77,42 @@ export async function createOrder(input: OrderInput): Promise<void> {
 }
 
 /**
+ * Reduce each purchased size's stock after a successful order, via the atomic
+ * `decrement_stock` RPC (see supabase/decrement_stock.sql). Best-effort by
+ * design: a failing decrement is LOGGED but never thrown, so a placed order is
+ * never rolled back or blocked (inventory can be corrected in admin). Only
+ * size-tracked lines are decremented — sizeless (color-level) lines have no
+ * count to reduce and are skipped. Quantities are integers.
+ */
+export async function decrementOrderStock(items: OrderItemSnapshot[]): Promise<void> {
+  const targets = items.filter(
+    (i) => i.variantId && i.size != null && Number(i.quantity) > 0,
+  )
+  await Promise.all(
+    targets.map(async (i) => {
+      try {
+        const { error } = await supabase.rpc('decrement_stock', {
+          p_product_id: i.productId,
+          p_variant_id: i.variantId,
+          p_size: i.size,
+          p_qty: Math.trunc(Number(i.quantity)),
+        })
+        if (error) {
+          console.error('decrement_stock failed', {
+            productId: i.productId,
+            variantId: i.variantId,
+            size: i.size,
+            message: error.message,
+          })
+        }
+      } catch (err) {
+        console.error('decrement_stock threw', err)
+      }
+    }),
+  )
+}
+
+/**
  * The logged-in customer's own orders, newest first. Runs on the CUSTOMER
  * client so the request carries the customer's JWT — the `orders_select_own`
  * RLS policy (user_id = auth.uid()) then returns only their rows. The explicit
