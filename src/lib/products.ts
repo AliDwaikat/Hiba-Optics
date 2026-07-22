@@ -16,6 +16,11 @@ export type FrameShape =
   | 'oval'
   | 'browline'
 
+/** Face shapes a frame can suit (products.face_shapes text[]) — drives the
+ *  "find your frame" matcher. Kept separate from FrameShape (the frame's own
+ *  geometry). */
+export type FaceShape = 'round' | 'oval' | 'square' | 'heart' | 'long'
+
 /** A single selectable color on a product (products.colors jsonb). */
 export interface ProductColor {
   name_ar: string
@@ -80,6 +85,9 @@ export interface Product {
   category: Category
   audience: Audience
   frame_shape: FrameShape | null
+  /** Face shapes this frame suits (many-to-many). Empty ⇒ fall back to
+   *  frame_shape-based matching in the finder. */
+  face_shapes: FaceShape[]
   price: number
   sale_price: number | null
   currency: string
@@ -116,7 +124,7 @@ const BRAND_COLUMNS = 'id, name_ar, name_en, logo_url, position, published'
 
 const PRODUCT_COLUMNS =
   'id, brand_id, name_ar, name_en, model, description_ar, description_en, category, audience, ' +
-  'frame_shape, ' +
+  'frame_shape, face_shapes, ' +
   'price, sale_price, currency, images, colors, features, variants, requires_consultation, in_stock, ' +
   'featured, published, position, tryon_ref, tryon_enabled'
 

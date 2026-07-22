@@ -9,11 +9,11 @@ import {
   fetchProducts,
   type Audience,
   type Category,
+  type FaceShape,
   type FrameShape,
   type Product,
 } from '../../lib/products'
 
-type FaceShape = 'oval' | 'round' | 'square' | 'heart' | 'long'
 type CategoryChoice = Category | 'all'
 
 /* ---- Face-shape icons (simple ink line-drawings with a yellow guide line) ---- */
@@ -120,13 +120,23 @@ const FACE_OPTIONS: FaceOption[] = [
   },
 ]
 
-/** Face shape → recommended frame_shapes (real optician guidance). */
+/** Face shape → recommended frame_shapes (real optician guidance). Used only as
+ *  a FALLBACK for products that don't yet have their own face_shapes set. */
 const MATCH: Record<FaceShape, FrameShape[]> = {
   round: ['rectangular', 'square', 'browline', 'cat_eye'],
   square: ['round', 'oval', 'aviator', 'cat_eye'],
   oval: ['rectangular', 'square', 'round', 'aviator', 'cat_eye', 'browline', 'oval'],
   heart: ['round', 'oval', 'aviator', 'cat_eye'],
   long: ['square', 'rectangular', 'browline', 'round'],
+}
+
+/** Does a product suit the chosen face shape? Prefer the product's own
+ *  face_shapes list; for products with none set (older rows), fall back to the
+ *  frame_shape → face mapping so results aren't empty during rollout. */
+function suitsFace(p: Product, face: FaceShape): boolean {
+  const faces = Array.isArray(p.face_shapes) ? p.face_shapes : []
+  if (faces.length > 0) return faces.includes(face)
+  return p.frame_shape ? MATCH[face].includes(p.frame_shape) : false
 }
 
 const CATEGORY_OPTIONS: { value: CategoryChoice; labelKey: UIKey }[] = [
@@ -182,30 +192,31 @@ export default function FinderQuiz({ wrapperClassName }: { wrapperClassName?: st
 
   const faceOption = FACE_OPTIONS.find((f) => f.value === face) ?? null
 
-  // Shape match with graceful broadening when nothing fits.
+  // Match directly on each product's face_shapes (frame_shape fallback inside
+  // suitsFace), with graceful broadening when nothing fits.
   const { list, broadened } = useMemo(() => {
-    const withShape = products.filter((p) => p.frame_shape)
     const inCat = (arr: Product[]) =>
       category === 'all' ? arr : arr.filter((p) => p.category === category)
     const inAud = (arr: Product[]) =>
       audience ? arr.filter((p) => p.audience === audience) : arr
 
     if (!face) return { list: [] as Product[], broadened: false }
-    const recommended = MATCH[face]
 
-    const matched = inAud(inCat(withShape))
-      .filter((p) => recommended.includes(p.frame_shape as FrameShape))
-      .sort(
-        (a, b) =>
-          recommended.indexOf(a.frame_shape as FrameShape) -
-            recommended.indexOf(b.frame_shape as FrameShape) || a.position - b.position,
-      )
+    const matched = inAud(inCat(products))
+      .filter((p) => suitsFace(p, face))
+      // Products with an explicit face_shapes match rank ahead of frame_shape
+      // fallbacks; ties keep the catalog order.
+      .sort((a, b) => {
+        const aExplicit = (a.face_shapes?.length ?? 0) > 0 ? 0 : 1
+        const bExplicit = (b.face_shapes?.length ?? 0) > 0 ? 0 : 1
+        return aExplicit - bExplicit || a.position - b.position
+      })
 
     if (matched.length > 0) return { list: matched, broadened: false }
 
-    // Broaden: all frames of the chosen category, then all frames.
-    let fallback = inCat(withShape).sort((a, b) => a.position - b.position)
-    if (fallback.length === 0) fallback = [...withShape].sort((a, b) => a.position - b.position)
+    // Broaden: all products of the chosen category, then the whole catalog.
+    let fallback = inCat(products).sort((a, b) => a.position - b.position)
+    if (fallback.length === 0) fallback = [...products].sort((a, b) => a.position - b.position)
     return { list: fallback, broadened: true }
   }, [products, face, category, audience])
 

@@ -2,6 +2,7 @@ import { supabase } from '../supabase'
 import type {
   Audience,
   Category,
+  FaceShape,
   FrameShape,
   Product,
   ProductColor,
@@ -103,7 +104,7 @@ export interface AdminProductRecord extends Product {
 
 /** The exact `products` columns the form reads and writes (includes model,
  *  frame_shape, and the per-color variants jsonb). */
-const ADMIN_FORM_COLUMNS = `${ADMIN_PRODUCT_COLUMNS}, model, frame_shape, variants`
+const ADMIN_FORM_COLUMNS = `${ADMIN_PRODUCT_COLUMNS}, model, frame_shape, face_shapes, variants`
 
 /** Every writable column, in the shape the form submits. */
 export interface ProductWritePayload {
@@ -116,6 +117,8 @@ export interface ProductWritePayload {
   category: Category
   audience: Audience
   frame_shape: FrameShape | null
+  /** Face shapes this frame suits (many-to-many). */
+  face_shapes: FaceShape[]
   price: number
   sale_price: number | null
   currency: string
@@ -148,6 +151,7 @@ export async function fetchAdminProduct(id: string): Promise<AdminProductRecord 
     images: p.images ?? [],
     colors: p.colors ?? [],
     variants: Array.isArray(p.variants) ? p.variants : [],
+    face_shapes: Array.isArray(p.face_shapes) ? p.face_shapes : [],
     features: p.features ?? [],
   }
 }

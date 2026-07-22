@@ -6,6 +6,7 @@ import {
   CATEGORY_LABELS_AR,
   type Audience,
   type Category,
+  type FaceShape,
   type FrameShape,
   type ProductColor,
   type ProductFeature,
@@ -46,6 +47,27 @@ const FRAME_SHAPE_OPTIONS: { value: FrameShape | ''; label: string }[] = [
   { value: 'oval', label: 'بيضاوي' },
   { value: 'browline', label: 'براولاين' },
 ]
+
+// Face shapes a frame can suit (many-to-many), in a natural display order.
+const FACE_SHAPE_OPTIONS: { value: FaceShape; label: string }[] = [
+  { value: 'oval', label: 'بيضاوي' },
+  { value: 'round', label: 'دائري' },
+  { value: 'square', label: 'مربّع' },
+  { value: 'heart', label: 'قلب' },
+  { value: 'long', label: 'طويل' },
+]
+
+// Optician mapping: a frame_shape's sensible suggested face shapes. Pre-filled
+// once (when face_shapes is still empty) as an editable starting point.
+const FRAME_TO_FACE_SUGGESTION: Record<FrameShape, FaceShape[]> = {
+  round: ['square', 'heart', 'long'],
+  square: ['round', 'oval', 'heart'],
+  rectangular: ['round', 'oval', 'heart', 'long'],
+  aviator: ['square', 'heart', 'oval'],
+  cat_eye: ['round', 'square', 'heart'],
+  oval: ['square', 'long', 'round'],
+  browline: ['round', 'oval', 'square'],
+}
 
 const CURRENCY_OPTIONS: { value: string; label: string }[] = [
   { value: 'ILS', label: '₪ شيكل' },
@@ -139,6 +161,7 @@ interface FormState {
   category: Category
   audience: Audience
   frame_shape: FrameShape | ''
+  face_shapes: FaceShape[]
   price: string
   sale_price: string
   currency: string
@@ -162,6 +185,7 @@ const EMPTY_FORM: FormState = {
   category: 'sunglasses',
   audience: 'unisex',
   frame_shape: '',
+  face_shapes: [],
   price: '',
   sale_price: '',
   currency: 'ILS',
@@ -640,6 +664,7 @@ export default function ProductForm() {
           category: p.category,
           audience: p.audience,
           frame_shape: p.frame_shape ?? '',
+          face_shapes: Array.isArray(p.face_shapes) ? p.face_shapes : [],
           price: String(p.price ?? ''),
           sale_price: p.sale_price != null ? String(p.sale_price) : '',
           currency: p.currency ?? 'ILS',
@@ -666,6 +691,27 @@ export default function ProductForm() {
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  // Changing the frame shape auto-suggests suitable face shapes — but ONLY when
+  // none have been chosen yet, so an existing manual selection is never clobbered.
+  function onFrameShapeChange(value: FrameShape | '') {
+    setForm((f) => {
+      const next = { ...f, frame_shape: value }
+      if (value && f.face_shapes.length === 0) {
+        next.face_shapes = FRAME_TO_FACE_SUGGESTION[value] ?? []
+      }
+      return next
+    })
+  }
+
+  function toggleFace(value: FaceShape) {
+    setForm((f) => ({
+      ...f,
+      face_shapes: f.face_shapes.includes(value)
+        ? f.face_shapes.filter((x) => x !== value)
+        : [...f.face_shapes, value],
+    }))
   }
 
   /* Colors / variants */
@@ -935,6 +981,7 @@ export default function ProductForm() {
       category: form.category,
       audience: form.audience,
       frame_shape: form.frame_shape || null,
+      face_shapes: form.face_shapes,
       price: Number(form.price),
       sale_price: form.sale_price.trim() === '' ? null : Number(form.sale_price),
       currency: form.currency || 'ILS',
@@ -1134,7 +1181,7 @@ export default function ProductForm() {
                   id="frame_shape"
                   className="field"
                   value={form.frame_shape}
-                  onChange={(e) => set('frame_shape', e.target.value as FrameShape | '')}
+                  onChange={(e) => onFrameShapeChange(e.target.value as FrameShape | '')}
                 >
                   {FRAME_SHAPE_OPTIONS.map((o) => (
                     <option key={o.value || 'none'} value={o.value}>
@@ -1143,9 +1190,39 @@ export default function ProductForm() {
                   ))}
                 </select>
                 <p className="mt-1 text-xs text-gray-600">
-                  يُستخدم في ميزة «اعثر على إطارك» لمطابقة شكل الوجه — اختياري.
+                  يُستخدم كمرجع ولاقتراح أشكال الوجه المناسبة تلقائياً — اختياري.
                 </p>
               </Field>
+
+              {/* Suitable face shapes (many-to-many) */}
+              <div className="sm:col-span-2">
+                <span className="mb-1.5 block text-sm font-medium text-ink">
+                  أشكال الوجه المناسبة
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {FACE_SHAPE_OPTIONS.map((o) => {
+                    const active = form.face_shapes.includes(o.value)
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => toggleFace(o.value)}
+                        aria-pressed={active}
+                        className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+                          active
+                            ? 'border-yellow bg-yellow/10 font-semibold text-ink ring-1 ring-yellow'
+                            : 'border-gray-300 text-ink hover:border-yellow-deep'
+                        }`}
+                      >
+                        {o.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="mt-1.5 text-xs text-gray-600">
+                  اختاري أشكال الوجه التي يناسبها هذا الإطار — تُستخدم في ميزة «اعثر على إطارك». يمكنكِ التعديل بحرية.
+                </p>
+              </div>
             </div>
           </Section>
 
