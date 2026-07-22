@@ -3,7 +3,6 @@ import type {
   Audience,
   Category,
   FaceShape,
-  FrameShape,
   Product,
   ProductColor,
   ProductFeature,
@@ -48,6 +47,25 @@ export async function fetchAdminBrands(): Promise<AdminBrand[]> {
 
   if (error) throw new Error(error.message)
   return (data ?? []) as unknown as AdminBrand[]
+}
+
+/**
+ * Distinct, non-empty frame_shape values already used across the catalog —
+ * trimmed and de-duplicated case-insensitively (first-seen casing wins). Lets
+ * the product form offer custom shapes the owner typed before as reusable
+ * dropdown options, so she never has to retype them.
+ */
+export async function fetchUsedFrameShapes(): Promise<string[]> {
+  const { data, error } = await supabase.from('products').select('frame_shape')
+  if (error) throw new Error(error.message)
+  const byLower = new Map<string, string>()
+  for (const row of (data ?? []) as { frame_shape: string | null }[]) {
+    const v = (row.frame_shape ?? '').trim()
+    if (!v) continue
+    const key = v.toLowerCase()
+    if (!byLower.has(key)) byLower.set(key, v)
+  }
+  return Array.from(byLower.values())
 }
 
 /** The boolean columns the list can toggle inline. */
@@ -116,7 +134,7 @@ export interface ProductWritePayload {
   description_en: string | null
   category: Category
   audience: Audience
-  frame_shape: FrameShape | null
+  frame_shape: string | null
   /** Face shapes this frame suits (many-to-many). */
   face_shapes: FaceShape[]
   price: number

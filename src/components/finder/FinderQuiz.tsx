@@ -136,7 +136,9 @@ const MATCH: Record<FaceShape, FrameShape[]> = {
 function suitsFace(p: Product, face: FaceShape): boolean {
   const faces = Array.isArray(p.face_shapes) ? p.face_shapes : []
   if (faces.length > 0) return faces.includes(face)
-  return p.frame_shape ? MATCH[face].includes(p.frame_shape) : false
+  // Custom (non-preset) frame_shape values simply won't match here — those
+  // products rely on face_shapes instead; the fallback never crashes on them.
+  return p.frame_shape ? MATCH[face].includes(p.frame_shape as FrameShape) : false
 }
 
 const CATEGORY_OPTIONS: { value: CategoryChoice; labelKey: UIKey }[] = [

@@ -16,6 +16,7 @@ import {
   createProduct,
   fetchAdminBrands,
   fetchAdminProduct,
+  fetchUsedFrameShapes,
   updateProduct,
   type AdminBrand,
   type ProductWritePayload,
@@ -47,6 +48,14 @@ const FRAME_SHAPE_OPTIONS: { value: FrameShape | ''; label: string }[] = [
   { value: 'oval', label: 'بيضاوي' },
   { value: 'browline', label: 'براولاين' },
 ]
+
+// Lowercased preset keys — used to tell presets from custom (typed) values.
+const FRAME_PRESET_KEYS = new Set(
+  FRAME_SHAPE_OPTIONS.map((o) => o.value).filter(Boolean).map((v) => v.toLowerCase()),
+)
+const isPresetFrame = (v: string) => FRAME_PRESET_KEYS.has(v.trim().toLowerCase())
+// Sentinel <option> value that reveals the "type a custom shape" input.
+const CUSTOM_FRAME_SENTINEL = '__custom__'
 
 // Face shapes a frame can suit (many-to-many), in a natural display order.
 const FACE_SHAPE_OPTIONS: { value: FaceShape; label: string }[] = [
@@ -160,7 +169,8 @@ interface FormState {
   description_en: string
   category: Category
   audience: Audience
-  frame_shape: FrameShape | ''
+  // Preset key, a reusable custom value, or free text the owner typed.
+  frame_shape: string
   face_shapes: FaceShape[]
   price: string
   sale_price: string
@@ -557,6 +567,10 @@ export default function ProductForm() {
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [brands, setBrands] = useState<AdminBrand[]>([])
+  // Distinct custom frame shapes used before (reusable dropdown options).
+  const [usedFrameShapes, setUsedFrameShapes] = useState<string[]>([])
+  // Whether the "type a custom frame shape" text input is showing.
+  const [customFrameMode, setCustomFrameMode] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   // Per-variant inline validation: keyed by variant index → { price?, sizes: {sizeIndex → msg} }.
   const [variantErrors, setVariantErrors] = useState<
@@ -637,12 +651,15 @@ export default function ProductForm() {
     }
   }
 
-  // Load brands (always) + the product (edit mode).
+  // Load brands + previously-used frame shapes (always) + the product (edit mode).
   useEffect(() => {
     let active = true
     fetchAdminBrands()
       .then((b) => active && setBrands(b))
       .catch(() => active && setBrands([]))
+    fetchUsedFrameShapes()
+      .then((s) => active && setUsedFrameShapes(s))
+      .catch(() => active && setUsedFrameShapes([]))
 
     if (!isEdit) return
     setLoading(true)
@@ -693,16 +710,34 @@ export default function ProductForm() {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
-  // Changing the frame shape auto-suggests suitable face shapes — but ONLY when
-  // none have been chosen yet, so an existing manual selection is never clobbered.
-  function onFrameShapeChange(value: FrameShape | '') {
+  // Changing the frame shape auto-suggests suitable face shapes — but ONLY for a
+  // known preset AND only when none have been chosen yet, so an existing manual
+  // selection is never clobbered (custom shapes have no suggestion mapping).
+  function onFrameShapeChange(value: string) {
     setForm((f) => {
       const next = { ...f, frame_shape: value }
-      if (value && f.face_shapes.length === 0) {
-        next.face_shapes = FRAME_TO_FACE_SUGGESTION[value] ?? []
+      const suggestion = value in FRAME_TO_FACE_SUGGESTION
+        ? FRAME_TO_FACE_SUGGESTION[value as FrameShape]
+        : null
+      if (suggestion && f.face_shapes.length === 0) {
+        next.face_shapes = suggestion
       }
       return next
     })
+  }
+
+  // The frame-shape <select> onChange. The custom sentinel reveals a text input;
+  // any other value (preset or a reusable custom value) is stored directly.
+  function handleFrameSelect(value: string) {
+    if (value === CUSTOM_FRAME_SENTINEL) {
+      setCustomFrameMode(true)
+      // Carry over an existing custom value; clear a preset so she starts fresh.
+      const current = isPresetFrame(form.frame_shape) ? '' : form.frame_shape
+      set('frame_shape', current)
+    } else {
+      setCustomFrameMode(false)
+      onFrameShapeChange(value)
+    }
   }
 
   function toggleFace(value: FaceShape) {
@@ -980,7 +1015,7 @@ export default function ProductForm() {
       description_en: form.description_en.trim() || null,
       category: form.category,
       audience: form.audience,
-      frame_shape: form.frame_shape || null,
+      frame_shape: form.frame_shape.trim() || null,
       face_shapes: form.face_shapes,
       price: Number(form.price),
       sale_price: form.sale_price.trim() === '' ? null : Number(form.sale_price),
@@ -1050,6 +1085,23 @@ export default function ProductForm() {
 
   // Latin/number inputs render dir="ltr"; .field already aligns to `start`.
   const numField = 'field'
+
+  // Custom (non-preset) frame shapes to list as reusable options: the ones used
+  // before, plus the product's own current custom value (so edit mode always
+  // shows it, even before the used-shapes fetch resolves). De-duped ci.
+  const customFrameValues: string[] = (() => {
+    const byLower = new Map<string, string>()
+    for (const v of usedFrameShapes) {
+      const t = v.trim()
+      if (!t || isPresetFrame(t)) continue
+      if (!byLower.has(t.toLowerCase())) byLower.set(t.toLowerCase(), t)
+    }
+    const cur = form.frame_shape.trim()
+    if (cur && !isPresetFrame(cur) && !byLower.has(cur.toLowerCase())) {
+      byLower.set(cur.toLowerCase(), cur)
+    }
+    return Array.from(byLower.values())
+  })()
 
   return (
     <form onSubmit={handleSubmit} onPaste={handlePaste} noValidate className="pb-24">
@@ -1180,17 +1232,34 @@ export default function ProductForm() {
                 <select
                   id="frame_shape"
                   className="field"
-                  value={form.frame_shape}
-                  onChange={(e) => onFrameShapeChange(e.target.value as FrameShape | '')}
+                  value={customFrameMode ? CUSTOM_FRAME_SENTINEL : form.frame_shape}
+                  onChange={(e) => handleFrameSelect(e.target.value)}
                 >
                   {FRAME_SHAPE_OPTIONS.map((o) => (
                     <option key={o.value || 'none'} value={o.value}>
                       {o.label}
                     </option>
                   ))}
+                  {/* Reusable custom shapes the owner added before. */}
+                  {customFrameValues.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                  <option value={CUSTOM_FRAME_SENTINEL}>+ شكل مخصص</option>
                 </select>
+                {customFrameMode && (
+                  <input
+                    className="field mt-2"
+                    value={form.frame_shape}
+                    onChange={(e) => set('frame_shape', e.target.value)}
+                    placeholder="اكتبي شكل الإطار (مثال: سداسي)"
+                    aria-label="شكل إطار مخصص"
+                    autoFocus
+                  />
+                )}
                 <p className="mt-1 text-xs text-gray-600">
-                  يُستخدم كمرجع ولاقتراح أشكال الوجه المناسبة تلقائياً — اختياري.
+                  اختاري شكلاً جاهزاً أو أضيفي شكلاً مخصصاً — يُستخدم كمرجع ولاقتراح أشكال الوجه. الأشكال المخصصة تظهر لاحقاً في القائمة.
                 </p>
               </Field>
 

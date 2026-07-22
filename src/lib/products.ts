@@ -84,7 +84,10 @@ export interface Product {
   description_en: string | null
   category: Category
   audience: Audience
-  frame_shape: FrameShape | null
+  /** Frame geometry — one of the FrameShape presets OR a free-text custom shape
+   *  the owner typed (e.g. "سداسي"). Stored as plain text; presets are just the
+   *  common suggestions. */
+  frame_shape: string | null
   /** Face shapes this frame suits (many-to-many). Empty ⇒ fall back to
    *  frame_shape-based matching in the finder. */
   face_shapes: FaceShape[]
