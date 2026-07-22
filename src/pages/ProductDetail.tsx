@@ -62,6 +62,15 @@ function CheckIcon() {
     </svg>
   )
 }
+/* Small sun glyph for the Polarized badge. */
+function PolarizedGlyph() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="shrink-0" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.5" />
+      <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" />
+    </svg>
+  )
+}
 function TrustIcon({ path }: { path: string }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-yellow-deep" aria-hidden="true">
@@ -741,6 +750,20 @@ export default function ProductDetail() {
                 <span className="num text-3xl font-bold text-ink">{formatPrice(colorRegular, product.currency)}</span>
               )}
             </div>
+
+            {/* Polarized — shown only when the SELECTED colour is polarized;
+                updates on colour change. English term kept in both languages. */}
+            {selectedVariant.polarized === true && (
+              <div className="mt-3">
+                <span
+                  dir="ltr"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-yellow-deep bg-yellow/10 px-3 py-1 text-xs font-semibold text-ink"
+                >
+                  <PolarizedGlyph />
+                  Polarized
+                </span>
+              </div>
+            )}
 
             {/* Description */}
             {description && (

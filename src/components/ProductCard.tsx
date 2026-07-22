@@ -36,6 +36,8 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
   // The displayed image uses the SHARED helper so the card and detail agree.
   const variants = product.variants ?? []
   const repVariant = variants.find((v) => v.in_stock) ?? variants[0] ?? null
+  // Any colour with polarized lenses → show the card-level Polarized badge.
+  const hasPolarizedVariant = variants.some((v) => v.polarized === true)
   const imageUrl = primaryImage(product) ?? undefined
   // A second, distinct image (from the rep variant's gallery) for the hover crossfade.
   const secondUrl = galleryImages(product, repVariant).find((u) => u !== imageUrl)
@@ -163,10 +165,23 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
             <HeartIcon filled={fav} />
           </button>
 
-          {product.requires_consultation && (
-            <span className="absolute end-2 top-2 z-10 rounded-full bg-yellow px-2 py-1 text-xs font-medium text-ink">
-              {t('card.consultation')}
-            </span>
+          {/* Top-end badge stack (dir-aware): consultation + Polarized. */}
+          {(product.requires_consultation || hasPolarizedVariant) && (
+            <div className="absolute end-2 top-2 z-10 flex flex-col items-end gap-1">
+              {product.requires_consultation && (
+                <span className="rounded-full bg-yellow px-2 py-1 text-xs font-medium text-ink">
+                  {t('card.consultation')}
+                </span>
+              )}
+              {hasPolarizedVariant && (
+                <span
+                  dir="ltr"
+                  className="rounded-full bg-white/85 px-2 py-1 text-xs font-semibold text-ink ring-1 ring-gray-100 backdrop-blur-sm"
+                >
+                  Polarized
+                </span>
+              )}
+            </div>
           )}
 
           {!product.in_stock && (

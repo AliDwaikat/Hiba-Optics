@@ -128,6 +128,7 @@ export default function Shop() {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [inStockOnly, setInStockOnly] = useState(false)
+  const [polarizedOnly, setPolarizedOnly] = useState(false)
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set())
   const [selectedFaces, setSelectedFaces] = useState<Set<FaceShape>>(new Set())
   const [priceRange, setPriceRange] = useState<{ min: number; max: number } | null>(null)
@@ -257,6 +258,7 @@ export default function Shop() {
     setSearchInput('')
     setSearch('')
     setInStockOnly(false)
+    setPolarizedOnly(false)
     setSelectedColors(new Set())
     setSelectedFaces(new Set())
     setPriceRange({ min: bounds.min, max: bounds.max })
@@ -281,6 +283,7 @@ export default function Shop() {
       const eff = effectivePrice(p)
       if (eff < range.min || eff > range.max) return false
       if (inStockOnly && !p.in_stock) return false
+      if (polarizedOnly && !(p.variants ?? []).some((v) => v.polarized === true)) return false
       if (selectedColors.size > 0) {
         const has = (p.colors ?? []).some((c) => selectedColors.has(colorKey(c.name_ar, c.hex)))
         if (!has) return false
@@ -301,7 +304,7 @@ export default function Shop() {
       sorted.sort((a, b) => Number(b.featured) - Number(a.featured) || a.position - b.position)
     // 'newest' keeps the fetched order (position ascending).
     return sorted
-  }, [products, search, category, brandId, audience, range, inStockOnly, selectedColors, selectedFaces, sort])
+  }, [products, search, category, brandId, audience, range, inStockOnly, polarizedOnly, selectedColors, selectedFaces, sort])
 
   // Advanced = everything that now lives inside the filter panel: brand,
   // audience, price, availability, colors. (Category stays in the always-visible
@@ -311,6 +314,7 @@ export default function Shop() {
     (audience !== 'all' ? 1 : 0) +
     (priceActive ? 1 : 0) +
     (inStockOnly ? 1 : 0) +
+    (polarizedOnly ? 1 : 0) +
     selectedColors.size +
     selectedFaces.size
 
@@ -415,17 +419,28 @@ export default function Shop() {
           </div>
         )}
 
-        {/* Availability */}
+        {/* Availability + Polarized */}
         <div>
           <p className="mb-2 text-sm font-semibold text-ink">{t('shop.avail.label')}</p>
-          <button
-            type="button"
-            onClick={() => setInStockOnly((v) => !v)}
-            aria-pressed={inStockOnly}
-            className={pillClass(inStockOnly)}
-          >
-            {t('shop.avail.inStock')}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setInStockOnly((v) => !v)}
+              aria-pressed={inStockOnly}
+              className={pillClass(inStockOnly)}
+            >
+              {t('shop.avail.inStock')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPolarizedOnly((v) => !v)}
+              aria-pressed={polarizedOnly}
+              dir="ltr"
+              className={pillClass(polarizedOnly)}
+            >
+              Polarized
+            </button>
+          </div>
         </div>
 
         {/* Colors */}
@@ -635,6 +650,7 @@ export default function Shop() {
           )}
           {priceActive && <Chip label={priceChipLabel()} onRemove={resetPrice} />}
           {inStockOnly && <Chip label={t('shop.avail.inStock')} onRemove={() => setInStockOnly(false)} />}
+          {polarizedOnly && <Chip label="Polarized" onRemove={() => setPolarizedOnly(false)} />}
           {Array.from(selectedColors).map((key) => {
             const c = allColors.find((x) => x.key === key)
             return (

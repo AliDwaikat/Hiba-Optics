@@ -63,6 +63,9 @@ export interface ProductVariant {
   show_stock?: boolean
   /** Optional per-size stock rows; absent/empty ⇒ availability via in_stock. */
   sizes?: VariantSize[]
+  /** Whether this colour's lenses are Polarized (display/filter metadata only);
+   *  absent ⇒ false. The label stays the English word "Polarized" in all langs. */
+  polarized?: boolean
 }
 
 export interface Brand {

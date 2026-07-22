@@ -105,6 +105,7 @@ interface VariantDraft {
   in_stock: boolean
   price: string
   show_stock: boolean
+  polarized: boolean
   sizes: SizeDraft[]
   images: string[]
   customSize: string
@@ -136,6 +137,7 @@ function toVariantDrafts(
       in_stock: v.in_stock !== false,
       price: v.price != null ? String(v.price) : '',
       show_stock: Boolean(v.show_stock),
+      polarized: Boolean(v.polarized),
       sizes: Array.isArray(v.sizes)
         ? v.sizes.map((s) => ({ size: String(s.size ?? ''), stock: String(s.stock ?? 0) }))
         : [],
@@ -152,6 +154,7 @@ function toVariantDrafts(
       in_stock: true,
       price: '',
       show_stock: false,
+      polarized: false,
       sizes: [],
       images: [],
       customSize: '',
@@ -761,6 +764,7 @@ export default function ProductForm() {
         in_stock: true,
         price: '',
         show_stock: false,
+        polarized: false,
         sizes: [],
         images: [],
         customSize: '',
@@ -993,6 +997,7 @@ export default function ProductForm() {
       in_stock: v.in_stock,
       price: v.price.trim() === '' ? null : Number(v.price),
       show_stock: v.show_stock,
+      polarized: v.polarized,
       sizes: v.sizes
         .filter((s) => s.size.trim() !== '')
         .map((s) => ({ size: s.size.trim(), stock: Math.trunc(Number(s.stock)) || 0 })),
@@ -1437,6 +1442,21 @@ export default function ProductForm() {
                         />
                         إظهار عدد القطع المتبقية للعميل
                       </label>
+                    </div>
+
+                    {/* Polarized — display/filter metadata only (English term kept). */}
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-medium text-ink">
+                        <Switch
+                          checked={v.polarized}
+                          onChange={() => updateVariant(i, { polarized: !v.polarized })}
+                          label="Polarized"
+                        />
+                        <span dir="ltr">Polarized</span>
+                      </label>
+                      <p className="mt-1 text-xs text-gray-600">
+                        فعّليه إذا كانت عدسات هذا اللون <span dir="ltr">Polarized</span>.
+                      </p>
                     </div>
 
                     {/* Sizes + per-size stock */}
