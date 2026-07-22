@@ -29,8 +29,22 @@ export interface ProductFeature {
   text_en: string
 }
 
+/** A single size row for a variant (variant.sizes jsonb) — a size label plus its
+ *  own stock count. Absent/empty sizes ⇒ color-level availability via in_stock. */
+export interface VariantSize {
+  /** Free-form size label, e.g. "52", "54", or a custom string. */
+  size: string
+  /** Units in stock for this size (non-negative integer). */
+  stock: number
+}
+
 /** A color/style variant (products.variants jsonb) — the source of truth for
- *  the product page's color switcher, gallery, and per-color stock. */
+ *  the product page's color switcher, gallery, and per-color stock.
+ *
+ *  price/show_stock/sizes are OPTIONAL and were added later; existing variants
+ *  omit them. Treat missing price as null (use the product base price), missing
+ *  show_stock as false, and missing sizes as [] (availability falls back to
+ *  in_stock). Never break variants that predate these fields. */
 export interface ProductVariant {
   id: string
   name_ar: string
@@ -38,6 +52,12 @@ export interface ProductVariant {
   hex: string
   images: string[]
   in_stock: boolean
+  /** Optional per-color price override; null/absent ⇒ use the product base price. */
+  price?: number | null
+  /** Show exact remaining counts to customers (limited editions); absent ⇒ false. */
+  show_stock?: boolean
+  /** Optional per-size stock rows; absent/empty ⇒ availability via in_stock. */
+  sizes?: VariantSize[]
 }
 
 export interface Brand {

@@ -6,6 +6,7 @@ import type {
   Product,
   ProductColor,
   ProductFeature,
+  ProductVariant,
 } from '../products'
 
 /**
@@ -100,8 +101,9 @@ export interface AdminProductRecord extends Product {
   model: string | null
 }
 
-/** The exact `products` columns the form reads and writes (includes model + frame_shape). */
-const ADMIN_FORM_COLUMNS = `${ADMIN_PRODUCT_COLUMNS}, model, frame_shape`
+/** The exact `products` columns the form reads and writes (includes model,
+ *  frame_shape, and the per-color variants jsonb). */
+const ADMIN_FORM_COLUMNS = `${ADMIN_PRODUCT_COLUMNS}, model, frame_shape, variants`
 
 /** Every writable column, in the shape the form submits. */
 export interface ProductWritePayload {
@@ -119,6 +121,8 @@ export interface ProductWritePayload {
   currency: string
   images: string[]
   colors: ProductColor[]
+  /** Extended per-color variants (price/sizes/stock/show_stock) persisted as jsonb. */
+  variants: ProductVariant[]
   features: ProductFeature[]
   requires_consultation: boolean
   in_stock: boolean
@@ -143,6 +147,7 @@ export async function fetchAdminProduct(id: string): Promise<AdminProductRecord 
     ...p,
     images: p.images ?? [],
     colors: p.colors ?? [],
+    variants: Array.isArray(p.variants) ? p.variants : [],
     features: p.features ?? [],
   }
 }

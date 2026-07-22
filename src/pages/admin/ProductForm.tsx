@@ -9,6 +9,7 @@ import {
   type FrameShape,
   type ProductColor,
   type ProductFeature,
+  type ProductVariant,
 } from '../../lib/products'
 import {
   createProduct,
@@ -54,6 +55,80 @@ const CURRENCY_OPTIONS: { value: string; label: string }[] = [
 ]
 
 /* ---- Local form state (numbers kept as strings for controlled inputs) ---- */
+
+/** One size + stock row within a variant, stock kept as a string for the input. */
+interface SizeDraft {
+  size: string
+  stock: string
+}
+
+/** Editable per-color variant. `price`/`stock` are strings for controlled inputs;
+ *  `images` is carried through untouched so existing variant photos are never lost
+ *  (per-variant image editing is a later pass). `customSize` is a transient input
+ *  buffer for the "add a custom size" field and is never persisted. */
+interface VariantDraft {
+  id: string
+  name_ar: string
+  name_en: string
+  hex: string
+  in_stock: boolean
+  price: string
+  show_stock: boolean
+  sizes: SizeDraft[]
+  images: string[]
+  customSize: string
+}
+
+/** Common lens sizes offered as quick-add chips. */
+const COMMON_SIZES = ['48', '50', '52', '54', '56', '58']
+
+let variantSeq = 0
+function newVariantId(): string {
+  variantSeq += 1
+  return `v-${Date.now().toString(36)}-${variantSeq}`
+}
+
+/** Build editable variant drafts from a loaded product, backward-compatibly:
+ *  prefer the extended `variants` jsonb; fall back to the legacy `colors` list
+ *  (name/hex only) for products saved before variants were managed here. Missing
+ *  price ⇒ '', missing show_stock ⇒ false, missing sizes ⇒ []. */
+function toVariantDrafts(
+  variants: ProductVariant[] | null | undefined,
+  colors: ProductColor[] | null | undefined,
+): VariantDraft[] {
+  if (Array.isArray(variants) && variants.length > 0) {
+    return variants.map((v) => ({
+      id: v.id || newVariantId(),
+      name_ar: v.name_ar ?? '',
+      name_en: v.name_en ?? '',
+      hex: v.hex ?? '#000000',
+      in_stock: v.in_stock !== false,
+      price: v.price != null ? String(v.price) : '',
+      show_stock: Boolean(v.show_stock),
+      sizes: Array.isArray(v.sizes)
+        ? v.sizes.map((s) => ({ size: String(s.size ?? ''), stock: String(s.stock ?? 0) }))
+        : [],
+      images: Array.isArray(v.images) ? v.images : [],
+      customSize: '',
+    }))
+  }
+  if (Array.isArray(colors) && colors.length > 0) {
+    return colors.map((c) => ({
+      id: newVariantId(),
+      name_ar: c.name_ar ?? '',
+      name_en: c.name_en ?? '',
+      hex: c.hex ?? '#000000',
+      in_stock: true,
+      price: '',
+      show_stock: false,
+      sizes: [],
+      images: [],
+      customSize: '',
+    }))
+  }
+  return []
+}
+
 interface FormState {
   brand_id: string
   model: string
@@ -72,7 +147,7 @@ interface FormState {
   featured: boolean
   published: boolean
   position: string
-  colors: ProductColor[]
+  variants: VariantDraft[]
   features: ProductFeature[]
   images: string[]
 }
@@ -95,7 +170,7 @@ const EMPTY_FORM: FormState = {
   featured: false,
   published: true,
   position: '0',
-  colors: [],
+  variants: [],
   features: [],
   images: [],
 }
@@ -459,6 +534,10 @@ export default function ProductForm() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [brands, setBrands] = useState<AdminBrand[]>([])
   const [errors, setErrors] = useState<Errors>({})
+  // Per-variant inline validation: keyed by variant index → { price?, sizes: {sizeIndex → msg} }.
+  const [variantErrors, setVariantErrors] = useState<
+    Record<number, { price?: string; sizes?: Record<number, string> }>
+  >({})
   const [loading, setLoading] = useState(isEdit)
   const [notFound, setNotFound] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -569,7 +648,7 @@ export default function ProductForm() {
           featured: Boolean(p.featured),
           published: Boolean(p.published),
           position: String(p.position ?? 0),
-          colors: Array.isArray(p.colors) ? p.colors : [],
+          variants: toVariantDrafts(p.variants, p.colors),
           features: Array.isArray(p.features) ? p.features : [],
           images: Array.isArray(p.images) ? p.images : [],
         })
@@ -589,12 +668,58 @@ export default function ProductForm() {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
-  /* Colors */
-  const addColor = () =>
-    set('colors', [...form.colors, { name_ar: '', name_en: '', hex: '#000000' }])
-  const updateColor = (i: number, patch: Partial<ProductColor>) =>
-    set('colors', form.colors.map((c, idx) => (idx === i ? { ...c, ...patch } : c)))
-  const removeColor = (i: number) => set('colors', form.colors.filter((_, idx) => idx !== i))
+  /* Colors / variants */
+  const addVariant = () =>
+    set('variants', [
+      ...form.variants,
+      {
+        id: newVariantId(),
+        name_ar: '',
+        name_en: '',
+        hex: '#000000',
+        in_stock: true,
+        price: '',
+        show_stock: false,
+        sizes: [],
+        images: [],
+        customSize: '',
+      },
+    ])
+  const updateVariant = (i: number, patch: Partial<VariantDraft>) =>
+    set('variants', form.variants.map((v, idx) => (idx === i ? { ...v, ...patch } : v)))
+  const removeVariant = (i: number) =>
+    set('variants', form.variants.filter((_, idx) => idx !== i))
+
+  /* Sizes within a variant */
+  const addSize = (vi: number, size: string) => {
+    const label = size.trim()
+    if (!label) return
+    set(
+      'variants',
+      form.variants.map((v, idx) => {
+        if (idx !== vi) return v
+        // Skip if this exact size label already exists on the variant.
+        if (v.sizes.some((s) => s.size.trim() === label)) return { ...v, customSize: '' }
+        return { ...v, sizes: [...v.sizes, { size: label, stock: '0' }], customSize: '' }
+      }),
+    )
+  }
+  const updateSize = (vi: number, si: number, patch: Partial<SizeDraft>) =>
+    set(
+      'variants',
+      form.variants.map((v, idx) =>
+        idx === vi
+          ? { ...v, sizes: v.sizes.map((s, j) => (j === si ? { ...s, ...patch } : s)) }
+          : v,
+      ),
+    )
+  const removeSize = (vi: number, si: number) =>
+    set(
+      'variants',
+      form.variants.map((v, idx) =>
+        idx === vi ? { ...v, sizes: v.sizes.filter((_, j) => j !== si) } : v,
+      ),
+    )
 
   /* Features */
   const addFeature = () => set('features', [...form.features, { text_ar: '', text_en: '' }])
@@ -734,19 +859,68 @@ export default function ProductForm() {
     return e
   }
 
+  /** Validate per-color overrides: a filled price must be a positive number, and
+   *  every size's stock must be a non-negative integer. Returns an index-keyed
+   *  error map (empty ⇒ all valid). */
+  function validateVariants(): Record<number, { price?: string; sizes?: Record<number, string> }> {
+    const out: Record<number, { price?: string; sizes?: Record<number, string> }> = {}
+    form.variants.forEach((v, vi) => {
+      const entry: { price?: string; sizes?: Record<number, string> } = {}
+      if (v.price.trim() !== '') {
+        const p = Number(v.price)
+        if (!Number.isFinite(p) || p <= 0) {
+          entry.price = 'يجب أن يكون السعر رقماً موجباً'
+        }
+      }
+      const sizeErrs: Record<number, string> = {}
+      v.sizes.forEach((s, si) => {
+        if (s.size.trim() === '') return // empty-label rows are dropped on save
+        const n = Number(s.stock)
+        if (s.stock.trim() === '' || !Number.isInteger(n) || n < 0) {
+          sizeErrs[si] = 'المخزون يجب أن يكون رقماً صحيحاً غير سالب'
+        }
+      })
+      if (Object.keys(sizeErrs).length > 0) entry.sizes = sizeErrs
+      if (entry.price || entry.sizes) out[vi] = entry
+    })
+    return out
+  }
+
   async function handleSubmit(ev: React.FormEvent) {
     ev.preventDefault()
     if (saving) return
     setSaveError(null)
 
     const e = validate()
+    const ve = validateVariants()
     setErrors(e)
-    if (Object.keys(e).length > 0) return
+    setVariantErrors(ve)
+    // Block save on any error, but keep the entered data so nothing is lost.
+    if (Object.keys(e).length > 0 || Object.keys(ve).length > 0) return
 
-    // Drop fully-empty repeatable rows before saving.
-    const colors = form.colors.filter(
-      (c) => c.name_ar.trim() || c.name_en.trim(),
+    // Drop fully-empty variant rows (no name and no sizes) before saving.
+    const keptVariants = form.variants.filter(
+      (v) => v.name_ar.trim() || v.name_en.trim() || v.sizes.some((s) => s.size.trim()),
     )
+    // Extended variants (source of truth) persisted to the `variants` jsonb.
+    const variants: ProductVariant[] = keptVariants.map((v) => ({
+      id: v.id,
+      name_ar: v.name_ar.trim(),
+      name_en: v.name_en.trim(),
+      hex: v.hex,
+      images: v.images, // preserved untouched — per-variant image editing is a later pass
+      in_stock: v.in_stock,
+      price: v.price.trim() === '' ? null : Number(v.price),
+      show_stock: v.show_stock,
+      sizes: v.sizes
+        .filter((s) => s.size.trim() !== '')
+        .map((s) => ({ size: s.size.trim(), stock: Math.trunc(Number(s.stock)) || 0 })),
+    }))
+    // Keep the legacy `colors` list in sync (name/hex) so the Shop color filter
+    // still works; only variants that carry a name contribute a color.
+    const colors: ProductColor[] = variants
+      .filter((v) => v.name_ar || v.name_en)
+      .map((v) => ({ name_ar: v.name_ar, name_en: v.name_en, hex: v.hex }))
     const features = form.features.filter(
       (f) => f.text_ar.trim() || f.text_en.trim(),
     )
@@ -766,6 +940,7 @@ export default function ProductForm() {
       currency: form.currency || 'ILS',
       images: form.images,
       colors,
+      variants,
       features,
       requires_consultation: form.requires_consultation,
       in_stock: form.in_stock,
@@ -1022,62 +1197,215 @@ export default function ProductForm() {
           </Section>
 
           {/* Colors */}
-          <Section title="الألوان">
-            {form.colors.length === 0 && (
+          <Section title="الألوان والمقاسات">
+            {form.variants.length === 0 && (
               <p className="text-sm text-gray-600">لا توجد ألوان. أضف لوناً إذا رغبت.</p>
             )}
-            <div className="space-y-3">
-              {form.colors.map((c, i) => (
-                <div key={i} className="flex flex-wrap items-end gap-3">
-                  <div className="min-w-[8rem] flex-1">
-                    <label className="mb-1 block text-xs text-gray-600">الاسم بالعربية</label>
-                    <input
-                      className="field"
-                      value={c.name_ar}
-                      onChange={(e) => updateColor(i, { name_ar: e.target.value })}
-                    />
-                  </div>
-                  <div className="min-w-[8rem] flex-1">
-                    <label className="mb-1 block text-xs text-gray-600">الاسم بالإنجليزية</label>
-                    <input
-                      dir="ltr"
-                      className={numField}
-                      value={c.name_en}
-                      onChange={(e) => updateColor(i, { name_en: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-gray-600">اللون</label>
-                    <input
-                      type="color"
-                      aria-label="اختيار اللون"
-                      className="h-[42px] w-14 cursor-pointer rounded-[var(--radius-sm)] border border-gray-300 bg-white p-1"
-                      value={/^#[0-9a-fA-F]{6}$/.test(c.hex) ? c.hex : '#000000'}
-                      onChange={(e) => updateColor(i, { hex: e.target.value })}
-                    />
-                  </div>
-                  {/* Eyedropper — only when there's an uploaded photo to sample from. */}
-                  {form.images.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setPickerFor(i)}
-                      className="btn btn-secondary inline-flex h-[42px] items-center gap-1.5 px-3 py-0"
-                    >
-                      <EyedropperIcon />
-                      اختر من الصورة
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removeColor(i)}
-                    className="btn btn-secondary h-[42px] px-3 py-0"
+            <div className="space-y-4">
+              {form.variants.map((v, i) => {
+                const vErr = variantErrors[i]
+                return (
+                  <div
+                    key={v.id}
+                    className="space-y-4 rounded-[var(--radius)] border border-gray-300 bg-white p-4"
                   >
-                    حذف
-                  </button>
-                </div>
-              ))}
+                    {/* Names + color + eyedropper + remove */}
+                    <div className="flex flex-wrap items-end gap-3">
+                      <div className="min-w-[8rem] flex-1">
+                        <label className="mb-1 block text-xs text-gray-600">الاسم بالعربية</label>
+                        <input
+                          className="field"
+                          value={v.name_ar}
+                          onChange={(e) => updateVariant(i, { name_ar: e.target.value })}
+                        />
+                      </div>
+                      <div className="min-w-[8rem] flex-1">
+                        <label className="mb-1 block text-xs text-gray-600">الاسم بالإنجليزية</label>
+                        <input
+                          dir="ltr"
+                          className={numField}
+                          value={v.name_en}
+                          onChange={(e) => updateVariant(i, { name_en: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-gray-600">اللون</label>
+                        <input
+                          type="color"
+                          aria-label="اختيار اللون"
+                          className="h-[42px] w-14 cursor-pointer rounded-[var(--radius-sm)] border border-gray-300 bg-white p-1"
+                          value={/^#[0-9a-fA-F]{6}$/.test(v.hex) ? v.hex : '#000000'}
+                          onChange={(e) => updateVariant(i, { hex: e.target.value })}
+                        />
+                      </div>
+                      {/* Eyedropper — only when there's an uploaded photo to sample from. */}
+                      {form.images.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setPickerFor(i)}
+                          className="btn btn-secondary inline-flex h-[42px] items-center gap-1.5 px-3 py-0"
+                        >
+                          <EyedropperIcon />
+                          اختر من الصورة
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(i)}
+                        className="btn btn-secondary h-[42px] px-3 py-0"
+                      >
+                        حذف اللون
+                      </button>
+                    </div>
+
+                    {/* Optional per-color price override */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs text-gray-600">
+                          سعر خاص بهذا اللون (اختياري)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          dir="ltr"
+                          inputMode="decimal"
+                          className={numField}
+                          value={v.price}
+                          onChange={(e) => updateVariant(i, { price: e.target.value })}
+                        />
+                        <p className="mt-1 text-xs text-gray-600">
+                          اتركيه فارغاً لاستخدام سعر المنتج.
+                        </p>
+                        {vErr?.price && (
+                          <p className="mt-1 text-xs" style={{ color: 'var(--color-error)' }}>
+                            {vErr.price}
+                          </p>
+                        )}
+                      </div>
+                      <label className="flex items-center gap-2 self-start pt-6 text-sm font-medium text-ink">
+                        <Switch
+                          checked={v.show_stock}
+                          onChange={() => updateVariant(i, { show_stock: !v.show_stock })}
+                          label="إظهار عدد القطع المتبقية للعميل"
+                        />
+                        إظهار عدد القطع المتبقية للعميل
+                      </label>
+                    </div>
+
+                    {/* Sizes + per-size stock */}
+                    <div>
+                      <span className="mb-1.5 block text-xs text-gray-600">المقاسات والمخزون</span>
+                      {/* Quick-add common lens sizes */}
+                      <div className="flex flex-wrap gap-2">
+                        {COMMON_SIZES.map((sz) => {
+                          const added = v.sizes.some((s) => s.size.trim() === sz)
+                          return (
+                            <button
+                              key={sz}
+                              type="button"
+                              onClick={() => addSize(i, sz)}
+                              disabled={added}
+                              className={`num rounded-full border px-3 py-1 text-sm transition-colors ${
+                                added
+                                  ? 'cursor-default border-gray-300 bg-gray-100 text-gray-600'
+                                  : 'border-gray-300 text-ink hover:border-yellow-deep hover:bg-gray-100'
+                              }`}
+                            >
+                              {sz}
+                              {added ? ' ✓' : ' +'}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {/* Custom / other size */}
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <input
+                          className="field max-w-[12rem]"
+                          placeholder="مقاس مخصص"
+                          value={v.customSize}
+                          onChange={(e) => updateVariant(i, { customSize: e.target.value })}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              addSize(i, v.customSize)
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => addSize(i, v.customSize)}
+                          className="btn btn-secondary h-[42px] px-3 py-0"
+                        >
+                          إضافة مقاس
+                        </button>
+                      </div>
+
+                      {v.sizes.length === 0 ? (
+                        <p className="mt-2 text-xs text-gray-600">
+                          بدون مقاسات — تُستخدم حالة التوفر أدناه للّون بأكمله.
+                        </p>
+                      ) : (
+                        <div className="mt-3 space-y-2">
+                          {v.sizes.map((s, si) => (
+                            <div key={si} className="flex flex-wrap items-center gap-2">
+                              <span
+                                className="num inline-flex h-[42px] min-w-[4rem] items-center justify-center rounded-[var(--radius-sm)] border border-gray-300 bg-gray-100 px-3 text-sm text-ink"
+                                dir="ltr"
+                              >
+                                {s.size}
+                              </span>
+                              <div>
+                                <label className="sr-only">المخزون</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  dir="ltr"
+                                  inputMode="numeric"
+                                  aria-label={`المخزون للمقاس ${s.size}`}
+                                  className={`${numField} w-28`}
+                                  placeholder="المخزون"
+                                  value={s.stock}
+                                  onChange={(e) => updateSize(i, si, { stock: e.target.value })}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeSize(i, si)}
+                                aria-label="حذف المقاس"
+                                className="btn btn-secondary h-[42px] px-3 py-0"
+                              >
+                                ×
+                              </button>
+                              {vErr?.sizes?.[si] && (
+                                <p
+                                  className="w-full text-xs"
+                                  style={{ color: 'var(--color-error)' }}
+                                >
+                                  {vErr.sizes[si]}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Color-level availability (used when there are no sizes) */}
+                    <label className="flex items-center gap-2 text-sm font-medium text-ink">
+                      <Switch
+                        checked={v.in_stock}
+                        onChange={() => updateVariant(i, { in_stock: !v.in_stock })}
+                        label="متوفر"
+                      />
+                      متوفر {v.sizes.length > 0 && <span className="text-xs text-gray-600">(تُستخدم المقاسات لتحديد التوفر)</span>}
+                    </label>
+                  </div>
+                )
+              })}
             </div>
-            <button type="button" onClick={addColor} className="btn btn-secondary mt-1">
+            <button type="button" onClick={addVariant} className="btn btn-secondary mt-1">
               + إضافة لون
             </button>
 
@@ -1085,7 +1413,7 @@ export default function ProductForm() {
             {pickerFor !== null && form.images.length > 0 && (
               <ImageColorPicker
                 images={form.images}
-                onPick={(hex) => updateColor(pickerFor, { hex })}
+                onPick={(hex) => updateVariant(pickerFor, { hex })}
                 onClose={() => setPickerFor(null)}
               />
             )}
