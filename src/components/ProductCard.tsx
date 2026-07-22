@@ -44,15 +44,30 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
   const showImage = Boolean(imageUrl) && !imageBroken
   const hasSecond = showImage && Boolean(secondUrl) && !secondBroken
 
-  // Card pricing reflects the REPRESENTATIVE color (default/first in-stock
-  // variant): its own price/sale each fall back to the product-level values.
+  // Per-color pricing. Each color's price/sale falls back to the product-level
+  // values only for safety on mid-migration products (new products always price
+  // per color). "eff" = the price paid (sale when it's a real discount).
   const price = Number(product.price)
   const salePrice = product.sale_price != null ? Number(product.sale_price) : null
-  const cardRegular = repVariant?.price != null ? Number(repVariant.price) : price
-  const cardSaleRaw = repVariant?.sale_price != null ? Number(repVariant.sale_price) : salePrice
-  const onSale =
-    cardSaleRaw != null && Number.isFinite(cardSaleRaw) && cardSaleRaw > 0 && cardSaleRaw < cardRegular
-  const effectivePrice = onSale ? (cardSaleRaw as number) : cardRegular
+  const pricingOf = (v: (typeof variants)[number] | null) => {
+    const reg = v?.price != null ? Number(v.price) : price
+    const saleRaw = v?.sale_price != null ? Number(v.sale_price) : salePrice
+    const s = saleRaw != null && Number.isFinite(saleRaw) && saleRaw > 0 && saleRaw < reg
+    return { reg, eff: s ? saleRaw : reg, onSale: s }
+  }
+  // Cheapest effective price across colors → the "starting from" price on the card.
+  const effList = (variants.length ? variants.map((v) => pricingOf(v).eff) : [pricingOf(null).eff])
+    .filter((n) => Number.isFinite(n) && n > 0)
+  const minEff = effList.length ? Math.min(...effList) : (Number.isFinite(price) ? price : 0)
+  const maxEff = effList.length ? Math.max(...effList) : minEff
+  const priceVaries = minEff !== maxEff
+  // Default color's pricing (shown when all colors cost the same; also the
+  // quick-add unit price for the color the card would add).
+  const repPricing = pricingOf(repVariant)
+  const onSale = repPricing.onSale
+  const cardRegular = repPricing.reg
+  const cardSaleRaw = repPricing.eff
+  const effectivePrice = repPricing.eff
 
   // Motion only when hovered AND the user hasn't asked to reduce motion.
   const animateHover = hovered && !reduce
@@ -223,10 +238,18 @@ export default function ProductCard({ product, brandName }: ProductCardProps) {
             {name}
           </h3>
 
-          {onSale ? (
+          {priceVaries ? (
+            // Colors differ in price → show the cheapest as a starting point.
+            <div className="mt-2 flex flex-wrap items-baseline justify-start gap-x-1.5 gap-y-0.5">
+              <span className="text-xs text-gray-600">{t('card.from')}</span>
+              <span className="num font-semibold text-ink">
+                {formatPrice(minEff, product.currency)}
+              </span>
+            </div>
+          ) : onSale ? (
             <div className="mt-2 flex flex-wrap items-baseline justify-start gap-x-2 gap-y-0.5">
               <span className="num font-semibold text-ink">
-                {formatPrice(cardSaleRaw as number, product.currency)}
+                {formatPrice(cardSaleRaw, product.currency)}
               </span>
               <span className="num text-sm text-gray-600 line-through">
                 {formatPrice(cardRegular, product.currency)}

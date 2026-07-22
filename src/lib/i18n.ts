@@ -193,6 +193,7 @@ export const UI = {
   'card.outOfStock': { ar: 'غير متوفر', en: 'Out of stock' },
   'card.reserve': { ar: 'احجز', en: 'Reserve' },
   'card.add': { ar: 'أضف للسلة', en: 'Add to cart' },
+  'card.from': { ar: 'ابتداءً من', en: 'From' },
   'card.added': { ar: 'تمت الإضافة ✓', en: 'Added ✓' },
 
   // ---- Product detail ----

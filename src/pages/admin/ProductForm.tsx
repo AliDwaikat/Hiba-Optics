@@ -137,8 +137,16 @@ function toVariantDrafts(
   variants: ProductVariant[] | null | undefined,
   colors: ProductColor[] | null | undefined,
   productImages: string[] | null | undefined,
+  productPrice: number | null | undefined,
 ): VariantDraft[] {
   const fallbackImages = Array.isArray(productImages) ? productImages : []
+  // Pricing is now per-color. A color with no price of its own is pre-filled with
+  // the product's existing price so already-priced legacy products stay saveable
+  // and Hiba can then adjust each color.
+  const fallbackPrice =
+    typeof productPrice === 'number' && Number.isFinite(productPrice) && productPrice > 0
+      ? String(productPrice)
+      : ''
   if (Array.isArray(variants) && variants.length > 0) {
     return variants.map((v) => {
       const own = Array.isArray(v.images) ? v.images.filter((x) => typeof x === 'string' && x) : []
@@ -148,7 +156,7 @@ function toVariantDrafts(
         name_en: v.name_en ?? '',
         hex: v.hex ?? '#000000',
         in_stock: v.in_stock !== false,
-        price: v.price != null ? String(v.price) : '',
+        price: v.price != null ? String(v.price) : fallbackPrice,
         sale_price: v.sale_price != null ? String(v.sale_price) : '',
         show_stock: Boolean(v.show_stock),
         polarized: Boolean(v.polarized),
@@ -168,7 +176,7 @@ function toVariantDrafts(
       name_en: c.name_en ?? '',
       hex: c.hex ?? '#000000',
       in_stock: true,
-      price: '',
+      price: fallbackPrice,
       sale_price: '',
       show_stock: false,
       polarized: false,
@@ -712,7 +720,7 @@ export default function ProductForm() {
           featured: Boolean(p.featured),
           published: Boolean(p.published),
           position: String(p.position ?? 0),
-          variants: toVariantDrafts(p.variants, p.colors, p.images),
+          variants: toVariantDrafts(p.variants, p.colors, p.images, p.price),
           features: Array.isArray(p.features) ? p.features : [],
           images: Array.isArray(p.images) ? p.images : [],
         })
@@ -963,50 +971,43 @@ export default function ProductForm() {
   }
 
   function validate(): Errors {
+    // Pricing is per-color now (validated in validateVariants); the product no
+    // longer has an editable price/sale here.
     const e: Errors = {}
     if (!form.name_ar.trim()) e.name_ar = 'الاسم بالعربية مطلوب'
     if (!form.name_en.trim()) e.name_en = 'الاسم بالإنجليزية مطلوب'
-
-    const price = Number(form.price)
-    if (form.price.trim() === '' || !Number.isFinite(price)) {
-      e.price = 'السعر مطلوب'
-    } else if (price < 0) {
-      e.price = 'يجب أن يكون السعر صفراً أو أكثر'
-    }
-
-    if (form.sale_price.trim() !== '') {
-      const sale = Number(form.sale_price)
-      if (!Number.isFinite(sale) || sale < 0) {
-        e.sale_price = 'سعر العرض غير صالح'
-      } else if (Number.isFinite(price) && sale >= price) {
-        e.sale_price = 'يجب أن يكون سعر العرض أقل من السعر الأساسي'
-      }
-    }
     return e
   }
 
-  /** Validate per-color overrides: a filled price must be positive; a filled sale
-   *  price must be positive AND below the color's effective price (its own price,
-   *  else the product base); every size's stock a non-negative integer. Returns an
-   *  index-keyed error map (empty ⇒ all valid). */
+  // A variant row is "kept" (persisted) when it carries a name or any size.
+  const variantIsKept = (v: VariantDraft) =>
+    v.name_ar.trim() !== '' || v.name_en.trim() !== '' || v.sizes.some((s) => s.size.trim() !== '')
+
+  /** Validate per-color pricing (per-color-only model): every kept color REQUIRES
+   *  a positive price; a filled sale price must be positive AND below that color's
+   *  price; every size's stock a non-negative integer. Returns an index-keyed error
+   *  map (empty ⇒ all valid). */
   function validateVariants(): Record<number, { price?: string; sale_price?: string; sizes?: Record<number, string> }> {
     const out: Record<number, { price?: string; sale_price?: string; sizes?: Record<number, string> }> = {}
-    const basePrice = Number(form.price)
     form.variants.forEach((v, vi) => {
       const entry: { price?: string; sale_price?: string; sizes?: Record<number, string> } = {}
       const priceFilled = v.price.trim() !== ''
       const p = Number(v.price)
-      if (priceFilled && (!Number.isFinite(p) || p <= 0)) {
-        entry.price = 'يجب أن يكون السعر رقماً موجباً'
+      if (variantIsKept(v)) {
+        if (!priceFilled) {
+          entry.price = 'سعر هذا اللون مطلوب'
+        } else if (!Number.isFinite(p) || p <= 0) {
+          entry.price = 'يجب أن يكون سعر هذا اللون رقماً موجباً'
+        }
+      } else if (priceFilled && (!Number.isFinite(p) || p <= 0)) {
+        entry.price = 'يجب أن يكون سعر هذا اللون رقماً موجباً'
       }
       if (v.sale_price.trim() !== '') {
-        // The color's effective price the sale must beat: its own price, else base.
-        const effective = priceFilled && Number.isFinite(p) ? p : basePrice
         const sp = Number(v.sale_price)
         if (!Number.isFinite(sp) || sp <= 0) {
-          entry.sale_price = 'يجب أن يكون سعر التخفيض رقماً موجباً'
-        } else if (Number.isFinite(effective) && sp >= effective) {
-          entry.sale_price = 'يجب أن يكون سعر التخفيض أقل من سعر هذا اللون'
+          entry.sale_price = 'يجب أن يكون سعر العرض رقماً موجباً'
+        } else if (priceFilled && Number.isFinite(p) && sp >= p) {
+          entry.sale_price = 'يجب أن يكون سعر العرض أقل من سعر هذا اللون'
         }
       }
       const sizeErrs: Record<number, string> = {}
@@ -1033,12 +1034,25 @@ export default function ProductForm() {
     setErrors(e)
     setVariantErrors(ve)
     // Block save on any error, but keep the entered data so nothing is lost.
-    if (Object.keys(e).length > 0 || Object.keys(ve).length > 0) return
+    // Name the first colour missing a price so the owner knows exactly where.
+    if (Object.keys(e).length > 0 || Object.keys(ve).length > 0) {
+      const missingIdx = form.variants.findIndex(
+        (v, i) => variantIsKept(v) && ve[i]?.price != null,
+      )
+      if (missingIdx !== -1) {
+        const mv = form.variants[missingIdx]
+        const label = mv.name_ar.trim() || mv.name_en.trim() || `#${missingIdx + 1}`
+        setSaveError(`اللون «${label}» بحاجة إلى سعر. كل لون يجب أن يكون له سعر.`)
+      }
+      return
+    }
 
     // Drop fully-empty variant rows (no name and no sizes) before saving.
-    const keptVariants = form.variants.filter(
-      (v) => v.name_ar.trim() || v.name_en.trim() || v.sizes.some((s) => s.size.trim()),
-    )
+    const keptVariants = form.variants.filter((v) => variantIsKept(v))
+    if (keptVariants.length === 0) {
+      setSaveError('أضف لوناً واحداً على الأقل مع سعره.')
+      return
+    }
     // Extended variants (source of truth) persisted to the `variants` jsonb.
     const variants: ProductVariant[] = keptVariants.map((v) => ({
       id: v.id,
@@ -1064,6 +1078,20 @@ export default function ProductForm() {
       (f) => f.text_ar.trim() || f.text_en.trim(),
     )
 
+    // Auto-maintain the product-level price column (kept for legacy code that
+    // reads product.price): the cheapest color's EFFECTIVE price = a sensible
+    // "starting price". sale_price is retired at the product level (null) — sales
+    // live per color now. The owner never sees or edits these.
+    const effectivePrices = variants
+      .map((v) => {
+        const reg = typeof v.price === 'number' ? v.price : NaN
+        const sale = typeof v.sale_price === 'number' ? v.sale_price : null
+        const eff = sale != null && sale > 0 && sale < reg ? sale : reg
+        return eff
+      })
+      .filter((n) => Number.isFinite(n) && n > 0)
+    const productPrice = effectivePrices.length > 0 ? Math.min(...effectivePrices) : 0
+
     const payload: ProductWritePayload = {
       brand_id: form.brand_id || null,
       model: form.model.trim() || null,
@@ -1075,8 +1103,9 @@ export default function ProductForm() {
       audience: form.audience,
       frame_shape: form.frame_shape.trim() || null,
       face_shapes: form.face_shapes,
-      price: Number(form.price),
-      sale_price: form.sale_price.trim() === '' ? null : Number(form.sale_price),
+      // Auto-computed from the colors (cheapest effective) — not user-edited.
+      price: productPrice,
+      sale_price: null,
       currency: form.currency || 'ILS',
       images: form.images,
       colors,
@@ -1354,35 +1383,10 @@ export default function ProductForm() {
           </Section>
 
           <Section title="التسعير">
+            <p className="text-xs text-gray-600">
+              يُحدَّد السعر لكل لون على حدة في قسم «الألوان والمقاسات» أدناه.
+            </p>
             <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="السعر" htmlFor="price" required error={errors.price}>
-                <input
-                  id="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  dir="ltr"
-                  inputMode="decimal"
-                  className={numField}
-                  value={form.price}
-                  onChange={(e) => set('price', e.target.value)}
-                />
-              </Field>
-
-              <Field label="سعر العرض (اختياري)" htmlFor="sale_price" error={errors.sale_price}>
-                <input
-                  id="sale_price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  dir="ltr"
-                  inputMode="decimal"
-                  className={numField}
-                  value={form.sale_price}
-                  onChange={(e) => set('sale_price', e.target.value)}
-                />
-              </Field>
-
               <Field label="العملة" htmlFor="currency">
                 <select
                   id="currency"
@@ -1617,11 +1621,11 @@ export default function ProductForm() {
                       </div>
                     </div>
 
-                    {/* Optional per-color price + sale price overrides */}
+                    {/* Per-color price (required) + optional sale price */}
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div>
                         <label className="mb-1 block text-xs text-gray-600">
-                          سعر خاص بهذا اللون (اختياري)
+                          سعر هذا اللون <span style={{ color: 'var(--color-error)' }}>*</span>
                         </label>
                         <input
                           type="number"
@@ -1634,7 +1638,7 @@ export default function ProductForm() {
                           onChange={(e) => updateVariant(i, { price: e.target.value })}
                         />
                         <p className="mt-1 text-xs text-gray-600">
-                          اتركيه فارغاً لاستخدام سعر المنتج.
+                          سعر مطلوب لكل لون.
                         </p>
                         {vErr?.price && (
                           <p className="mt-1 text-xs" style={{ color: 'var(--color-error)' }}>
@@ -1644,7 +1648,7 @@ export default function ProductForm() {
                       </div>
                       <div>
                         <label className="mb-1 block text-xs text-gray-600">
-                          سعر التخفيض لهذا اللون (اختياري)
+                          سعر العرض لهذا اللون (اختياري)
                         </label>
                         <input
                           type="number"
