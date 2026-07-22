@@ -1482,11 +1482,16 @@ export default function ProductForm() {
                                     الصورة الرئيسية
                                   </span>
                                 )}
+                                {/* Explicit rgba backing (not bg-black/60 — the
+                                    theme colours are hex CSS vars, so Tailwind's
+                                    /opacity modifier produces no rule) so the ×
+                                    stays visible on light AND dark photos. Turns
+                                    red on hover to signal delete. */}
                                 <button
                                   type="button"
                                   onClick={() => removeVariantImage(i, j)}
-                                  aria-label="إزالة الصورة"
-                                  className="absolute end-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+                                  aria-label="حذف الصورة"
+                                  className="absolute end-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(0,0,0,0.6)] text-base leading-none text-white shadow-sm ring-1 ring-[rgba(255,255,255,0.55)] transition-colors hover:bg-[rgba(198,40,40,0.95)]"
                                 >
                                   ×
                                 </button>
