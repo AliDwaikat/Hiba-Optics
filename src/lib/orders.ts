@@ -17,9 +17,12 @@ export interface OrderItemSnapshot {
   variantId: string | null
   name_ar: string
   quantity: number
+  /** Effective unit price paid for this line (color override or product base). */
   unit_price: number
   /** Selected variant color (name_ar / name_en / hex). */
   color: CartColor | null
+  /** Selected size label (null when the color has no sizes / legacy items). */
+  size: string | null
   /** The variant's image url (so the order shows the exact color ordered). */
   image: string | null
   requiresConsultation: boolean

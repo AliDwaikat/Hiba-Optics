@@ -134,6 +134,7 @@ export default function Checkout() {
       quantity: i.quantity,
       unit_price: i.price,
       color: i.color,
+      size: i.size ?? null,
       image: i.image || null,
       requiresConsultation: i.requiresConsultation,
     }))
@@ -172,6 +173,14 @@ export default function Checkout() {
           // ignore — the order is already placed; profile save is secondary
         }
       }
+      // TODO (inventory): decrement each purchased color+size's stock in the
+      // product's variants jsonb by the quantity bought. NOT done here on
+      // purpose — the storefront runs on the anon/customer client, which has no
+      // UPDATE on `products` (RLS restricts writes to the owner), and a naive
+      // client read-modify-write would also race across concurrent orders. This
+      // belongs in a Postgres RPC / edge function invoked with elevated rights
+      // that decrements atomically. It must never block or fail a placed order.
+
       // Success = insert returned no error. We rely on the client-side
       // order_number (no read-back), since guests can't SELECT orders.
       // Mark placed BEFORE clearing so the empty-cart guard doesn't bounce to
@@ -313,6 +322,12 @@ export default function Checkout() {
                               aria-hidden="true"
                             />
                             {localize(i.color, 'name')}
+                          </span>
+                        )}
+                        {i.size && (
+                          <span className="num text-gray-600">
+                            {' · '}
+                            {t('cart.size')}: {i.size}
                           </span>
                         )}
                         <span className="num text-gray-600"> × {i.quantity}</span>

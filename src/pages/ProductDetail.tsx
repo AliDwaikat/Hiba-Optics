@@ -617,13 +617,25 @@ export default function ProductDetail() {
   // Remaining count for the selected size (only meaningful when sizes exist).
   const remaining = hasSizes ? Number(activeSizeObj?.stock ?? 0) : null
   const showStock = selectedVariant.show_stock === true
+  // Quantity cap for the selected size (tracked stock). null ⇒ no cap.
+  const stockCap = hasSizes ? Number(activeSizeObj?.stock ?? 0) : null
+  const atQtyCap = stockCap != null && quantity >= stockCap
 
   function selectVariant(v: ProductVariant) {
     setSelectedVariantId(v.id)
     // Reset the size to this color's first in-stock size (falls back in render).
     const s = variantSizesOf(v)
-    const first = s.length > 0 ? (s.find((x) => Number(x.stock) > 0) ?? s[0]).size : null
-    setSelectedSize(first)
+    const firstSize = s.length > 0 ? (s.find((x) => Number(x.stock) > 0) ?? s[0]) : null
+    setSelectedSize(firstSize ? firstSize.size : null)
+    // Keep the quantity within the newly-selected size's stock.
+    if (firstSize && Number(firstSize.stock) > 0) {
+      setQuantity((q) => Math.min(q, Number(firstSize.stock)))
+    }
+  }
+
+  function selectSize(s: { size: string; stock: number }) {
+    setSelectedSize(s.size)
+    if (Number(s.stock) > 0) setQuantity((q) => Math.min(q, Number(s.stock)))
   }
 
   function handleAdd() {
@@ -645,6 +657,7 @@ export default function ProductDetail() {
       color,
       variantId: hasVariants ? selectedVariant.id : null,
       size: hasSizes ? activeSize : null,
+      stock: stockCap,
       quantity,
       requiresConsultation: product.requires_consultation,
     })
@@ -808,7 +821,7 @@ export default function ProductDetail() {
                       <button
                         key={s.size}
                         type="button"
-                        onClick={() => inStock && setSelectedSize(s.size)}
+                        onClick={() => inStock && selectSize(s)}
                         disabled={!inStock}
                         aria-pressed={active}
                         title={inStock ? s.size : `${s.size} — ${t('pd.outOfStock')}`}
@@ -829,7 +842,7 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Quantity */}
+            {/* Quantity — capped at the selected size's tracked stock. */}
             <div className="mt-6 flex items-center gap-4">
               <span className="text-sm text-ink">{t('pd.qty')}</span>
               <div className="flex items-center gap-3">
@@ -845,13 +858,17 @@ export default function ProductDetail() {
                 <span className="num w-8 text-center text-ink">{quantity}</span>
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => q + 1)}
+                  onClick={() => setQuantity((q) => (stockCap != null ? Math.min(stockCap, q + 1) : q + 1))}
+                  disabled={atQtyCap}
                   aria-label={t('pd.qty.inc')}
-                  className="h-9 w-9 rounded-full border border-gray-300 text-lg text-ink transition-colors hover:border-yellow"
+                  className="h-9 w-9 rounded-full border border-gray-300 text-lg text-ink transition-colors hover:border-yellow disabled:opacity-40"
                 >
                   +
                 </button>
               </div>
+              {atQtyCap && (
+                <span className="num text-xs text-gray-600">{format(t('cart.available'), { n: stockCap })}</span>
+              )}
             </div>
 
             {/* Availability line for the current color + size. When show_stock is

@@ -346,6 +346,8 @@ export const UI = {
   'cart.deliveryNote': { ar: 'تُحسب رسوم التوصيل عند إتمام الطلب.', en: 'Delivery fees are calculated at checkout.' },
   'cart.checkout': { ar: 'إتمام الطلب', en: 'Checkout' },
   'cart.continue': { ar: 'متابعة التسوق', en: 'Continue shopping' },
+  'cart.size': { ar: 'المقاس', en: 'Size' },
+  'cart.available': { ar: 'الكمية المتاحة: {n}', en: 'Available: {n}' },
 
   // ---- Checkout ----
   'checkout.title': { ar: 'إتمام الطلب', en: 'Checkout' },

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Reveal, RevealGroup, RevealItem } from '../components/home/Reveal'
 import { formatPrice } from '../lib/format'
+import { format } from '../lib/i18n'
 import { useCart, type CartItem } from '../lib/cart'
 import { useLanguage } from '../lib/language'
 
@@ -38,9 +39,9 @@ function ThumbPlaceholder() {
   )
 }
 
-/** A cart line is identified by product id + variant id (null for legacy items). */
-function lineKey(item: CartItem): string | null {
-  return item.variantId ?? null
+/** A cart line's React key: product id + variant id + size (each may be null). */
+function lineReactKey(item: CartItem): string {
+  return `${item.productId}-${item.variantId ?? ''}-${item.size ?? ''}`
 }
 
 /* ---------- Line item ---------- */
@@ -48,7 +49,11 @@ function CartLine({ item }: { item: CartItem }) {
   const { updateQty, removeItem } = useCart()
   const { t, localize } = useLanguage()
   const [broken, setBroken] = useState(false)
-  const vid = lineKey(item)
+  const vid = item.variantId ?? null
+  const size = item.size ?? null
+  // Tracked stock caps the quantity; untracked (null) ⇒ no cap.
+  const cap = item.stock ?? null
+  const atCap = cap != null && item.quantity >= cap
   const showImage = Boolean(item.image) && !broken
   const name = localize(item, 'name')
 
@@ -81,11 +86,16 @@ function CartLine({ item }: { item: CartItem }) {
                 {localize(item.color, 'name')}
               </span>
             )}
+            {item.size && (
+              <p className="num mt-1 text-xs text-gray-600">
+                {t('cart.size')}: <span dir="ltr">{item.size}</span>
+              </p>
+            )}
           </div>
 
           <button
             type="button"
-            onClick={() => removeItem(item.productId, vid)}
+            onClick={() => removeItem(item.productId, vid, size)}
             aria-label={t('cart.remove')}
             className="text-gray-600 transition-colors hover:text-error"
           >
@@ -95,25 +105,31 @@ function CartLine({ item }: { item: CartItem }) {
 
         <div className="mt-3 flex items-end justify-between gap-3">
           {/* Quantity stepper */}
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => updateQty(item.productId, vid, Math.max(1, item.quantity - 1))}
-              disabled={item.quantity <= 1}
-              aria-label={t('cart.qtyDec')}
-              className="h-8 w-8 rounded-full border border-gray-300 text-lg leading-none text-ink transition-colors hover:border-yellow disabled:opacity-40"
-            >
-              −
-            </button>
-            <span className="num w-6 text-center text-ink">{item.quantity}</span>
-            <button
-              type="button"
-              onClick={() => updateQty(item.productId, vid, item.quantity + 1)}
-              aria-label={t('cart.qtyInc')}
-              className="h-8 w-8 rounded-full border border-gray-300 text-lg leading-none text-ink transition-colors hover:border-yellow"
-            >
-              +
-            </button>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => updateQty(item.productId, vid, size, Math.max(1, item.quantity - 1))}
+                disabled={item.quantity <= 1}
+                aria-label={t('cart.qtyDec')}
+                className="h-8 w-8 rounded-full border border-gray-300 text-lg leading-none text-ink transition-colors hover:border-yellow disabled:opacity-40"
+              >
+                −
+              </button>
+              <span className="num w-6 text-center text-ink">{item.quantity}</span>
+              <button
+                type="button"
+                onClick={() => updateQty(item.productId, vid, size, item.quantity + 1)}
+                disabled={atCap}
+                aria-label={t('cart.qtyInc')}
+                className="h-8 w-8 rounded-full border border-gray-300 text-lg leading-none text-ink transition-colors hover:border-yellow disabled:opacity-40"
+              >
+                +
+              </button>
+            </div>
+            {atCap && (
+              <p className="num mt-1.5 text-xs text-gray-600">{format(t('cart.available'), { n: cap })}</p>
+            )}
           </div>
 
           {/* Price / total */}
@@ -138,7 +154,7 @@ function ItemGroup({ items }: { items: CartItem[] }) {
   return (
     <RevealGroup className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-[var(--radius-lg)] border border-gray-100 bg-white shadow-card">
       {items.map((item) => (
-        <RevealItem key={`${item.productId}-${lineKey(item) ?? ''}`}>
+        <RevealItem key={lineReactKey(item)}>
           <CartLine item={item} />
         </RevealItem>
       ))}

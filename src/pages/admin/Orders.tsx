@@ -181,6 +181,11 @@ function OrderDetail({
                       {it.color.name_ar}
                     </span>
                   )}
+                  {it.size && (
+                    <span className="num">
+                      المقاس: <span dir="ltr">{it.size}</span>
+                    </span>
+                  )}
                   {it.requiresConsultation && (
                     <span
                       className="rounded-full px-2 py-0.5"

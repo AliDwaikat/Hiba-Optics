@@ -163,6 +163,12 @@ export default function AccountOrders() {
                             {localize(it.color, 'name')}
                           </span>
                         )}
+                        {it.size && (
+                          <span className="num text-gray-600">
+                            {' · '}
+                            {t('cart.size')}: <span dir="ltr">{it.size}</span>
+                          </span>
+                        )}
                       </span>
                       <span className="num shrink-0 text-gray-600">× {it.quantity}</span>
                     </li>
