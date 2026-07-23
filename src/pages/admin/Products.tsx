@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import ProductImagePlaceholder from '../../components/ProductImagePlaceholder'
 import { formatPrice } from '../../lib/format'
+import { primaryImage } from '../../lib/productImages'
 import { CATEGORY_LABELS_AR, type Category, type Product } from '../../lib/products'
 import {
   bulkDeleteProducts,
@@ -58,22 +59,36 @@ function Switch({
   )
 }
 
-/* ---- Thumbnail: first image, else the shared branded placeholder ---- */
-function Thumb({ src, alt }: { src?: string; alt: string }) {
+/* ---- Thumbnail: the product's representative image, derived the SAME way the
+   storefront does (first variant that has images → its first image; else the old
+   product-level images[0]) via the shared primaryImage helper. Falls back to the
+   branded placeholder when there's no image anywhere or the URL is broken; a
+   product with no image at all also gets a subtle "no image" indicator. ---- */
+function Thumb({ product }: { product: Product }) {
   const [broken, setBroken] = useState(false)
-  const show = Boolean(src) && !broken
+  const src = primaryImage(product) ?? undefined
+  const hasImage = Boolean(src)
+  const show = hasImage && !broken
   return (
-    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-gray-900">
+    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-gray-900">
       {show ? (
         <img
           src={src}
-          alt={alt}
+          alt={product.name_ar}
           loading="lazy"
           onError={() => setBroken(true)}
           className="h-full w-full object-cover"
         />
       ) : (
         <ProductImagePlaceholder textClassName="text-[10px]" />
+      )}
+      {!hasImage && (
+        <span
+          className="absolute inset-x-0 bottom-0 bg-[rgba(0,0,0,0.55)] px-1 py-0.5 text-center text-[8px] leading-tight text-white"
+          title="لا توجد صورة لهذا المنتج"
+        >
+          لا توجد صورة
+        </span>
       )}
     </div>
   )
@@ -490,7 +505,7 @@ export default function AdminProducts() {
                       {/* Product */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <Thumb src={p.images?.[0]} alt={p.name_ar} />
+                          <Thumb product={p} />
                           <div className="min-w-0">
                             <p className="truncate font-medium text-ink">{p.name_ar}</p>
                             {brandName && (

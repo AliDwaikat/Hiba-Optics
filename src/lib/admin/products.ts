@@ -24,7 +24,7 @@ export interface AdminBrand {
 
 const ADMIN_PRODUCT_COLUMNS =
   'id, brand_id, name_ar, name_en, description_ar, description_en, category, audience, ' +
-  'price, sale_price, currency, images, colors, features, requires_consultation, in_stock, ' +
+  'price, sale_price, currency, images, colors, variants, features, requires_consultation, in_stock, ' +
   'featured, published, position'
 
 /** Every product, ordered by position (admin sees drafts too). */
@@ -122,7 +122,7 @@ export interface AdminProductRecord extends Product {
 
 /** The exact `products` columns the form reads and writes (includes model,
  *  frame_shape, and the per-color variants jsonb). */
-const ADMIN_FORM_COLUMNS = `${ADMIN_PRODUCT_COLUMNS}, model, frame_shape, face_shapes, variants`
+const ADMIN_FORM_COLUMNS = `${ADMIN_PRODUCT_COLUMNS}, model, frame_shape, face_shapes`
 
 /** Every writable column, in the shape the form submits. */
 export interface ProductWritePayload {
