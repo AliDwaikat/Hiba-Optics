@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+
+# TODO(deployer): update the host to the real production domain.
+Sitemap: https://hibaoptics.com/sitemap.xml

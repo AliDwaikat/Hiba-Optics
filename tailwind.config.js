@@ -20,10 +20,10 @@ export default {
         error: 'var(--color-error)',
       },
       fontFamily: {
-        // Cairo drives Arabic + general UI; Poppins carries Latin names and numbers.
-        sans: ['Cairo', 'system-ui', 'sans-serif'],
-        base: ['Cairo', 'system-ui', 'sans-serif'],
-        latin: ['Poppins', 'system-ui', 'sans-serif'],
+        // Tajawal drives everything — Arabic, Latin names, and numbers.
+        sans: ['Tajawal', 'system-ui', 'sans-serif'],
+        base: ['Tajawal', 'system-ui', 'sans-serif'],
+        latin: ['Tajawal', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         card: 'var(--shadow-card)',

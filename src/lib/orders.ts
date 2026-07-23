@@ -1,0 +1,140 @@
+import { supabase } from './supabase'
+import { supabaseCustomer } from './supabaseCustomer'
+import type { CartColor } from './cart'
+
+/**
+ * Orders data layer. Fields mirror the Supabase `orders` columns exactly.
+ * Cash-on-delivery only — no online payment.
+ */
+
+export type FulfillmentType = 'delivery' | 'pickup'
+export type OrderStatus = 'new' | 'confirmed' | 'delivered' | 'cancelled'
+
+/** One line of the cart snapshot stored in orders.items (jsonb). */
+export interface OrderItemSnapshot {
+  productId: string
+  /** Chosen variant id (null for legacy / variant-less items). */
+  variantId: string | null
+  name_ar: string
+  quantity: number
+  /** Effective unit price paid for this line (color override or product base). */
+  unit_price: number
+  /** Selected variant color (name_ar / name_en / hex). */
+  color: CartColor | null
+  /** Selected size label (null when the color has no sizes / legacy items). */
+  size: string | null
+  /** The variant's image url (so the order shows the exact color ordered). */
+  image: string | null
+  requiresConsultation: boolean
+}
+
+export interface OrderInput {
+  order_number: string
+  customer_name: string
+  customer_phone: string
+  fulfillment_type: FulfillmentType
+  branch_id: string | null
+  address: string | null
+  city: string | null
+  items: OrderItemSnapshot[]
+  subtotal: number
+  delivery_fee: number
+  total: number
+  payment_method: string
+  status: string
+  has_consultation_items: boolean
+  notes: string | null
+  /** Owning customer (auth.users id) when logged in; null for guest checkout. */
+  user_id: string | null
+}
+
+/** A customer's own order, as shown on the order-history page. */
+export interface CustomerOrder {
+  id: string
+  order_number: string
+  status: OrderStatus
+  total: number
+  items: OrderItemSnapshot[]
+  has_consultation_items: boolean
+  created_at: string
+}
+
+/**
+ * Insert an order via the anon client. Deliberately does NOT chain `.select()`:
+ * anon has INSERT but not SELECT on `orders` (SELECT stays restricted to the
+ * owning customer / admin), so reading the row back would 401. Success is
+ * confirmed by the insert `error` being null; the caller relies on the
+ * client-side generated order_number for the success page. Throws the raw
+ * Supabase error (with details/code) on failure so the caller can log it, show
+ * a friendly message, and keep the cart for retry.
+ *
+ * `input.user_id` links the order to a logged-in customer (or null for guests);
+ * it is a plain column value, so the guest flow is byte-for-byte unchanged.
+ */
+export async function createOrder(input: OrderInput): Promise<void> {
+  const { error } = await supabase.from('orders').insert(input)
+  if (error) throw error
+}
+
+/**
+ * Reduce each purchased size's stock after a successful order, via the atomic
+ * `decrement_stock` RPC (see supabase/decrement_stock.sql). Best-effort by
+ * design: a failing decrement is LOGGED but never thrown, so a placed order is
+ * never rolled back or blocked (inventory can be corrected in admin). Only
+ * size-tracked lines are decremented — sizeless (color-level) lines have no
+ * count to reduce and are skipped. Quantities are integers.
+ */
+export async function decrementOrderStock(items: OrderItemSnapshot[]): Promise<void> {
+  const targets = items.filter(
+    (i) => i.variantId && i.size != null && Number(i.quantity) > 0,
+  )
+  await Promise.all(
+    targets.map(async (i) => {
+      try {
+        const { error } = await supabase.rpc('decrement_stock', {
+          p_product_id: i.productId,
+          p_variant_id: i.variantId,
+          p_size: i.size,
+          p_qty: Math.trunc(Number(i.quantity)),
+        })
+        if (error) {
+          console.error('decrement_stock failed', {
+            productId: i.productId,
+            variantId: i.variantId,
+            size: i.size,
+            message: error.message,
+          })
+        }
+      } catch (err) {
+        console.error('decrement_stock threw', err)
+      }
+    }),
+  )
+}
+
+/**
+ * The logged-in customer's own orders, newest first. Runs on the CUSTOMER
+ * client so the request carries the customer's JWT — the `orders_select_own`
+ * RLS policy (user_id = auth.uid()) then returns only their rows. The explicit
+ * user_id filter is belt-and-suspenders; RLS is the real guard.
+ */
+export async function fetchMyOrders(userId: string): Promise<CustomerOrder[]> {
+  const { data, error } = await supabaseCustomer
+    .from('orders')
+    .select('id, order_number, status, total, items, has_consultation_items, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as unknown as CustomerOrder[]
+}
+
+/** Order number in the format HIB-YYYYMMDD-XXXX (Western digits). */
+export function generateOrderNumber(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const suffix = String(Math.floor(1000 + Math.random() * 9000))
+  return `HIB-${y}${m}${day}-${suffix}`
+}
